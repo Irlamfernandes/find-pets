@@ -31,4 +31,4 @@ jobs:
         run: npm run lint
 
       - name: Checar compatibilidade do Expo
-        run: npx expo doctor
+        run: npx expo-doctor

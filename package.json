@@ -14,6 +14,13 @@
     "format": "prettier --write .",
     "test": "jest --ci"
   },
+  "expo": {
+    "install": {
+      "exclude": [
+        "jest-expo"
+      ]
+    }
+  },
   "jest": {
     "preset": "jest-expo"
   },

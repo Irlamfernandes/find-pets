@@ -1,0 +1,34 @@
+name: CI Pipeline - App Expo
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  lint-and-validate:
+    name: Validar Código JS e Formatação
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Checar formatação com Prettier
+        run: npx prettier --check .
+
+      - name: Executar Linter (ESLint)
+        run: npm run lint
+
+      - name: Checar compatibilidade do Expo
+        run: npx expo doctor

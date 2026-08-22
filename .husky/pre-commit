@@ -1,6 +1,12 @@
+#!/bin/sh
+
+# 1. Bloqueia commits diretos na branch main
 branch="$(git rev-parse --abbrev-ref HEAD)"
 if [ "$branch" = "main" ]; then
   echo "❌ Commits diretos na branch main não são permitidos!"
   echo "Por favor, crie uma nova branch: git checkout -b feature/nome-da-feature"
   exit 1
 fi
+
+# 2. Executa os testes automatizados com cobertura antes do commit
+npm test

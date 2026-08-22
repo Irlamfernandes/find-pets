@@ -26,6 +26,14 @@ jobs:
       - name: Instalar dependências
         run: npm ci --legacy-peer-deps
 
+      - name: Checar vulnerabilidades conhecidas
+        run: npm audit --audit-level=high
+
+      - name: Escanear segredos e credenciais expostas
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Checar formatação com Prettier
         run: npx prettier --check .
 

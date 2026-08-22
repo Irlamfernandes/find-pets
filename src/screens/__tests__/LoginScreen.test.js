@@ -6,27 +6,22 @@ import { useLogin } from '../../hooks/useLogin';
 jest.mock('../../hooks/useLogin');
 
 describe('LoginScreen Component', () => {
-  const mockSetEmail = jest.fn();
-  const mockSetPassword = jest.fn();
   const mockHandleManualLogin = jest.fn();
   const mockTriggerBiometricAuth = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     useLogin.mockReturnValue({
-      email: '',
-      setEmail: mockSetEmail,
-      password: '',
-      setPassword: mockSetPassword,
       hasBiometrics: true,
-      errorMessage: '',
       handleManualLogin: mockHandleManualLogin,
       triggerBiometricAuth: mockTriggerBiometricAuth,
     });
   });
 
   it('deve renderizar os campos e botões corretamente', () => {
-    const { getByPlaceholderText, getByTestId } = render(<LoginScreen />);
+    const { getByPlaceholderText, getByTestId } = render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
 
     expect(getByPlaceholderText('E-mail')).toBeTruthy();
     expect(getByPlaceholderText('Senha')).toBeTruthy();
@@ -34,35 +29,43 @@ describe('LoginScreen Component', () => {
     expect(getByTestId('button-biometrics')).toBeTruthy();
   });
 
-  it('deve exibir a mensagem de erro quando informada pelo hook', () => {
-    useLogin.mockReturnValueOnce({
-      email: '',
-      setEmail: mockSetEmail,
-      password: '',
-      setPassword: mockSetPassword,
+  it('deve exibir mensagem de erro se tentar logar com campos vazios', () => {
+    const { getByTestId, getByText } = render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
+
+    fireEvent.press(getByTestId('button-login'));
+    expect(getByText('Please fill in all fields')).toBeTruthy();
+    expect(mockHandleManualLogin).not.toHaveBeenCalled();
+  });
+
+  it('deve chamar o handleManualLogin quando os campos estiverem preenchidos', () => {
+    const { getByTestId } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+
+    fireEvent.changeText(getByTestId('input-email'), 'teste@test.com');
+    fireEvent.changeText(getByTestId('input-password'), '123456');
+
+    fireEvent.press(getByTestId('button-login'));
+    expect(mockHandleManualLogin).toHaveBeenCalled();
+  });
+
+  it('deve disparar o evento de biometria ao clicar no botão correspondente', () => {
+    const { getByTestId } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+
+    fireEvent.press(getByTestId('button-biometrics'));
+    expect(mockTriggerBiometricAuth).toHaveBeenCalled();
+  });
+
+  it('não deve renderizar o botão de biometria se hasBiometrics for falso', () => {
+    useLogin.mockReturnValue({
       hasBiometrics: false,
-      errorMessage: 'Preencha e-mail e senha.',
       handleManualLogin: mockHandleManualLogin,
       triggerBiometricAuth: mockTriggerBiometricAuth,
     });
 
-    const { getByText } = render(<LoginScreen />);
-    expect(getByText('Preencha e-mail e senha.')).toBeTruthy();
-  });
-
-  it('deve disparar os eventos de digitação e clique', () => {
-    const { getByTestId } = render(<LoginScreen />);
-
-    fireEvent.changeText(getByTestId('input-email'), 'teste@test.com');
-    expect(mockSetEmail).toHaveBeenCalledWith('teste@test.com');
-
-    fireEvent.changeText(getByTestId('input-password'), '123456');
-    expect(mockSetPassword).toHaveBeenCalledWith('123456');
-
-    fireEvent.press(getByTestId('button-login'));
-    expect(mockHandleManualLogin).toHaveBeenCalled();
-
-    fireEvent.press(getByTestId('button-biometrics'));
-    expect(mockTriggerBiometricAuth).toHaveBeenCalled();
+    const { queryByTestId } = render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
+    expect(queryByTestId('button-biometrics')).toBeNull();
   });
 });

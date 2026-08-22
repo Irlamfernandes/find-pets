@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,16 +10,25 @@ import PropTypes from 'prop-types';
 import { useLogin } from '../hooks/useLogin';
 
 export default function LoginScreen({ onLoginSuccess }) {
-  const {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const { hasBiometrics, handleManualLogin, triggerBiometricAuth } = useLogin(
+    onLoginSuccess,
     email,
-    setEmail,
     password,
-    setPassword,
-    hasBiometrics,
-    errorMessage,
-    handleManualLogin,
-    triggerBiometricAuth,
-  } = useLogin(onLoginSuccess);
+    setErrorMessage
+  );
+
+  const handleSubmit = () => {
+    if (!email || !password) {
+      setErrorMessage('Please fill in all fields');
+      return;
+    }
+
+    handleManualLogin();
+  };
 
   return (
     <View style={styles.container}>
@@ -50,7 +59,7 @@ export default function LoginScreen({ onLoginSuccess }) {
       <TouchableOpacity
         testID="button-login"
         style={styles.button}
-        onPress={handleManualLogin}
+        onPress={handleSubmit}
       >
         <Text style={styles.buttonText}>Entrar</Text>
       </TouchableOpacity>
@@ -91,7 +100,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  errorText: { color: '#D0021B', textAlign: 'center', marginBottom: 12 },
+  errorText: {
+    color: '#D0021B',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
   input: {
     height: 50,
     borderWidth: 1,
@@ -109,7 +122,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
-  buttonText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   biometricButton: {
     height: 50,
     borderWidth: 1,
@@ -119,5 +136,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  biometricButtonText: { color: '#4A90E2', fontSize: 16, fontWeight: 'bold' },
+  biometricButtonText: {
+    color: '#4A90E2',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

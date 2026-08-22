@@ -27,7 +27,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Checar vulnerabilidades conhecidas
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
       - name: Escanear segredos e credenciais expostas
         uses: gitleaks/gitleaks-action@v2

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import PropTypes from 'prop-types';
 import { useLogin } from '../hooks/useLogin';
 
 export default function LoginScreen({ onLoginSuccess }) {
@@ -66,6 +67,10 @@ export default function LoginScreen({ onLoginSuccess }) {
     </View>
   );
 }
+
+LoginScreen.propTypes = {
+  onLoginSuccess: PropTypes.func.isRequired,
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -10,9 +10,6 @@ export function useLogin(onSuccess) {
   const checkBiometricSupport = useCallback(async () => {
     const isAvailable = await biometricService.checkAvailability();
     setHasBiometrics(isAvailable);
-    if (isAvailable) {
-      triggerBiometricAuth();
-    }
   }, []);
 
   useEffect(() => {

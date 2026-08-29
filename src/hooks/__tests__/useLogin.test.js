@@ -9,7 +9,19 @@ describe('useLogin Hook', () => {
     jest.clearAllMocks();
   });
 
-  it('deve inicializar com biometria desativada e tentar autenticar se disponível', async () => {
+  it('deve inicializar com biometria disponível, mas não autenticar automaticamente', async () => {
+    biometricService.checkAvailability.mockResolvedValue(true);
+    const onSuccess = jest.fn();
+    const { result } = renderHook(() => useLogin(onSuccess));
+
+    await waitFor(() => {
+      expect(result.current.hasBiometrics).toBe(true);
+    });
+
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('deve disparar autenticação biométrica com sucesso ao chamar triggerBiometricAuth', async () => {
     biometricService.checkAvailability.mockResolvedValue(true);
     biometricService.authenticate.mockResolvedValue({ success: true });
 
@@ -18,6 +30,10 @@ describe('useLogin Hook', () => {
 
     await waitFor(() => {
       expect(result.current.hasBiometrics).toBe(true);
+    });
+
+    await act(async () => {
+      await result.current.triggerBiometricAuth();
     });
 
     expect(onSuccess).toHaveBeenCalledWith({ type: 'biometric' });
@@ -33,10 +49,16 @@ describe('useLogin Hook', () => {
     const { result } = renderHook(() => useLogin(jest.fn()));
 
     await waitFor(() => {
-      expect(result.current.errorMessage).toBe(
-        'Falha na autenticação biométrica.'
-      );
+      expect(result.current.hasBiometrics).toBe(true);
     });
+
+    await act(async () => {
+      await result.current.triggerBiometricAuth();
+    });
+
+    expect(result.current.errorMessage).toBe(
+      'Falha na autenticação biométrica.'
+    );
   });
 
   it('deve exibir erro se credenciais manuais forem vazias', async () => {
@@ -89,6 +111,10 @@ describe('useLogin Hook', () => {
 
     await waitFor(() => {
       expect(result.current.hasBiometrics).toBe(true);
+    });
+
+    await act(async () => {
+      await result.current.triggerBiometricAuth();
     });
 
     expect(result.current.errorMessage).toBe('');

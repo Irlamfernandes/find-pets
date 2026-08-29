@@ -12,7 +12,12 @@ describe('LoginScreen Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useLogin.mockReturnValue({
+      email: '',
+      setEmail: jest.fn(),
+      password: '',
+      setPassword: jest.fn(),
       hasBiometrics: true,
+      errorMessage: '',
       handleManualLogin: mockHandleManualLogin,
       triggerBiometricAuth: mockTriggerBiometricAuth,
     });
@@ -30,20 +35,27 @@ describe('LoginScreen Component', () => {
   });
 
   it('deve exibir mensagem de erro se tentar logar com campos vazios', () => {
+    useLogin.mockReturnValue({
+      email: '',
+      setEmail: jest.fn(),
+      password: '',
+      setPassword: jest.fn(),
+      hasBiometrics: true,
+      errorMessage: 'Preencha e-mail e senha.',
+      handleManualLogin: mockHandleManualLogin,
+      triggerBiometricAuth: mockTriggerBiometricAuth,
+    });
+
     const { getByTestId, getByText } = render(
       <LoginScreen onLoginSuccess={jest.fn()} />
     );
 
     fireEvent.press(getByTestId('button-login'));
-    expect(getByText('Please fill in all fields')).toBeTruthy();
-    expect(mockHandleManualLogin).not.toHaveBeenCalled();
+    expect(getByText('Preencha e-mail e senha.')).toBeTruthy();
   });
 
-  it('deve chamar o handleManualLogin quando os campos estiverem preenchidos', () => {
+  it('deve chamar o handleManualLogin quando o botão de entrar for pressionado', () => {
     const { getByTestId } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
-
-    fireEvent.changeText(getByTestId('input-email'), 'teste@test.com');
-    fireEvent.changeText(getByTestId('input-password'), '123456');
 
     fireEvent.press(getByTestId('button-login'));
     expect(mockHandleManualLogin).toHaveBeenCalled();
@@ -58,7 +70,12 @@ describe('LoginScreen Component', () => {
 
   it('não deve renderizar o botão de biometria se hasBiometrics for falso', () => {
     useLogin.mockReturnValue({
+      email: '',
+      setEmail: jest.fn(),
+      password: '',
+      setPassword: jest.fn(),
       hasBiometrics: false,
+      errorMessage: '',
       handleManualLogin: mockHandleManualLogin,
       triggerBiometricAuth: mockTriggerBiometricAuth,
     });

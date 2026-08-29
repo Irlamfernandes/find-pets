@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,25 +10,16 @@ import PropTypes from 'prop-types';
 import { useLogin } from '../hooks/useLogin';
 
 export default function LoginScreen({ onLoginSuccess }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-
-  const { hasBiometrics, handleManualLogin, triggerBiometricAuth } = useLogin(
-    onLoginSuccess,
+  const {
     email,
+    setEmail,
     password,
-    setErrorMessage
-  );
-
-  const handleSubmit = () => {
-    if (!email || !password) {
-      setErrorMessage('Please fill in all fields');
-      return;
-    }
-
-    handleManualLogin();
-  };
+    setPassword,
+    hasBiometrics,
+    errorMessage,
+    handleManualLogin,
+    triggerBiometricAuth,
+  } = useLogin(onLoginSuccess);
 
   return (
     <View style={styles.container}>
@@ -59,7 +50,7 @@ export default function LoginScreen({ onLoginSuccess }) {
       <TouchableOpacity
         testID="button-login"
         style={styles.button}
-        onPress={handleSubmit}
+        onPress={handleManualLogin}
       >
         <Text style={styles.buttonText}>Entrar</Text>
       </TouchableOpacity>

@@ -10,6 +10,11 @@ jest.mock('../../services/postService', () => ({
   },
 }));
 
+jest.mock('expo-location', () => ({
+  requestForegroundPermissionsAsync: jest.fn(),
+  getCurrentPositionAsync: jest.fn(),
+}));
+
 jest.mock('expo-camera', () => ({
   CameraView: 'CameraView',
   useCameraPermissions: () => [
@@ -33,13 +38,14 @@ describe('FeedScreen', () => {
     });
   });
 
-  it('deve renderizar posts salvos na lista', async () => {
+  it('deve renderizar posts salvos na lista com localização', async () => {
     const mockPosts = [
       {
         id: '123',
         imageUri: 'https://example.com/pet.jpg',
         date: '05/09/2026',
         type: 'Perdido',
+        location: 'Lat: -22.5000, Lon: -44.1000',
       },
     ];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
@@ -48,7 +54,28 @@ describe('FeedScreen', () => {
 
     await waitFor(() => {
       expect(getByText('Perdido')).toBeTruthy();
+      expect(getByText('📍 Lat: -22.5000, Lon: -44.1000')).toBeTruthy();
       expect(getByText('Registrado em: 05/09/2026')).toBeTruthy();
+    });
+  });
+
+  it('deve renderizar post sem localização informada', async () => {
+    const mockPosts = [
+      {
+        id: '124',
+        imageUri: 'https://example.com/pet2.jpg',
+        date: '05/09/2026',
+        type: 'Encontrado',
+        location: '',
+      },
+    ];
+    postService.getPosts.mockResolvedValueOnce(mockPosts);
+
+    const { getByText } = render(<FeedScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Encontrado')).toBeTruthy();
+      expect(getByText('📍 Localização não informada')).toBeTruthy();
     });
   });
 

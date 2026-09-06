@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCameraPermissions } from 'expo-camera';
 import { postService } from '../services/postService';
+import { locationService } from '../services/locationService';
 
 export function useFeed() {
   const [posts, setPosts] = useState([]);
@@ -38,12 +39,16 @@ export function useFeed() {
 
     try {
       const photo = await cameraRef.takePictureAsync({ quality: 0.5 });
+      const locationText = await locationService.getCurrentLocation();
+
       const newPost = {
         id: Date.now().toString(),
         imageUri: photo.uri,
+        location: locationText,
         date: new Date().toLocaleDateString('pt-BR'),
         type: 'Perdido',
       };
+
       await postService.savePost(newPost);
       await loadPosts();
       setIsCameraOpen(false);

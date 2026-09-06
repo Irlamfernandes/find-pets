@@ -47,6 +47,7 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~54.0.36",
+    "expo-camera": "~17.0.10",
     "expo-local-authentication": "~17.0.9",
     "expo-status-bar": "~3.0.9",
     "prop-types": "^15.8.1",

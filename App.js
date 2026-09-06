@@ -1,16 +1,9 @@
 import React, { useEffect } from 'react';
-import {
-  StyleSheet,
-  StatusBar,
-  Alert,
-  ActivityIndicator,
-  View,
-  Text,
-  TouchableOpacity,
-} from 'react-native';
+import { StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import LoginScreen from './src/screens/LoginScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import FeedScreen from './src/screens/FeedScreen';
 import { useSession } from './src/hooks/useSession';
 import { sessionService } from './src/services/session';
 
@@ -81,22 +74,7 @@ export default function App() {
           <OnboardingScreen onComplete={handleOnboardingComplete} />
         )}
 
-        {currentStep === 'home' && (
-          <View style={[styles.container, styles.centered]}>
-            <Text style={styles.welcomeText}>
-              Bem-vindo ao Feed Principal (Find Pets)!
-            </Text>
-            <TouchableOpacity
-              testID="button-logout"
-              style={styles.logoutButton}
-              onPress={handleLogout}
-            >
-              <Text style={styles.logoutButtonText}>
-                Sair da Conta (Logout)
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {currentStep === 'home' && <FeedScreen onLogout={handleLogout} />}
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -111,23 +89,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  welcomeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  logoutButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });

@@ -36,3 +36,4 @@ O **Find Pets** é um aplicativo mobile desenvolvido para auxiliar na localizaç
 1. **Clone o repositório:**
    ```bash
    git clone [https://github.com/Irlamfernandes/find-pets.git](https://github.com/Irlamfernandes/find-pets.git)
+   ```

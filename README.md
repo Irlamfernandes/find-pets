@@ -15,6 +15,7 @@ O **Find Pets** é um aplicativo mobile desenvolvido para auxiliar na localizaç
 
 - **RF01:** Autenticação rápida e segura por biometria nativa do dispositivo (Expo Local Authentication).
 - **RF02:** Onboarding interativo para conclusão de cadastro e perfil do usuário (com validação de nome e WhatsApp).
+- **RF03:** Gestão de sessão persistente e opção de "Sair da Conta" (Logout) utilizando AsyncStorage, preservando o estado de acesso do usuário.
 - **Cobertura de Testes:** 100% de cobertura validada via Jest.
 
 ---
@@ -23,6 +24,7 @@ O **Find Pets** é um aplicativo mobile desenvolvido para auxiliar na localizaç
 
 - **React Native / Expo**
 - **JavaScript**
+- **AsyncStorage** (Persistência local e suporte à arquitetura Offline-First)
 - **Jest** (Testes automatizados e unitários)
 - **ESLint & Prettier** (Padronização e qualidade de código)
 - **GitHub Actions** (Integração Contínua - CI/CD)

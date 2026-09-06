@@ -6,14 +6,15 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  SafeAreaView,
   Modal,
+  Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView } from 'expo-camera';
 import PropTypes from 'prop-types';
 import { useFeed } from '../hooks/useFeed';
 
-export function FeedScreen({ onLogout }) {
+export default function FeedScreen({ onLogout }) {
   const {
     posts,
     isCameraOpen,
@@ -22,6 +23,18 @@ export function FeedScreen({ onLogout }) {
     closeCamera,
     takePicture,
   } = useFeed();
+
+  const openInMap = (latitude, longitude, address) => {
+    let url = '';
+    if (latitude && longitude) {
+      url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    } else if (address) {
+      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    } else {
+      return;
+    }
+    Linking.openURL(url);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -51,9 +64,16 @@ export function FeedScreen({ onLogout }) {
             <Image source={{ uri: item.imageUri }} style={styles.cardImage} />
             <View style={styles.cardInfo}>
               <Text style={styles.cardBadge}>{item.type}</Text>
-              <Text style={styles.cardLocation}>
-                📍 {item.location || 'Localização não informada'}
-              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  openInMap(item.latitude, item.longitude, item.location)
+                }
+              >
+                <Text style={styles.cardLocation}>
+                  📍 {item.location || 'Localização não informada'} (Ver no
+                  mapa)
+                </Text>
+              </TouchableOpacity>
               <Text style={styles.cardDate}>Registrado em: {item.date}</Text>
             </View>
           </View>
@@ -66,22 +86,22 @@ export function FeedScreen({ onLogout }) {
 
       <Modal visible={isCameraOpen} animationType="slide">
         <View style={styles.cameraContainer}>
-          <CameraView style={styles.camera} ref={setCameraRef}>
-            <View style={styles.cameraButtonContainer}>
-              <TouchableOpacity
-                style={styles.captureButton}
-                onPress={takePicture}
-              >
-                <View style={styles.captureInner} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.closeCameraButton}
-                onPress={closeCamera}
-              >
-                <Text style={styles.closeCameraText}>Cancelar</Text>
-              </TouchableOpacity>
-            </View>
-          </CameraView>
+          <CameraView style={styles.camera} ref={setCameraRef} />
+
+          <View style={styles.cameraButtonContainer}>
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={takePicture}
+            >
+              <View style={styles.captureInner} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.closeCameraButton}
+              onPress={closeCamera}
+            >
+              <Text style={styles.closeCameraText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -142,7 +162,8 @@ const styles = StyleSheet.create({
   },
   cardLocation: {
     fontSize: 13,
-    color: '#444',
+    color: '#007AFF',
+    textDecorationLine: 'underline',
     marginBottom: 4,
   },
   cardDate: { fontSize: 12, color: '#777' },
@@ -162,7 +183,10 @@ const styles = StyleSheet.create({
   cameraContainer: { flex: 1, backgroundColor: '#000' },
   camera: { flex: 1 },
   cameraButtonContainer: {
-    flex: 1,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: 'transparent',
     flexDirection: 'column',
     justifyContent: 'flex-end',

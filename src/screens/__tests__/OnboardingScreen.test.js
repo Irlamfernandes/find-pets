@@ -2,6 +2,11 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import OnboardingScreen from '../OnboardingScreen';
 
+// Mock do AsyncStorage para evitar erros no Jest
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
 describe('OnboardingScreen Component', () => {
   const mockOnComplete = jest.fn();
 

@@ -7,7 +7,7 @@ export const sessionService = {
   async saveSession(userData) {
     try {
       await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(userData));
-    } catch (error) {
+    } catch {
       throw new Error('Erro ao salvar a sessão.');
     }
   },
@@ -16,7 +16,7 @@ export const sessionService = {
     try {
       const data = await AsyncStorage.getItem(SESSION_KEY);
       return data ? JSON.parse(data) : null;
-    } catch (error) {
+    } catch {
       return null;
     }
   },
@@ -25,7 +25,7 @@ export const sessionService = {
     try {
       await AsyncStorage.removeItem(SESSION_KEY);
       await AsyncStorage.removeItem(PROFILE_KEY);
-    } catch (error) {
+    } catch {
       throw new Error('Erro ao encerrar a sessão.');
     }
   },

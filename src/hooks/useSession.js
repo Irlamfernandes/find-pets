@@ -10,7 +10,7 @@ export function useSession() {
     try {
       const currentSession = await sessionService.getSession();
       setSession(currentSession);
-    } catch (error) {
+    } catch {
       setSession(null);
     } finally {
       setIsLoading(false);

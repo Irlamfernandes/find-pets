@@ -6,20 +6,29 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import FeedScreen from './src/screens/FeedScreen';
 import { useSession } from './src/hooks/useSession';
 import { sessionService } from './src/services/session';
+import { onboardingService } from './src/services/onboarding';
 
 export default function App() {
   const { isLoading, session, saveUserSession, logout } = useSession();
   const [currentStep, setCurrentStep] = React.useState('loading');
 
   useEffect(() => {
-    if (!isLoading) {
-      if (session) {
-        // Se já tem sessão e perfil completo, vai para home; senão, onboarding ou login
-        setCurrentStep('home');
-      } else {
-        setCurrentStep('login');
+    async function checkInitialState() {
+      if (!isLoading) {
+        if (session) {
+          // Se já tem sessão, verifica se o perfil de onboarding já foi preenchido
+          const profile = await onboardingService.getUserProfile();
+          if (profile) {
+            setCurrentStep('home');
+          } else {
+            setCurrentStep('onboarding');
+          }
+        } else {
+          setCurrentStep('login');
+        }
       }
     }
+    checkInitialState();
   }, [isLoading, session]);
 
   const handleLoginSuccess = async (data) => {
@@ -30,7 +39,14 @@ export default function App() {
     }
 
     await saveUserSession(data);
-    setCurrentStep('onboarding');
+
+    // Se já fez o onboarding antes, vai pra home. Senão, vai preencher o perfil.
+    const profile = await onboardingService.getUserProfile();
+    if (profile) {
+      setCurrentStep('home');
+    } else {
+      setCurrentStep('onboarding');
+    }
   };
 
   const handleOnboardingComplete = async (profileData) => {

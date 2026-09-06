@@ -1,47 +1,117 @@
 import { useState, useEffect, useCallback } from 'react';
 import { biometricService } from '../services/biometrics';
+import { sessionService } from '../services/session';
 
 export function useLogin(onSuccess) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [hasBiometrics, setHasBiometrics] = useState(false);
+  const [usuario, setUsuario] = useState('');
+  const [senha, setSenha] = useState('');
+  const [hasHardwareBiometric, setHasHardwareBiometric] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [authMode, setAuthMode] = useState('home'); // 'home', 'login', 'cadastro'
 
   const checkBiometricSupport = useCallback(async () => {
     const isAvailable = await biometricService.checkAvailability();
-    setHasBiometrics(isAvailable);
+    setHasHardwareBiometric(isAvailable);
   }, []);
 
   useEffect(() => {
     checkBiometricSupport();
   }, [checkBiometricSupport]);
 
-  const triggerBiometricAuth = async () => {
+  // 1. CADASTRO: Salva usuário, senha e biometria (se o usuário aceitar)
+  const handleRegister = async () => {
     setErrorMessage('');
-    const result = await biometricService.authenticate();
-    if (result.success) {
-      onSuccess?.({ type: 'biometric' });
-    } else if (result.error && result.error !== 'user_cancel') {
-      setErrorMessage('Falha na autenticação biométrica.');
+    if (!usuario.trim() || !senha.trim()) {
+      setErrorMessage('Preencha usuário e senha.');
+      return;
+    }
+
+    try {
+      let cadastrouBiometria = false;
+
+      // Se o celular tiver leitor biométrico, tenta cadastrar/vincular
+      if (hasHardwareBiometric) {
+        const result = await biometricService.authenticate(
+          'Cadastre sua biometria para futuros logins'
+        );
+        if (result.success) {
+          cadastrouBiometria = true;
+        }
+      }
+
+      // Salva no AsyncStorage as credenciais e se a biometria foi habilitada
+      await sessionService.saveCredentials(
+        usuario.trim(),
+        senha,
+        cadastrouBiometria
+      );
+
+      alert('Cadastro realizado com sucesso! Faça o login.');
+      setAuthMode('home');
+      setUsuario('');
+      setSenha('');
+    } catch {
+      setErrorMessage('Erro ao realizar o cadastro.');
     }
   };
 
-  const handleManualLogin = () => {
+  // 2. LOGIN MANUAL: Valida usuário e senha estritos
+  const handleManualLogin = async () => {
     setErrorMessage('');
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('Preencha e-mail e senha.');
+    if (!usuario.trim() || !senha.trim()) {
+      setErrorMessage('Preencha usuário e senha.');
       return;
     }
-    onSuccess?.({ type: 'credentials', email });
+
+    const savedCreds = await sessionService.getCredentials();
+
+    if (
+      !savedCreds ||
+      savedCreds.email !== usuario.trim() ||
+      savedCreds.password !== senha
+    ) {
+      setErrorMessage('Usuário não existe ou senha errada.');
+      return;
+    }
+
+    onSuccess?.({ type: 'credentials', usuario: savedCreds.email });
+  };
+
+  // 3. LOGIN POR BIOMETRIA
+  const triggerBiometricAuth = async () => {
+    setErrorMessage('');
+    const savedCreds = await sessionService.getCredentials();
+
+    if (!savedCreds) {
+      setErrorMessage('Nenhum usuário cadastrado neste dispositivo.');
+      return;
+    }
+
+    if (!savedCreds.hasBiometrics) {
+      setErrorMessage('A biometria não foi cadastrada para este usuário.');
+      return;
+    }
+
+    const result = await biometricService.authenticate(
+      'Autentique-se com sua biometria'
+    );
+    if (result.success) {
+      onSuccess?.({ type: 'biometric', usuario: savedCreds.email });
+    } else if (result.error && result.error !== 'user_cancel') {
+      setErrorMessage('Biometria não reconhecida.');
+    }
   };
 
   return {
-    email,
-    setEmail,
-    password,
-    setPassword,
-    hasBiometrics,
+    usuario,
+    setUsuario,
+    senha,
+    setSenha,
+    hasHardwareBiometric,
     errorMessage,
+    authMode,
+    setAuthMode,
+    handleRegister,
     handleManualLogin,
     triggerBiometricAuth,
   };

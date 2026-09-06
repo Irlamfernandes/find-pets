@@ -13,6 +13,60 @@ describe('sessionService', () => {
     jest.clearAllMocks();
   });
 
+  // --- CREDENCIAIS ---
+  it('deve salvar as credenciais com sucesso', async () => {
+    AsyncStorage.setItem.mockResolvedValueOnce();
+
+    await expect(
+      sessionService.saveCredentials('teste@test.com', '123456', true)
+    ).resolves.toBeUndefined();
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      '@FindPets:credentials',
+      JSON.stringify({
+        email: 'teste@test.com',
+        password: '123456',
+        hasBiometrics: true,
+      })
+    );
+  });
+
+  it('deve lançar erro ao falhar ao salvar credenciais', async () => {
+    AsyncStorage.setItem.mockRejectedValueOnce(new Error('Storage error'));
+
+    await expect(
+      sessionService.saveCredentials('teste@test.com', '123456')
+    ).rejects.toThrow('Erro ao salvar credenciais.');
+  });
+
+  it('deve retornar as credenciais quando elas existirem', async () => {
+    const creds = {
+      email: 'teste@test.com',
+      password: '123456',
+      hasBiometrics: false,
+    };
+    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(creds));
+
+    const result = await sessionService.getCredentials();
+    expect(result).toEqual(creds);
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith('@FindPets:credentials');
+  });
+
+  it('deve retornar null se não houver credenciais salvas', async () => {
+    AsyncStorage.getItem.mockResolvedValueOnce(null);
+
+    const result = await sessionService.getCredentials();
+    expect(result).toBeNull();
+  });
+
+  it('deve retornar null caso ocorra erro ao buscar as credenciais', async () => {
+    AsyncStorage.getItem.mockRejectedValueOnce(new Error('Storage error'));
+
+    const result = await sessionService.getCredentials();
+    expect(result).toBeNull();
+  });
+
+  // --- SESSÃO ---
   it('deve salvar a sessão com sucesso', async () => {
     AsyncStorage.setItem.mockResolvedValueOnce();
 
@@ -56,13 +110,12 @@ describe('sessionService', () => {
     expect(result).toBeNull();
   });
 
-  it('deve limpar a sessão e o perfil com sucesso (logout)', async () => {
-    AsyncStorage.removeItem.mockResolvedValue();
+  it('deve limpar a sessão com sucesso (logout)', async () => {
+    AsyncStorage.removeItem.mockResolvedValueOnce();
 
     await expect(sessionService.clearSession()).resolves.toBeUndefined();
-    expect(AsyncStorage.removeItem).toHaveBeenCalledTimes(2);
+    expect(AsyncStorage.removeItem).toHaveBeenCalledTimes(1);
     expect(AsyncStorage.removeItem).toHaveBeenCalledWith('@FindPets:session');
-    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('@FindPets:profile');
   });
 
   it('deve lançar erro ao falhar ao limpar a sessão', async () => {

@@ -51,6 +51,9 @@ export function FeedScreen({ onLogout }) {
             <Image source={{ uri: item.imageUri }} style={styles.cardImage} />
             <View style={styles.cardInfo}>
               <Text style={styles.cardBadge}>{item.type}</Text>
+              <Text style={styles.cardLocation}>
+                📍 {item.location || 'Localização não informada'}
+              </Text>
               <Text style={styles.cardDate}>Registrado em: {item.date}</Text>
             </View>
           </View>
@@ -136,6 +139,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
     marginBottom: 6,
+  },
+  cardLocation: {
+    fontSize: 13,
+    color: '#444',
+    marginBottom: 4,
   },
   cardDate: { fontSize: 12, color: '#777' },
   fab: {

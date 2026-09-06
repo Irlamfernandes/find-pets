@@ -17,13 +17,14 @@ O **Find Pets** é um aplicativo mobile desenvolvido para auxiliar na localizaç
 - **RF02:** Onboarding interativo para conclusão de cadastro e perfil do usuário (com validação de nome e WhatsApp).
 - **RF03:** Gestão de sessão persistente e opção de "Sair da Conta" (Logout) utilizando AsyncStorage, preservando o estado de acesso do usuário.
 - **RF04:** Feed principal com listagem de posts e integração com a câmera nativa (Expo Camera) para cadastro de pets perdidos/encontrados.
+- **RF05:** Captura automática de geolocalização em tempo real (Expo Location) para registrar coordenadas precisas no cadastro de cada pet.
 - **Cobertura de Testes:** 100% de cobertura validada via Jest.
 
 ---
 
 ## 🛠️ Tecnologias e Ferramentas
 
-- **React Native / Expo** (Expo Camera, Expo Local Authentication, SafeAreaContext)
+- **React Native / Expo** (Expo Camera, Expo Local Authentication, Expo Location, SafeAreaContext)
 - **JavaScript**
 - **AsyncStorage** (Persistência local e suporte à arquitetura Offline-First)
 - **Jest & React Native Testing Library** (Testes automatizados e unitários)
@@ -37,3 +38,4 @@ O **Find Pets** é um aplicativo mobile desenvolvido para auxiliar na localizaç
 1. **Clone o repositório:**
    ```bash
    git clone [https://github.com/Irlamfernandes/find-pets.git](https://github.com/Irlamfernandes/find-pets.git)
+   ```

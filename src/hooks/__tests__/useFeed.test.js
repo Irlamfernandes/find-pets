@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useFeed } from '../useFeed';
 import { postService } from '../../services/postService';
+import { locationService } from '../../services/locationService';
 
 let mockCameraPermissionValue = { granted: true };
 let mockRequestPermissionResult = { granted: true };
@@ -9,6 +10,12 @@ jest.mock('../../services/postService', () => ({
   postService: {
     getPosts: jest.fn(),
     savePost: jest.fn(),
+  },
+}));
+
+jest.mock('../../services/locationService', () => ({
+  locationService: {
+    getCurrentLocation: jest.fn(),
   },
 }));
 
@@ -24,6 +31,9 @@ describe('useFeed Hook', () => {
     jest.clearAllMocks();
     mockCameraPermissionValue = { granted: true };
     mockRequestPermissionResult = { granted: true };
+    locationService.getCurrentLocation.mockResolvedValue(
+      'Lat: -22.5000, Lon: -44.1000'
+    );
   });
 
   it('deve carregar os posts ao iniciar', async () => {
@@ -125,7 +135,14 @@ describe('useFeed Hook', () => {
     });
 
     expect(mockCamera.takePictureAsync).toHaveBeenCalled();
-    expect(postService.savePost).toHaveBeenCalled();
+    expect(locationService.getCurrentLocation).toHaveBeenCalled();
+    expect(postService.savePost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        imageUri: 'file://photo.jpg',
+        location: 'Lat: -22.5000, Lon: -44.1000',
+        type: 'Perdido',
+      })
+    );
     expect(result.current.isCameraOpen).toBe(false);
   });
 
@@ -159,7 +176,6 @@ describe('useFeed Hook', () => {
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
 
-    // Garantimos que cameraRef é null e chamamos takePicture
     await act(async () => {
       await result.current.takePicture();
     });

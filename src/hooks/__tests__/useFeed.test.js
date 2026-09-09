@@ -22,7 +22,9 @@ jest.mock('../../services/locationService', () => ({
 
 jest.mock('../../services/onboarding', () => ({
   onboardingService: {
-    getUserProfile: jest.fn().mockResolvedValue({ name: 'Irlam', whatsapp: '11999999999' }),
+    getUserProfile: jest
+      .fn()
+      .mockResolvedValue({ name: 'Irlam', whatsapp: '11999999999' }),
   },
 }));
 
@@ -199,7 +201,10 @@ describe('useFeed Hook', () => {
   it('deve tirar a foto e salvar o post sem WhatsApp se o perfil não o possuir', async () => {
     postService.getPosts.mockResolvedValue([]);
     postService.savePost.mockResolvedValueOnce();
-    onboardingService.getUserProfile.mockResolvedValueOnce({ name: 'Irlam', whatsapp: null });
+    onboardingService.getUserProfile.mockResolvedValueOnce({
+      name: 'Irlam',
+      whatsapp: null,
+    });
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});

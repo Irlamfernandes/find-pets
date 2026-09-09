@@ -22,7 +22,9 @@ jest.mock('../../services/externalLinkService', () => ({
 // Adicionado o mock do onboardingService para suprir a dependência do useFeed
 jest.mock('../../services/onboarding', () => ({
   onboardingService: {
-    getUserProfile: jest.fn().mockResolvedValue({ name: 'Irlam', whatsapp: '11999999999' }),
+    getUserProfile: jest
+      .fn()
+      .mockResolvedValue({ name: 'Irlam', whatsapp: '11999999999' }),
   },
 }));
 

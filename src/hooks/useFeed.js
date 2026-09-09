@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCameraPermissions } from 'expo-camera';
+import { Alert } from 'react-native';
 import { postService } from '../services/postService';
 import { locationService } from '../services/locationService';
 import { onboardingService } from '../services/onboarding';
@@ -11,8 +12,12 @@ export function useFeed() {
   const [cameraRef, setCameraRef] = useState(null);
 
   const loadPosts = useCallback(async () => {
-    const loadedPosts = await postService.getPosts();
-    setPosts(loadedPosts);
+    try {
+      const loadedPosts = await postService.getPosts();
+      setPosts(loadedPosts);
+    } catch {
+      setPosts([]);
+    }
   }, []);
 
   useEffect(() => {
@@ -58,7 +63,11 @@ export function useFeed() {
       await loadPosts();
       setIsCameraOpen(false);
     } catch {
-      // Tratamento de erro na captura
+      setIsCameraOpen(false);
+      Alert.alert(
+        'Erro',
+        'Não foi possível capturar a foto ou obter a localização. Tente novamente.'
+      );
     }
   };
 

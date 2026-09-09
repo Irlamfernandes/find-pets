@@ -1,22 +1,36 @@
+// src/services/session.js
+import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import bcrypt from 'bcryptjs';
 import { STORAGE_KEYS } from '../constants/storageKeys';
 
 export const sessionService = {
-  async saveCredentials(email, password, hasBiometrics = false) {
-    if (!email || !password) {
-      throw new Error('E-mail e senha são obrigatórios.');
+  async saveCredentials(usuario, password, hasBiometrics = false) {
+    if (!usuario || !password) {
+      throw new Error('Usuário e senha são obrigatórios.');
     }
     try {
-      const data = JSON.stringify({ email, password, hasBiometrics });
-      await AsyncStorage.setItem(STORAGE_KEYS.CREDENTIALS, data);
+      // Gera o hash seguro da senha com salt de 10 rounds
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      const data = JSON.stringify({ usuario, passwordHash, hasBiometrics });
+      await SecureStore.setItemAsync(STORAGE_KEYS.CREDENTIALS, data);
     } catch (error) {
-      throw new Error(`Erro ao salvar credenciais: ${error.message}`);
+      throw new Error(
+        `Erro ao salvar credenciais com segurança: ${error.message}`
+      );
     }
+  },
+
+  async verifyPassword(inputPassword, storedHash) {
+    if (!inputPassword || !storedHash) return false;
+    return await bcrypt.compare(inputPassword, storedHash);
   },
 
   async getCredentials() {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.CREDENTIALS);
+      const data = await SecureStore.getItemAsync(STORAGE_KEYS.CREDENTIALS);
       return data ? JSON.parse(data) : null;
     } catch (error) {
       throw new Error(`Erro ao recuperar credenciais: ${error.message}`);

@@ -1,3 +1,4 @@
+// src/services/externalLinkService.js
 import { Linking } from 'react-native';
 
 export const externalLinkService = {
@@ -14,10 +15,14 @@ export const externalLinkService = {
   },
 
   openWhatsApp(phoneNumber) {
-    const targetPhone = phoneNumber || '5500000000000';
+    // Se não houver telefone cadastrado, encerra a execução para não abrir chat fictício
+    if (!phoneNumber) {
+      return;
+    }
+
     const message = encodeURIComponent(
       'Olá! Vi seu post sobre o pet no Find Pets e gostaria de ajudar.'
     );
-    Linking.openURL(`https://wa.me/${targetPhone}?text=${message}`);
+    Linking.openURL(`https://wa.me/${phoneNumber}?text=${message}`);
   },
 };

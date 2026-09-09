@@ -1,3 +1,4 @@
+// src/hooks/useLogin.js
 import { useState, useEffect, useCallback } from 'react';
 import { biometricService } from '../services/biometrics';
 import { sessionService } from '../services/session';
@@ -18,11 +19,23 @@ export function useLogin(onSuccess) {
     checkBiometricSupport();
   }, [checkBiometricSupport]);
 
+  // Função auxiliar para validar formato de e-mail
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   // 1. CADASTRO: Salva usuário, senha e biometria (se o usuário aceitar)
   const handleRegister = async () => {
     setErrorMessage('');
     if (!usuario.trim() || !senha.trim()) {
       setErrorMessage('Preencha usuário e senha.');
+      return;
+    }
+
+    // Validar formato do e-mail
+    if (!isValidEmail(usuario.trim())) {
+      setErrorMessage('Insira um formato de e-mail válido.');
       return;
     }
 
@@ -39,7 +52,7 @@ export function useLogin(onSuccess) {
         }
       }
 
-      // Salva no AsyncStorage as credenciais e se a biometria foi habilitada
+      // Salva as credenciais e se a biometria foi habilitada
       await sessionService.saveCredentials(
         usuario.trim(),
         senha,
@@ -50,8 +63,8 @@ export function useLogin(onSuccess) {
       setAuthMode('home');
       setUsuario('');
       setSenha('');
-    } catch {
-      setErrorMessage('Erro ao realizar o cadastro.');
+    } catch (error) {
+      setErrorMessage(error.message || 'Erro ao realizar o cadastro.');
     }
   };
 
@@ -63,18 +76,32 @@ export function useLogin(onSuccess) {
       return;
     }
 
-    const savedCreds = await sessionService.getCredentials();
-
-    if (
-      !savedCreds ||
-      savedCreds.email !== usuario.trim() ||
-      savedCreds.password !== senha
-    ) {
-      setErrorMessage('Usuário não existe ou senha errada.');
+    // Validar formato do e-mail também no login
+    if (!isValidEmail(usuario.trim())) {
+      setErrorMessage('Insira um formato de e-mail válido.');
       return;
     }
 
-    onSuccess?.({ type: 'credentials', usuario: savedCreds.email });
+    try {
+      const savedCreds = await sessionService.getCredentials();
+
+      const isPasswordValid = savedCreds
+        ? await sessionService.verifyPassword(senha, savedCreds.passwordHash)
+        : false;
+
+      if (
+        !savedCreds ||
+        savedCreds.usuario !== usuario.trim() ||
+        !isPasswordValid
+      ) {
+        setErrorMessage('Usuário não existe ou senha errada.');
+        return;
+      }
+
+      onSuccess?.({ type: 'credentials', usuario: savedCreds.usuario });
+    } catch (error) {
+      setErrorMessage(error.message || 'Erro ao realizar o login.');
+    }
   };
 
   // 3. LOGIN POR BIOMETRIA
@@ -96,7 +123,7 @@ export function useLogin(onSuccess) {
       'Autentique-se com sua biometria'
     );
     if (result.success) {
-      onSuccess?.({ type: 'biometric', usuario: savedCreds.email });
+      onSuccess?.({ type: 'biometric', usuario: savedCreds.usuario });
     } else if (result.error && result.error !== 'user_cancel') {
       setErrorMessage('Biometria não reconhecida.');
     }

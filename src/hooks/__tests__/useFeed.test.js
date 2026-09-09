@@ -230,4 +230,14 @@ describe('useFeed Hook', () => {
       })
     );
   });
+
+  it('deve definir posts como array vazio se falhar ao carregar os posts', async () => {
+    postService.getPosts.mockRejectedValueOnce(new Error('Erro ao carregar'));
+
+    const { result } = renderHook(() => useFeed());
+
+    await act(async () => {});
+
+    expect(result.current.posts).toEqual([]);
+  });
 });

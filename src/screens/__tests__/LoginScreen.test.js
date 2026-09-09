@@ -165,4 +165,14 @@ describe('LoginScreen Component', () => {
     const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
     expect(getByText('Erro crítico de login')).toBeTruthy();
   });
+
+  it('deve renderizar a AuthLoginScreen por padrão quando authMode for diferente de home e cadastro', () => {
+    useLogin.mockReturnValue({
+      ...baseHookValues,
+      authMode: 'unknown_or_login',
+    });
+
+    const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+    expect(getByText('Login')).toBeTruthy();
+  });
 });

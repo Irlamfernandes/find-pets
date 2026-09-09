@@ -16,6 +16,6 @@
       },
       "package": "com.anonymous.findpets"
     },
-    "plugins": ["expo-status-bar"]
+    "plugins": ["expo-status-bar", "expo-secure-store"]
   }
 }

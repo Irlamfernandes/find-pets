@@ -1,4 +1,5 @@
-import React from 'react';
+// src/screens/FeedScreen.js
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +16,7 @@ import { externalLinkService } from '../services/externalLinkService';
 import { PetCard } from './components/PetCard';
 
 export default function FeedScreen({ onLogout }) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const {
     posts,
     isCameraOpen,
@@ -24,13 +26,34 @@ export default function FeedScreen({ onLogout }) {
     takePicture,
   } = useFeed();
 
+  const handleLogoutPress = async () => {
+    try {
+      setIsLoggingOut(true);
+      await onLogout();
+    } catch (error) {
+      console.error('Erro ao realizar logout:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Find Pets - Feed</Text>
         {onLogout && (
-          <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Sair</Text>
+          <TouchableOpacity
+            onPress={handleLogoutPress}
+            disabled={isLoggingOut}
+            style={[
+              styles.logoutButton,
+              isLoggingOut && styles.disabledLogoutButton,
+            ]}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.logoutText}>
+              {isLoggingOut ? 'Saindo...' : 'Sair'}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -107,6 +130,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: '#ff4d4d',
     borderRadius: 6,
+  },
+  disabledLogoutButton: {
+    backgroundColor: '#ffb3b3',
+    opacity: 0.8,
   },
   logoutText: { color: '#fff', fontWeight: 'bold' },
   listContainer: { padding: 16 },

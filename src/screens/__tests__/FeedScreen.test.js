@@ -1,9 +1,8 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import FeedScreen from '../FeedScreen';
 import { postService } from '../../services/postService';
 import { externalLinkService } from '../../services/externalLinkService';
-import { onboardingService } from '../../services/onboarding';
 
 jest.mock('../../services/postService', () => ({
   postService: {
@@ -19,7 +18,6 @@ jest.mock('../../services/externalLinkService', () => ({
   },
 }));
 
-// Adicionado o mock do onboardingService para suprir a dependência do useFeed
 jest.mock('../../services/onboarding', () => ({
   onboardingService: {
     getUserProfile: jest
@@ -126,6 +124,68 @@ describe('FeedScreen', () => {
     });
   });
 
+  it('deve lidar com logout assíncrono, exibindo estado de carregamento e prevenindo cliques duplos', async () => {
+    postService.getPosts.mockResolvedValueOnce([]);
+
+    let resolveLogout;
+    const mockLogout = jest.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveLogout = resolve;
+        })
+    );
+
+    const { getByText } = render(<FeedScreen onLogout={mockLogout} />);
+
+    await waitFor(() => {
+      expect(getByText('Sair')).toBeTruthy();
+    });
+
+    const logoutBtn = getByText('Sair');
+
+    // 1º Clique: dispara o logout e muda o estado para isLoggingOut = true
+    fireEvent.press(logoutBtn);
+
+    await waitFor(() => {
+      expect(getByText('Saindo...')).toBeTruthy();
+    });
+
+    // 2º Clique: como isLoggingOut já é true, vai bater direto no 'if (isLoggingOut) return;'
+    fireEvent.press(logoutBtn);
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+
+    // Finaliza a promessa
+    await act(async () => {
+      resolveLogout();
+    });
+  });
+
+  it('deve capturar erro se o logout assíncrono falhar', async () => {
+    postService.getPosts.mockResolvedValueOnce([]);
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    const mockLogout = jest
+      .fn()
+      .mockRejectedValue(new Error('Falha no logout'));
+
+    const { getByText } = render(<FeedScreen onLogout={mockLogout} />);
+
+    await waitFor(() => {
+      expect(getByText('Sair')).toBeTruthy();
+    });
+
+    const logoutBtn = getByText('Sair');
+
+    await act(async () => {
+      fireEvent.press(logoutBtn);
+    });
+
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
+
   it('deve abrir e fechar o modal da câmera', async () => {
     postService.getPosts.mockResolvedValueOnce([]);
 
@@ -140,5 +200,16 @@ describe('FeedScreen', () => {
     expect(cancelButton).toBeTruthy();
 
     fireEvent.press(cancelButton);
+  });
+
+  it('deve renderizar a tela corretamente quando a prop onLogout não for fornecida', async () => {
+    postService.getPosts.mockResolvedValueOnce([]);
+
+    const { queryByText } = render(<FeedScreen />);
+
+    await waitFor(() => {
+      expect(queryByText('Nenhum pet cadastrado ainda.')).toBeTruthy();
+      expect(queryByText('Sair')).toBeNull();
+    });
   });
 });

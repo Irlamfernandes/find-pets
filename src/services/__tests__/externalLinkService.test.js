@@ -59,17 +59,10 @@ describe('externalLinkService', () => {
       );
     });
 
-    it('deve usar o telefone padrão se nenhum for fornecido', () => {
-      const defaultPhone = '5500000000000';
-      const expectedMessage = encodeURIComponent(
-        'Olá! Vi seu post sobre o pet no Find Pets e gostaria de ajudar.'
-      );
-
+    it('não deve abrir o WhatsApp se nenhum número for fornecido', () => {
       externalLinkService.openWhatsApp(null);
 
-      expect(Linking.openURL).toHaveBeenCalledWith(
-        `https://wa.me/${defaultPhone}?text=${expectedMessage}`
-      );
+      expect(Linking.openURL).not.toHaveBeenCalled();
     });
   });
 });

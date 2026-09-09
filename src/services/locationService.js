@@ -5,13 +5,27 @@ export const locationService = {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        return 'Localização não permitida';
+        return {
+          latitude: null,
+          longitude: null,
+          address: 'Localização não permitida',
+        };
       }
 
       const location = await Location.getCurrentPositionAsync({});
-      return `Lat: ${location.coords.latitude.toFixed(4)}, Lon: ${location.coords.longitude.toFixed(4)}`;
+      const { latitude, longitude } = location.coords;
+
+      return {
+        latitude,
+        longitude,
+        address: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`,
+      };
     } catch {
-      return 'Localização indisponível';
+      return {
+        latitude: null,
+        longitude: null,
+        address: 'Localização indisponível',
+      };
     }
   },
 };

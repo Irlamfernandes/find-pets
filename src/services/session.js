@@ -1,50 +1,56 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const SESSION_KEY = '@FindPets:session';
-const CREDENTIALS_KEY = '@FindPets:credentials';
+import { STORAGE_KEYS } from '../constants/storageKeys';
 
 export const sessionService = {
-  // Salva os dados de cadastro (email, senha e se tem biometria)
   async saveCredentials(email, password, hasBiometrics = false) {
+    if (!email || !password) {
+      throw new Error('E-mail e senha são obrigatórios.');
+    }
     try {
-      const data = { email, password, hasBiometrics };
-      await AsyncStorage.setItem(CREDENTIALS_KEY, JSON.stringify(data));
-    } catch {
-      throw new Error('Erro ao salvar credenciais.');
+      const data = JSON.stringify({ email, password, hasBiometrics });
+      await AsyncStorage.setItem(STORAGE_KEYS.CREDENTIALS, data);
+    } catch (error) {
+      throw new Error(`Erro ao salvar credenciais: ${error.message}`);
     }
   },
 
   async getCredentials() {
     try {
-      const data = await AsyncStorage.getItem(CREDENTIALS_KEY);
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.CREDENTIALS);
       return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
+    } catch (error) {
+      throw new Error(`Erro ao recuperar credenciais: ${error.message}`);
     }
   },
 
   async saveSession(userData) {
+    if (!userData) {
+      throw new Error('Dados de sessão inválidos.');
+    }
     try {
-      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(userData));
-    } catch {
-      throw new Error('Erro ao salvar a sessão.');
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.SESSION,
+        JSON.stringify(userData)
+      );
+    } catch (error) {
+      throw new Error(`Erro ao persistir sessão: ${error.message}`);
     }
   },
 
   async getSession() {
     try {
-      const data = await AsyncStorage.getItem(SESSION_KEY);
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.SESSION);
       return data ? JSON.parse(data) : null;
-    } catch {
-      return null;
+    } catch (error) {
+      throw new Error(`Erro ao buscar sessão ativa: ${error.message}`);
     }
   },
 
   async clearSession() {
     try {
-      await AsyncStorage.removeItem(SESSION_KEY);
-    } catch {
-      throw new Error('Erro ao encerrar a sessão.');
+      await AsyncStorage.removeItem(STORAGE_KEYS.SESSION);
+    } catch (error) {
+      throw new Error(`Erro ao encerrar a sessão: ${error.message}`);
     }
   },
 };

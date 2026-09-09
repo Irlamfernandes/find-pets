@@ -31,9 +31,11 @@ describe('useFeed Hook', () => {
     jest.clearAllMocks();
     mockCameraPermissionValue = { granted: true };
     mockRequestPermissionResult = { granted: true };
-    locationService.getCurrentLocation.mockResolvedValue(
-      'Lat: -22.5000, Lon: -44.1000'
-    );
+    locationService.getCurrentLocation.mockResolvedValue({
+      latitude: -22.5,
+      longitude: -44.1,
+      address: 'Lat: -22.5000, Lon: -44.1000',
+    });
   });
 
   it('deve carregar os posts ao iniciar', async () => {
@@ -139,6 +141,8 @@ describe('useFeed Hook', () => {
     expect(postService.savePost).toHaveBeenCalledWith(
       expect.objectContaining({
         imageUri: 'file://photo.jpg',
+        latitude: -22.5,
+        longitude: -44.1,
         location: 'Lat: -22.5000, Lon: -44.1000',
         type: 'Perdido',
       })

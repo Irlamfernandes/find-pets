@@ -39,12 +39,14 @@ export function useFeed() {
 
     try {
       const photo = await cameraRef.takePictureAsync({ quality: 0.5 });
-      const locationText = await locationService.getCurrentLocation();
+      const locationData = await locationService.getCurrentLocation();
 
       const newPost = {
         id: Date.now().toString(),
         imageUri: photo.uri,
-        location: locationText,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        location: locationData.address,
         date: new Date().toLocaleDateString('pt-BR'),
         type: 'Perdido',
       };

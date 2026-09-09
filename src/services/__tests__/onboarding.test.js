@@ -1,3 +1,4 @@
+// src/services/__tests__/onboarding.test.js
 import { onboardingService } from '../onboarding';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -19,18 +20,22 @@ describe('onboardingService', () => {
     expect(result.data).toEqual(profile);
   });
 
-  it('deve lançar erro se tentar salvar sem nome ou whatsapp', async () => {
+  it('deve lançar erro se tentar salvar sem profileData, nome ou whatsapp', async () => {
+    await expect(onboardingService.saveUserProfile(null)).rejects.toThrow(
+      'Dados inválidos para salvamento do perfil.'
+    );
+
     await expect(
       onboardingService.saveUserProfile({ name: '', whatsapp: '' })
-    ).rejects.toThrow('Dados inválidos para salvamento.');
+    ).rejects.toThrow('Dados inválidos para salvamento do perfil.');
 
     await expect(
       onboardingService.saveUserProfile({ name: 'Irlam', whatsapp: '' })
-    ).rejects.toThrow('Dados inválidos para salvamento.');
+    ).rejects.toThrow('Dados inválidos para salvamento do perfil.');
 
     await expect(
       onboardingService.saveUserProfile({ name: '', whatsapp: '11999999999' })
-    ).rejects.toThrow('Dados inválidos para salvamento.');
+    ).rejects.toThrow('Dados inválidos para salvamento do perfil.');
   });
 
   it('deve lançar erro se houver falha no AsyncStorage ao salvar', async () => {
@@ -38,7 +43,7 @@ describe('onboardingService', () => {
 
     const profile = { name: 'Irlam', whatsapp: '11999999999' };
     await expect(onboardingService.saveUserProfile(profile)).rejects.toThrow(
-      'Erro ao salvar perfil.'
+      'Erro ao salvar perfil: Storage error'
     );
   });
 
@@ -57,10 +62,11 @@ describe('onboardingService', () => {
     expect(result).toBeNull();
   });
 
-  it('deve retornar null se houver exceção no AsyncStorage ao buscar o perfil', async () => {
+  it('deve lançar erro se houver exceção no AsyncStorage ao buscar o perfil', async () => {
     AsyncStorage.getItem.mockRejectedValueOnce(new Error('Storage error'));
 
-    const result = await onboardingService.getUserProfile();
-    expect(result).toBeNull();
+    await expect(onboardingService.getUserProfile()).rejects.toThrow(
+      'Erro ao buscar perfil: Storage error'
+    );
   });
 });

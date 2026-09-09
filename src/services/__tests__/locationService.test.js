@@ -7,7 +7,7 @@ jest.mock('expo-location', () => ({
 }));
 
 describe('locationService', () => {
-  it('deve retornar as coordenadas formatadas quando a permissão for concedida', async () => {
+  it('deve retornar as coordenadas e o endereço formatado quando a permissão for concedida', async () => {
     Location.requestForegroundPermissionsAsync.mockResolvedValueOnce({
       status: 'granted',
     });
@@ -16,24 +16,36 @@ describe('locationService', () => {
     });
 
     const result = await locationService.getCurrentLocation();
-    expect(result).toBe('Lat: -22.5000, Lon: -44.1000');
+    expect(result).toEqual({
+      latitude: -22.5,
+      longitude: -44.1,
+      address: 'Lat: -22.5000, Lon: -44.1000',
+    });
   });
 
-  it('deve retornar mensagem de negado se a permissão não for concedida', async () => {
+  it('deve retornar valores nulos e mensagem de negado se a permissão não for concedida', async () => {
     Location.requestForegroundPermissionsAsync.mockResolvedValueOnce({
       status: 'denied',
     });
 
     const result = await locationService.getCurrentLocation();
-    expect(result).toBe('Localização não permitida');
+    expect(result).toEqual({
+      latitude: null,
+      longitude: null,
+      address: 'Localização não permitida',
+    });
   });
 
-  it('deve retornar indisponível se ocorrer um erro', async () => {
+  it('deve retornar valores nulos e indisponível se ocorrer um erro', async () => {
     Location.requestForegroundPermissionsAsync.mockRejectedValueOnce(
       new Error('Erro GPS')
     );
 
     const result = await locationService.getCurrentLocation();
-    expect(result).toBe('Localização indisponível');
+    expect(result).toEqual({
+      latitude: null,
+      longitude: null,
+      address: 'Localização indisponível',
+    });
   });
 });

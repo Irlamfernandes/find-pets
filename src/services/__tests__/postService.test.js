@@ -1,4 +1,6 @@
+// src/services/__tests__/postService.test.js
 import { postService } from '../postService';
+import { STORAGE_KEYS } from '../../constants/storageKeys';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -16,7 +18,7 @@ describe('Post Service', () => {
 
     const posts = await postService.getPosts();
     expect(posts).toEqual([]);
-    expect(AsyncStorage.getItem).toHaveBeenCalledWith('@FindPets:posts');
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith(STORAGE_KEYS.POSTS);
   });
 
   it('deve retornar os posts salvos convertidos em JSON', async () => {
@@ -27,11 +29,22 @@ describe('Post Service', () => {
     expect(posts).toEqual(mockPosts);
   });
 
-  it('deve retornar array vazio se ocorrer erro ao buscar posts', async () => {
+  it('deve lançar erro se ocorrer falha ao buscar posts', async () => {
     AsyncStorage.getItem.mockRejectedValueOnce(new Error('Erro storage'));
 
-    const posts = await postService.getPosts();
-    expect(posts).toEqual([]);
+    await expect(postService.getPosts()).rejects.toThrow(
+      'Erro ao carregar as publicações: Erro storage'
+    );
+  });
+
+  it('deve lançar erro se tentar salvar um post inválido ou sem id', async () => {
+    await expect(postService.savePost(null)).rejects.toThrow(
+      'Dados do post inválidos.'
+    );
+
+    await expect(postService.savePost({})).rejects.toThrow(
+      'Dados do post inválidos.'
+    );
   });
 
   it('deve salvar um novo post com sucesso', async () => {
@@ -43,7 +56,7 @@ describe('Post Service', () => {
 
     expect(posts).toEqual([newPost]);
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
-      '@FindPets:posts',
+      STORAGE_KEYS.POSTS,
       JSON.stringify([newPost])
     );
   });
@@ -53,7 +66,7 @@ describe('Post Service', () => {
     AsyncStorage.setItem.mockRejectedValueOnce(new Error('Erro storage'));
 
     await expect(postService.savePost({ id: '1' })).rejects.toThrow(
-      'Erro ao salvar a publicação.'
+      'Erro ao salvar a publicação: Erro storage'
     );
   });
 });

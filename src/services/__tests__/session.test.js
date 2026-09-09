@@ -1,4 +1,6 @@
+// src/services/__tests__/session.test.js
 import { sessionService } from '../session';
+import { STORAGE_KEYS } from '../../constants/storageKeys';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mock do AsyncStorage
@@ -14,6 +16,15 @@ describe('sessionService', () => {
   });
 
   // --- CREDENCIAIS ---
+  it('deve lançar erro se tentar salvar credenciais sem e-mail ou senha', async () => {
+    await expect(sessionService.saveCredentials('', '123')).rejects.toThrow(
+      'E-mail e senha são obrigatórios.'
+    );
+    await expect(
+      sessionService.saveCredentials('teste@test.com', '')
+    ).rejects.toThrow('E-mail e senha são obrigatórios.');
+  });
+
   it('deve salvar as credenciais com sucesso', async () => {
     AsyncStorage.setItem.mockResolvedValueOnce();
 
@@ -22,7 +33,7 @@ describe('sessionService', () => {
     ).resolves.toBeUndefined();
 
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
-      '@FindPets:credentials',
+      STORAGE_KEYS.CREDENTIALS,
       JSON.stringify({
         email: 'teste@test.com',
         password: '123456',
@@ -36,7 +47,7 @@ describe('sessionService', () => {
 
     await expect(
       sessionService.saveCredentials('teste@test.com', '123456')
-    ).rejects.toThrow('Erro ao salvar credenciais.');
+    ).rejects.toThrow('Erro ao salvar credenciais: Storage error');
   });
 
   it('deve retornar as credenciais quando elas existirem', async () => {
@@ -49,7 +60,7 @@ describe('sessionService', () => {
 
     const result = await sessionService.getCredentials();
     expect(result).toEqual(creds);
-    expect(AsyncStorage.getItem).toHaveBeenCalledWith('@FindPets:credentials');
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith(STORAGE_KEYS.CREDENTIALS);
   });
 
   it('deve retornar null se não houver credenciais salvas', async () => {
@@ -59,21 +70,28 @@ describe('sessionService', () => {
     expect(result).toBeNull();
   });
 
-  it('deve retornar null caso ocorra erro ao buscar as credenciais', async () => {
+  it('deve lançar erro caso ocorra exceção ao buscar as credenciais', async () => {
     AsyncStorage.getItem.mockRejectedValueOnce(new Error('Storage error'));
 
-    const result = await sessionService.getCredentials();
-    expect(result).toBeNull();
+    await expect(sessionService.getCredentials()).rejects.toThrow(
+      'Erro ao recuperar credenciais: Storage error'
+    );
   });
 
   // --- SESSÃO ---
+  it('deve lançar erro se tentar salvar sessão com dados inválidos', async () => {
+    await expect(sessionService.saveSession(null)).rejects.toThrow(
+      'Dados de sessão inválidos.'
+    );
+  });
+
   it('deve salvar a sessão com sucesso', async () => {
     AsyncStorage.setItem.mockResolvedValueOnce();
 
     const userData = { type: 'biometric', email: 'teste@test.com' };
     await expect(sessionService.saveSession(userData)).resolves.toBeUndefined();
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
-      '@FindPets:session',
+      STORAGE_KEYS.SESSION,
       JSON.stringify(userData)
     );
   });
@@ -83,7 +101,7 @@ describe('sessionService', () => {
 
     const userData = { type: 'biometric' };
     await expect(sessionService.saveSession(userData)).rejects.toThrow(
-      'Erro ao salvar a sessão.'
+      'Erro ao persistir sessão: Storage error'
     );
   });
 
@@ -93,7 +111,7 @@ describe('sessionService', () => {
 
     const result = await sessionService.getSession();
     expect(result).toEqual(userData);
-    expect(AsyncStorage.getItem).toHaveBeenCalledWith('@FindPets:session');
+    expect(AsyncStorage.getItem).toHaveBeenCalledWith(STORAGE_KEYS.SESSION);
   });
 
   it('deve retornar null se não houver sessão salva', async () => {
@@ -103,11 +121,12 @@ describe('sessionService', () => {
     expect(result).toBeNull();
   });
 
-  it('deve retornar null caso ocorra erro ao buscar a sessão', async () => {
+  it('deve lançar erro caso ocorra exceção ao buscar a sessão', async () => {
     AsyncStorage.getItem.mockRejectedValueOnce(new Error('Storage error'));
 
-    const result = await sessionService.getSession();
-    expect(result).toBeNull();
+    await expect(sessionService.getSession()).rejects.toThrow(
+      'Erro ao buscar sessão ativa: Storage error'
+    );
   });
 
   it('deve limpar a sessão com sucesso (logout)', async () => {
@@ -115,14 +134,14 @@ describe('sessionService', () => {
 
     await expect(sessionService.clearSession()).resolves.toBeUndefined();
     expect(AsyncStorage.removeItem).toHaveBeenCalledTimes(1);
-    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('@FindPets:session');
+    expect(AsyncStorage.removeItem).toHaveBeenCalledWith(STORAGE_KEYS.SESSION);
   });
 
   it('deve lançar erro ao falhar ao limpar a sessão', async () => {
     AsyncStorage.removeItem.mockRejectedValueOnce(new Error('Storage error'));
 
     await expect(sessionService.clearSession()).rejects.toThrow(
-      'Erro ao encerrar a sessão.'
+      'Erro ao encerrar a sessão: Storage error'
     );
   });
 });

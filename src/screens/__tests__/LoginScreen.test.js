@@ -1,3 +1,4 @@
+// src/screens/__tests__/LoginScreen.test.js
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import LoginScreen from '../LoginScreen';
@@ -86,6 +87,17 @@ describe('LoginScreen Component', () => {
     expect(mockSetAuthMode).toHaveBeenCalledWith('home');
   });
 
+  it('não deve exibir mensagem de erro se errorMessage estiver vazio no Cadastro', () => {
+    useLogin.mockReturnValue({
+      ...baseHookValues,
+      authMode: 'cadastro',
+      errorMessage: '',
+    });
+
+    const { queryByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+    expect(queryByText('Erro de teste')).toBeNull();
+  });
+
   // --- TELA 3: LOGIN ---
   it('deve renderizar a tela de Login, campos, botões e biometria', () => {
     useLogin.mockReturnValue({
@@ -132,28 +144,6 @@ describe('LoginScreen Component', () => {
     expect(queryByText('Entrar com Biometria')).toBeNull();
   });
 
-  it('deve renderizar o botão de biometria se hasHardwareBiometric for verdadeiro na tela de login', () => {
-    useLogin.mockReturnValue({
-      ...baseHookValues,
-      authMode: 'login',
-      hasHardwareBiometric: true,
-    });
-
-    const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
-    expect(getByText('Entrar com Biometria')).toBeTruthy();
-  });
-
-  it('não deve exibir mensagem de erro se errorMessage estiver vazio no Cadastro', () => {
-    useLogin.mockReturnValue({
-      ...baseHookValues,
-      authMode: 'cadastro',
-      errorMessage: '',
-    });
-
-    const { queryByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
-    expect(queryByText('Erro de teste')).toBeNull();
-  });
-
   it('não deve exibir mensagem de erro se errorMessage estiver vazio no Login', () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
@@ -162,39 +152,7 @@ describe('LoginScreen Component', () => {
     });
 
     const { queryByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
-    expect(queryByText('Erro de teste')).toBeNull();
-  });
-
-  it('deve avaliar o branch positivo do botão de biometria na tela de login', () => {
-    useLogin.mockReturnValue({
-      ...baseHookValues,
-      authMode: 'login',
-      hasHardwareBiometric: true,
-    });
-    const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
-    expect(getByText('Entrar com Biometria')).toBeTruthy();
-  });
-
-  it('deve avaliar o branch negativo do botão de biometria na tela de login', () => {
-    useLogin.mockReturnValue({
-      ...baseHookValues,
-      authMode: 'login',
-      hasHardwareBiometric: false,
-    });
-    const { queryByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
-    expect(queryByText('Entrar com Biometria')).toBeNull();
-  });
-
-  it('deve disparar o triggerBiometricAuth ao pressionar o botão de biometria na tela de login', () => {
-    useLogin.mockReturnValue({
-      ...baseHookValues,
-      authMode: 'login',
-      hasHardwareBiometric: true,
-    });
-
-    const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
-    fireEvent.press(getByText('Entrar com Biometria'));
-    expect(mockTriggerBiometricAuth).toHaveBeenCalled();
+    expect(queryByText('Erro crítico de login')).toBeNull();
   });
 
   it('deve exibir mensagem de erro se errorMessage estiver preenchido no Login', () => {

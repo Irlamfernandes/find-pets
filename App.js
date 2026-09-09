@@ -1,50 +1,58 @@
-import React, { useEffect } from 'react';
+// App.js
+import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
 import LoginScreen from './src/screens/LoginScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import FeedScreen from './src/screens/FeedScreen';
+
 import { useSession } from './src/hooks/useSession';
 import { sessionService } from './src/services/session';
 import { onboardingService } from './src/services/onboarding';
 
 export default function App() {
   const { isLoading, session, saveUserSession, logout } = useSession();
-  const [currentStep, setCurrentStep] = React.useState('loading');
+  const [currentStep, setCurrentStep] = useState('loading');
 
-  useEffect(() => {
-    async function checkInitialState() {
-      if (!isLoading) {
-        if (session) {
-          // Se já tem sessão, verifica se o perfil de onboarding já foi preenchido
-          const profile = await onboardingService.getUserProfile();
-          if (profile) {
-            setCurrentStep('home');
-          } else {
-            setCurrentStep('onboarding');
-          }
-        } else {
-          setCurrentStep('login');
-        }
+  const determineInitialStep = useCallback(async () => {
+    if (isLoading) return;
+
+    try {
+      if (!session) {
+        setCurrentStep('login');
+        return;
       }
+
+      // Se há sessão ativa, valida se o perfil de onboarding já existe
+      const profile = await onboardingService.getUserProfile();
+      setCurrentStep(profile ? 'home' : 'onboarding');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        `Não foi possível carregar os dados do usuário: ${error.message}`
+      );
+      setCurrentStep('login');
     }
-    checkInitialState();
   }, [isLoading, session]);
 
-  const handleLoginSuccess = async (data) => {
-    if (data.type === 'biometric') {
-      Alert.alert('Sucesso!', 'Login realizado via Biometria com sucesso.');
-    } else {
-      Alert.alert('Sucesso!', `Bem-vindo de volta, ${data.email}!`);
-    }
+  useEffect(() => {
+    determineInitialStep();
+  }, [determineInitialStep]);
 
+  const handleLoginSuccess = async (data) => {
+    const welcomeMessage =
+      data.type === 'biometric'
+        ? 'Login realizado via Biometria com sucesso.'
+        : `Bem-vindo de volta, ${data.usuario}!`;
+
+    Alert.alert('Sucesso!', welcomeMessage);
     await saveUserSession(data);
 
-    // Se já fez o onboarding antes, vai pra home. Senão, vai preencher o perfil.
-    const profile = await onboardingService.getUserProfile();
-    if (profile) {
-      setCurrentStep('home');
-    } else {
+    try {
+      const profile = await onboardingService.getUserProfile();
+      setCurrentStep(profile ? 'home' : 'onboarding');
+    } catch {
       setCurrentStep('onboarding');
     }
   };
@@ -55,16 +63,29 @@ export default function App() {
       `Seja bem-vindo, ${profileData.name}! Seu cadastro foi salvo com sucesso.`
     );
 
-    const currentSession = (await sessionService.getSession()) || {};
-    const updatedSession = { ...currentSession, profile: profileData };
-    await saveUserSession(updatedSession);
-
-    setCurrentStep('home');
+    try {
+      const currentSession = (await sessionService.getSession()) || {};
+      const updatedSession = { ...currentSession, profile: profileData };
+      await saveUserSession(updatedSession);
+      setCurrentStep('home');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        `Falha ao salvar sessão com o perfil: ${error.message}`
+      );
+    }
   };
 
   const handleLogout = async () => {
-    await logout();
-    setCurrentStep('login');
+    try {
+      await logout();
+      setCurrentStep('login');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        `Não foi possível encerrar a sessão: ${error.message}`
+      );
+    }
   };
 
   if (isLoading || currentStep === 'loading') {

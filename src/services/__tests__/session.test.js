@@ -1,13 +1,26 @@
 // src/services/__tests__/session.test.js
 import { sessionService } from '../session';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
+import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import bcrypt from 'bcryptjs';
 
-// Mock do AsyncStorage
+// Mock do expo-secure-store, AsyncStorage e bcryptjs
+jest.mock('expo-secure-store', () => ({
+  setItemAsync: jest.fn(),
+  getItemAsync: jest.fn(),
+}));
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
   removeItem: jest.fn(),
+}));
+
+jest.mock('bcryptjs', () => ({
+  genSalt: jest.fn().mockResolvedValue('mockSalt'),
+  hash: jest.fn().mockResolvedValue('mockPasswordHash'),
+  compare: jest.fn(),
 }));
 
 describe('sessionService', () => {
@@ -16,69 +29,89 @@ describe('sessionService', () => {
   });
 
   // --- CREDENCIAIS ---
-  it('deve lançar erro se tentar salvar credenciais sem e-mail ou senha', async () => {
+  it('deve lançar erro se tentar salvar credenciais sem usuário ou senha', async () => {
     await expect(sessionService.saveCredentials('', '123')).rejects.toThrow(
-      'E-mail e senha são obrigatórios.'
+      'Usuário e senha são obrigatórios.'
     );
     await expect(
       sessionService.saveCredentials('teste@test.com', '')
-    ).rejects.toThrow('E-mail e senha são obrigatórios.');
+    ).rejects.toThrow('Usuário e senha são obrigatórios.');
   });
 
-  it('deve salvar as credenciais com sucesso', async () => {
-    AsyncStorage.setItem.mockResolvedValueOnce();
+  it('deve salvar as credenciais com segurança usando SecureStore gerando hash da senha', async () => {
+    SecureStore.setItemAsync.mockResolvedValueOnce();
 
     await expect(
       sessionService.saveCredentials('teste@test.com', '123456', true)
     ).resolves.toBeUndefined();
 
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+    expect(bcrypt.genSalt).toHaveBeenCalledWith(10);
+    expect(bcrypt.hash).toHaveBeenCalledWith('123456', 'mockSalt');
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
       STORAGE_KEYS.CREDENTIALS,
       JSON.stringify({
-        email: 'teste@test.com',
-        password: '123456',
+        usuario: 'teste@test.com',
+        passwordHash: 'mockPasswordHash',
         hasBiometrics: true,
       })
     );
   });
 
   it('deve lançar erro ao falhar ao salvar credenciais', async () => {
-    AsyncStorage.setItem.mockRejectedValueOnce(new Error('Storage error'));
+    SecureStore.setItemAsync.mockRejectedValueOnce(new Error('Secure error'));
 
     await expect(
       sessionService.saveCredentials('teste@test.com', '123456')
-    ).rejects.toThrow('Erro ao salvar credenciais: Storage error');
+    ).rejects.toThrow('Erro ao salvar credenciais com segurança: Secure error');
   });
 
   it('deve retornar as credenciais quando elas existirem', async () => {
     const creds = {
-      email: 'teste@test.com',
-      password: '123456',
+      usuario: 'teste@test.com',
+      passwordHash: 'mockPasswordHash',
       hasBiometrics: false,
     };
-    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(creds));
+    SecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(creds));
 
     const result = await sessionService.getCredentials();
     expect(result).toEqual(creds);
-    expect(AsyncStorage.getItem).toHaveBeenCalledWith(STORAGE_KEYS.CREDENTIALS);
+    expect(SecureStore.getItemAsync).toHaveBeenCalledWith(
+      STORAGE_KEYS.CREDENTIALS
+    );
   });
 
   it('deve retornar null se não houver credenciais salvas', async () => {
-    AsyncStorage.getItem.mockResolvedValueOnce(null);
+    SecureStore.getItemAsync.mockResolvedValueOnce(null);
 
     const result = await sessionService.getCredentials();
     expect(result).toBeNull();
   });
 
   it('deve lançar erro caso ocorra exceção ao buscar as credenciais', async () => {
-    AsyncStorage.getItem.mockRejectedValueOnce(new Error('Storage error'));
+    SecureStore.getItemAsync.mockRejectedValueOnce(new Error('Secure error'));
 
     await expect(sessionService.getCredentials()).rejects.toThrow(
-      'Erro ao recuperar credenciais: Storage error'
+      'Erro ao recuperar credenciais: Secure error'
     );
   });
 
-  // --- SESSÃO ---
+  // --- VERIFICAÇÃO DE SENHA (verifyPassword) ---
+  it('deve retornar false se faltar senha ou hash na verificação', async () => {
+    expect(await sessionService.verifyPassword('', 'hash')).toBe(false);
+    expect(await sessionService.verifyPassword('123', '')).toBe(false);
+  });
+
+  it('deve retornar true se a senha coincidir com o hash', async () => {
+    bcrypt.compare.mockResolvedValueOnce(true);
+    const result = await sessionService.verifyPassword(
+      '123456',
+      'mockPasswordHash'
+    );
+    expect(result).toBe(true);
+    expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'mockPasswordHash');
+  });
+
+  // --- SESSÃO (Mantido com AsyncStorage) ---
   it('deve lançar erro se tentar salvar sessão com dados inválidos', async () => {
     await expect(sessionService.saveSession(null)).rejects.toThrow(
       'Dados de sessão inválidos.'
@@ -88,7 +121,7 @@ describe('sessionService', () => {
   it('deve salvar a sessão com sucesso', async () => {
     AsyncStorage.setItem.mockResolvedValueOnce();
 
-    const userData = { type: 'biometric', email: 'teste@test.com' };
+    const userData = { type: 'biometric', usuario: 'teste@test.com' };
     await expect(sessionService.saveSession(userData)).resolves.toBeUndefined();
     expect(AsyncStorage.setItem).toHaveBeenCalledWith(
       STORAGE_KEYS.SESSION,
@@ -106,7 +139,7 @@ describe('sessionService', () => {
   });
 
   it('deve retornar a sessão quando ela existir', async () => {
-    const userData = { type: 'biometric', email: 'teste@test.com' };
+    const userData = { type: 'biometric', usuario: 'teste@test.com' };
     AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(userData));
 
     const result = await sessionService.getSession();

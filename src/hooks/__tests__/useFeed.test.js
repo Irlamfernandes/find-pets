@@ -2,6 +2,7 @@ import { renderHook, act } from '@testing-library/react-native';
 import { useFeed } from '../useFeed';
 import { postService } from '../../services/postService';
 import { locationService } from '../../services/locationService';
+import { onboardingService } from '../../services/onboarding';
 
 let mockCameraPermissionValue = { granted: true };
 let mockRequestPermissionResult = { granted: true };
@@ -16,6 +17,14 @@ jest.mock('../../services/postService', () => ({
 jest.mock('../../services/locationService', () => ({
   locationService: {
     getCurrentLocation: jest.fn(),
+  },
+}));
+
+jest.mock('../../services/onboarding', () => ({
+  onboardingService: {
+    getUserProfile: jest
+      .fn()
+      .mockResolvedValue({ name: 'Irlam', whatsapp: '11999999999' }),
   },
 }));
 
@@ -114,7 +123,7 @@ describe('useFeed Hook', () => {
     expect(result.current.isCameraOpen).toBe(false);
   });
 
-  it('deve tirar a foto e salvar o post com sucesso', async () => {
+  it('deve tirar a foto e salvar o post com sucesso incluindo o WhatsApp do usuário', async () => {
     postService.getPosts.mockResolvedValue([]);
     postService.savePost.mockResolvedValueOnce();
 
@@ -138,6 +147,7 @@ describe('useFeed Hook', () => {
 
     expect(mockCamera.takePictureAsync).toHaveBeenCalled();
     expect(locationService.getCurrentLocation).toHaveBeenCalled();
+    expect(onboardingService.getUserProfile).toHaveBeenCalled();
     expect(postService.savePost).toHaveBeenCalledWith(
       expect.objectContaining({
         imageUri: 'file://photo.jpg',
@@ -145,6 +155,7 @@ describe('useFeed Hook', () => {
         longitude: -44.1,
         location: 'Lat: -22.5000, Lon: -44.1000',
         type: 'Perdido',
+        contactPhone: '11999999999',
       })
     );
     expect(result.current.isCameraOpen).toBe(false);
@@ -185,5 +196,48 @@ describe('useFeed Hook', () => {
     });
 
     expect(postService.savePost).not.toHaveBeenCalled();
+  });
+
+  it('deve tirar a foto e salvar o post sem WhatsApp se o perfil não o possuir', async () => {
+    postService.getPosts.mockResolvedValue([]);
+    postService.savePost.mockResolvedValueOnce();
+    onboardingService.getUserProfile.mockResolvedValueOnce({
+      name: 'Irlam',
+      whatsapp: null,
+    });
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+
+    const mockCamera = {
+      takePictureAsync: jest
+        .fn()
+        .mockResolvedValue({ uri: 'file://photo.jpg' }),
+    };
+
+    act(() => {
+      result.current.setCameraRef(mockCamera);
+    });
+
+    await act(async () => {
+      await result.current.openCamera();
+      await result.current.takePicture();
+    });
+
+    expect(postService.savePost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contactPhone: null,
+      })
+    );
+  });
+
+  it('deve definir posts como array vazio se falhar ao carregar os posts', async () => {
+    postService.getPosts.mockRejectedValueOnce(new Error('Erro ao carregar'));
+
+    const { result } = renderHook(() => useFeed());
+
+    await act(async () => {});
+
+    expect(result.current.posts).toEqual([]);
   });
 });

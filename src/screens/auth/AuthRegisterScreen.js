@@ -1,3 +1,4 @@
+// src/screens/AuthRegisterScreen.js
 import React from 'react';
 import {
   View,
@@ -25,7 +26,7 @@ export function AuthRegisterScreen({
       {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, !!errorMessage && styles.inputError]}
         placeholder="Usuário"
         placeholderTextColor="#888"
         value={usuario}
@@ -34,7 +35,7 @@ export function AuthRegisterScreen({
       />
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, !!errorMessage && styles.inputError]}
         placeholder="Senha"
         placeholderTextColor="#888"
         value={senha}
@@ -96,6 +97,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: '#FFF',
     color: '#333',
+  },
+  inputError: {
+    borderColor: '#D0021B',
   },
   button: {
     height: 50,

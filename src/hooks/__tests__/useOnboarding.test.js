@@ -47,19 +47,30 @@ describe('useOnboarding Hook (via Componente)', () => {
   it('deve lidar com erro de campos vazios ou preenchidos apenas com espaços', async () => {
     const { getByTestId } = render(<TestComponent />);
 
-    // Tenta salvar totalmente vazio
     fireEvent.press(getByTestId('save'));
     expect(getByTestId('error').props.children).toBe(
       'Preencha todos os campos.'
     );
 
-    // Tenta salvar com espaços em branco (testando o .trim())
     fireEvent.changeText(getByTestId('name'), '   ');
     fireEvent.changeText(getByTestId('whatsapp'), '   ');
     fireEvent.press(getByTestId('save'));
     expect(getByTestId('error').props.children).toBe(
       'Preencha todos os campos.'
     );
+  });
+
+  it('deve exibir erro se o número de WhatsApp for inválido (menos de 10 dígitos)', async () => {
+    const { getByTestId } = render(<TestComponent />);
+
+    fireEvent.changeText(getByTestId('name'), 'Irlam');
+    fireEvent.changeText(getByTestId('whatsapp'), '119999999');
+    fireEvent.press(getByTestId('save'));
+
+    expect(getByTestId('error').props.children).toBe(
+      'Insira um número de WhatsApp válido com DDD.'
+    );
+    expect(onboardingService.saveUserProfile).not.toHaveBeenCalled();
   });
 
   it('deve salvar com sucesso quando os dados forem válidos', async () => {

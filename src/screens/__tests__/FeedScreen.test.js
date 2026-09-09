@@ -1,13 +1,28 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Linking } from 'react-native';
+import { render, fireEvent, waitFor, act } from '@testing-library/react-native';
 import FeedScreen from '../FeedScreen';
 import { postService } from '../../services/postService';
+import { externalLinkService } from '../../services/externalLinkService';
 
 jest.mock('../../services/postService', () => ({
   postService: {
     getPosts: jest.fn(),
     savePost: jest.fn(),
+  },
+}));
+
+jest.mock('../../services/externalLinkService', () => ({
+  externalLinkService: {
+    openMap: jest.fn(),
+    openWhatsApp: jest.fn(),
+  },
+}));
+
+jest.mock('../../services/onboarding', () => ({
+  onboardingService: {
+    getUserProfile: jest
+      .fn()
+      .mockResolvedValue({ name: 'Irlam', whatsapp: '11999999999' }),
   },
 }));
 
@@ -24,8 +39,6 @@ jest.mock('expo-camera', () => ({
   ],
 }));
 
-jest.spyOn(Linking, 'openURL').mockImplementation(() => Promise.resolve(true));
-
 describe('FeedScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -41,7 +54,7 @@ describe('FeedScreen', () => {
     });
   });
 
-  it('deve renderizar posts salvos na lista com coordenadas e abrir mapa', async () => {
+  it('deve renderizar posts salvos na lista e chamar openMap ao clicar no botão de mapa', async () => {
     const mockPosts = [
       {
         id: '123',
@@ -59,49 +72,27 @@ describe('FeedScreen', () => {
 
     await waitFor(() => {
       expect(getByText('Perdido')).toBeTruthy();
-      const locationBtn = getByText('📍 Rua Teste (Ver no mapa)');
-      expect(locationBtn).toBeTruthy();
+      const mapBtn = getByText('📍 Ver no Mapa');
+      expect(mapBtn).toBeTruthy();
 
-      fireEvent.press(locationBtn);
-      expect(Linking.openURL).toHaveBeenCalledWith(
-        'https://www.google.com/maps/search/?api=1&query=-22.5,-44.1'
+      fireEvent.press(mapBtn);
+      expect(externalLinkService.openMap).toHaveBeenCalledTimes(1);
+      expect(externalLinkService.openMap).toHaveBeenCalledWith(
+        -22.5,
+        -44.1,
+        'Rua Teste'
       );
     });
   });
 
-  it('deve abrir mapa usando endereço texto se não houver coordenadas', async () => {
-    const mockPosts = [
-      {
-        id: '125',
-        imageUri: 'https://example.com/pet3.jpg',
-        date: '05/09/2026',
-        type: 'Perdido',
-        latitude: null,
-        longitude: null,
-        location: 'Praça Central',
-      },
-    ];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
-
-    const { getByText } = render(<FeedScreen />);
-
-    await waitFor(() => {
-      const locationBtn = getByText('📍 Praça Central (Ver no mapa)');
-      fireEvent.press(locationBtn);
-      expect(Linking.openURL).toHaveBeenCalledWith(
-        'https://www.google.com/maps/search/?api=1&query=Pra%C3%A7a%20Central'
-      );
-    });
-  });
-
-  it('deve renderizar post sem localização informada', async () => {
+  it('deve chamar openWhatsApp ao clicar no botão do WhatsApp no card', async () => {
     const mockPosts = [
       {
         id: '124',
         imageUri: 'https://example.com/pet2.jpg',
         date: '05/09/2026',
         type: 'Encontrado',
-        location: '',
+        contactPhone: '5511999999999',
       },
     ];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
@@ -109,10 +100,14 @@ describe('FeedScreen', () => {
     const { getByText } = render(<FeedScreen />);
 
     await waitFor(() => {
-      expect(getByText('Encontrado')).toBeTruthy();
-      expect(
-        getByText('📍 Localização não informada (Ver no mapa)')
-      ).toBeTruthy();
+      const whatsappBtn = getByText('💬 WhatsApp');
+      expect(whatsappBtn).toBeTruthy();
+
+      fireEvent.press(whatsappBtn);
+      expect(externalLinkService.openWhatsApp).toHaveBeenCalledTimes(1);
+      expect(externalLinkService.openWhatsApp).toHaveBeenCalledWith(
+        '5511999999999'
+      );
     });
   });
 
@@ -127,6 +122,68 @@ describe('FeedScreen', () => {
       fireEvent.press(logoutBtn);
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it('deve lidar com logout assíncrono, exibindo estado de carregamento e prevenindo cliques duplos', async () => {
+    postService.getPosts.mockResolvedValueOnce([]);
+
+    let resolveLogout;
+    const mockLogout = jest.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveLogout = resolve;
+        })
+    );
+
+    const { getByText } = render(<FeedScreen onLogout={mockLogout} />);
+
+    await waitFor(() => {
+      expect(getByText('Sair')).toBeTruthy();
+    });
+
+    const logoutBtn = getByText('Sair');
+
+    // 1º Clique: dispara o logout e muda o estado para isLoggingOut = true
+    fireEvent.press(logoutBtn);
+
+    await waitFor(() => {
+      expect(getByText('Saindo...')).toBeTruthy();
+    });
+
+    // 2º Clique: como isLoggingOut já é true, vai bater direto no 'if (isLoggingOut) return;'
+    fireEvent.press(logoutBtn);
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+
+    // Finaliza a promessa
+    await act(async () => {
+      resolveLogout();
+    });
+  });
+
+  it('deve capturar erro se o logout assíncrono falhar', async () => {
+    postService.getPosts.mockResolvedValueOnce([]);
+    const consoleErrorSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+    const mockLogout = jest
+      .fn()
+      .mockRejectedValue(new Error('Falha no logout'));
+
+    const { getByText } = render(<FeedScreen onLogout={mockLogout} />);
+
+    await waitFor(() => {
+      expect(getByText('Sair')).toBeTruthy();
+    });
+
+    const logoutBtn = getByText('Sair');
+
+    await act(async () => {
+      fireEvent.press(logoutBtn);
+    });
+
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+    expect(consoleErrorSpy).toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
   });
 
   it('deve abrir e fechar o modal da câmera', async () => {
@@ -145,28 +202,14 @@ describe('FeedScreen', () => {
     fireEvent.press(cancelButton);
   });
 
-  it('não deve chamar openURL se não houver coordenadas nem endereço', async () => {
-    const mockPosts = [
-      {
-        id: '126',
-        imageUri: 'https://example.com/pet4.jpg',
-        date: '05/09/2026',
-        type: 'Perdido',
-        latitude: null,
-        longitude: null,
-        location: '',
-      },
-    ];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
+  it('deve renderizar a tela corretamente quando a prop onLogout não for fornecida', async () => {
+    postService.getPosts.mockResolvedValueOnce([]);
 
-    const { getByText } = render(<FeedScreen />);
+    const { queryByText } = render(<FeedScreen />);
 
     await waitFor(() => {
-      const locationBtn = getByText(
-        '📍 Localização não informada (Ver no mapa)'
-      );
-      fireEvent.press(locationBtn);
-      expect(Linking.openURL).not.toHaveBeenCalled();
+      expect(queryByText('Nenhum pet cadastrado ainda.')).toBeTruthy();
+      expect(queryByText('Sair')).toBeNull();
     });
   });
 });

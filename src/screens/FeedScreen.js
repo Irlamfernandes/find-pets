@@ -5,14 +5,14 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
   Modal,
-  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView } from 'expo-camera';
 import PropTypes from 'prop-types';
 import { useFeed } from '../hooks/useFeed';
+import { externalLinkService } from '../services/externalLinkService';
+import { PetCard } from './components/PetCard';
 
 export default function FeedScreen({ onLogout }) {
   const {
@@ -23,18 +23,6 @@ export default function FeedScreen({ onLogout }) {
     closeCamera,
     takePicture,
   } = useFeed();
-
-  const openInMap = (latitude, longitude, address) => {
-    let url = '';
-    if (latitude && longitude) {
-      url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-    } else if (address) {
-      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-    } else {
-      return;
-    }
-    Linking.openURL(url);
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -60,23 +48,13 @@ export default function FeedScreen({ onLogout }) {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.imageUri }} style={styles.cardImage} />
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardBadge}>{item.type}</Text>
-              <TouchableOpacity
-                onPress={() =>
-                  openInMap(item.latitude, item.longitude, item.location)
-                }
-              >
-                <Text style={styles.cardLocation}>
-                  📍 {item.location || 'Localização não informada'} (Ver no
-                  mapa)
-                </Text>
-              </TouchableOpacity>
-              <Text style={styles.cardDate}>Registrado em: {item.date}</Text>
-            </View>
-          </View>
+          <PetCard
+            item={item}
+            onOpenMap={(lat, lon, addr) =>
+              externalLinkService.openMap(lat, lon, addr)
+            }
+            onOpenWhatsApp={(phone) => externalLinkService.openWhatsApp(phone)}
+          />
         )}
       />
 
@@ -139,34 +117,6 @@ const styles = StyleSheet.create({
   },
   emptyText: { fontSize: 16, fontWeight: 'bold', color: '#666' },
   emptySubText: { fontSize: 14, color: '#999', marginTop: 4 },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  cardImage: { width: '100%', height: 250 },
-  cardInfo: { padding: 12 },
-  cardBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#ff9800',
-    color: '#fff',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    fontWeight: 'bold',
-    fontSize: 12,
-    marginBottom: 6,
-  },
-  cardLocation: {
-    fontSize: 13,
-    color: '#007AFF',
-    textDecorationLine: 'underline',
-    marginBottom: 4,
-  },
-  cardDate: { fontSize: 12, color: '#777' },
   fab: {
     position: 'absolute',
     bottom: 24,

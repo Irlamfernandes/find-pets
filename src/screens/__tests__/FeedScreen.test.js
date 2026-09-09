@@ -1,13 +1,28 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Linking } from 'react-native';
 import FeedScreen from '../FeedScreen';
 import { postService } from '../../services/postService';
+import { externalLinkService } from '../../services/externalLinkService';
+import { onboardingService } from '../../services/onboarding';
 
 jest.mock('../../services/postService', () => ({
   postService: {
     getPosts: jest.fn(),
     savePost: jest.fn(),
+  },
+}));
+
+jest.mock('../../services/externalLinkService', () => ({
+  externalLinkService: {
+    openMap: jest.fn(),
+    openWhatsApp: jest.fn(),
+  },
+}));
+
+// Adicionado o mock do onboardingService para suprir a dependência do useFeed
+jest.mock('../../services/onboarding', () => ({
+  onboardingService: {
+    getUserProfile: jest.fn().mockResolvedValue({ name: 'Irlam', whatsapp: '11999999999' }),
   },
 }));
 
@@ -24,8 +39,6 @@ jest.mock('expo-camera', () => ({
   ],
 }));
 
-jest.spyOn(Linking, 'openURL').mockImplementation(() => Promise.resolve(true));
-
 describe('FeedScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -41,7 +54,7 @@ describe('FeedScreen', () => {
     });
   });
 
-  it('deve renderizar posts salvos na lista com coordenadas e abrir mapa', async () => {
+  it('deve renderizar posts salvos na lista e chamar openMap ao clicar no botão de mapa', async () => {
     const mockPosts = [
       {
         id: '123',
@@ -59,49 +72,27 @@ describe('FeedScreen', () => {
 
     await waitFor(() => {
       expect(getByText('Perdido')).toBeTruthy();
-      const locationBtn = getByText('📍 Rua Teste (Ver no mapa)');
-      expect(locationBtn).toBeTruthy();
+      const mapBtn = getByText('📍 Ver no Mapa');
+      expect(mapBtn).toBeTruthy();
 
-      fireEvent.press(locationBtn);
-      expect(Linking.openURL).toHaveBeenCalledWith(
-        'https://www.google.com/maps/search/?api=1&query=-22.5,-44.1'
+      fireEvent.press(mapBtn);
+      expect(externalLinkService.openMap).toHaveBeenCalledTimes(1);
+      expect(externalLinkService.openMap).toHaveBeenCalledWith(
+        -22.5,
+        -44.1,
+        'Rua Teste'
       );
     });
   });
 
-  it('deve abrir mapa usando endereço texto se não houver coordenadas', async () => {
-    const mockPosts = [
-      {
-        id: '125',
-        imageUri: 'https://example.com/pet3.jpg',
-        date: '05/09/2026',
-        type: 'Perdido',
-        latitude: null,
-        longitude: null,
-        location: 'Praça Central',
-      },
-    ];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
-
-    const { getByText } = render(<FeedScreen />);
-
-    await waitFor(() => {
-      const locationBtn = getByText('📍 Praça Central (Ver no mapa)');
-      fireEvent.press(locationBtn);
-      expect(Linking.openURL).toHaveBeenCalledWith(
-        'https://www.google.com/maps/search/?api=1&query=Pra%C3%A7a%20Central'
-      );
-    });
-  });
-
-  it('deve renderizar post sem localização informada', async () => {
+  it('deve chamar openWhatsApp ao clicar no botão do WhatsApp no card', async () => {
     const mockPosts = [
       {
         id: '124',
         imageUri: 'https://example.com/pet2.jpg',
         date: '05/09/2026',
         type: 'Encontrado',
-        location: '',
+        contactPhone: '5511999999999',
       },
     ];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
@@ -109,10 +100,14 @@ describe('FeedScreen', () => {
     const { getByText } = render(<FeedScreen />);
 
     await waitFor(() => {
-      expect(getByText('Encontrado')).toBeTruthy();
-      expect(
-        getByText('📍 Localização não informada (Ver no mapa)')
-      ).toBeTruthy();
+      const whatsappBtn = getByText('💬 WhatsApp');
+      expect(whatsappBtn).toBeTruthy();
+
+      fireEvent.press(whatsappBtn);
+      expect(externalLinkService.openWhatsApp).toHaveBeenCalledTimes(1);
+      expect(externalLinkService.openWhatsApp).toHaveBeenCalledWith(
+        '5511999999999'
+      );
     });
   });
 
@@ -143,30 +138,5 @@ describe('FeedScreen', () => {
     expect(cancelButton).toBeTruthy();
 
     fireEvent.press(cancelButton);
-  });
-
-  it('não deve chamar openURL se não houver coordenadas nem endereço', async () => {
-    const mockPosts = [
-      {
-        id: '126',
-        imageUri: 'https://example.com/pet4.jpg',
-        date: '05/09/2026',
-        type: 'Perdido',
-        latitude: null,
-        longitude: null,
-        location: '',
-      },
-    ];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
-
-    const { getByText } = render(<FeedScreen />);
-
-    await waitFor(() => {
-      const locationBtn = getByText(
-        '📍 Localização não informada (Ver no mapa)'
-      );
-      fireEvent.press(locationBtn);
-      expect(Linking.openURL).not.toHaveBeenCalled();
-    });
   });
 });

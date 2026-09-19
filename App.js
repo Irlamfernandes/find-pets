@@ -1,4 +1,5 @@
 // App.js
+import 'react-native-get-random-values';
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';

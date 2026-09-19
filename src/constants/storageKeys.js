@@ -1,6 +1,6 @@
 export const STORAGE_KEYS = {
-  SESSION: '@FindPets:session',
-  CREDENTIALS: '@FindPets:credentials',
-  PROFILE: '@FindPets:profile',
-  POSTS: '@FindPets:posts',
+  SESSION: 'FindPets_session',
+  CREDENTIALS: 'FindPets_credentials',
+  PROFILE: 'FindPets_profile',
+  POSTS: 'FindPets_posts',
 };

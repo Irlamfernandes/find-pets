@@ -1,11 +1,11 @@
-// src/screens/AuthRegisterScreen.js
 import React from 'react';
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -19,38 +19,46 @@ export function AuthRegisterScreen({
   onBack,
 }) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Cadastro</Text>
-      <Text style={styles.subtitle}>Crie seus dados de acesso</Text>
+    <KeyboardAvoidingView style={styles.keyboardContainer} behavior="padding">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Cadastro</Text>
+        <Text style={styles.subtitle}>Crie seus dados de acesso</Text>
 
-      {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
 
-      <TextInput
-        style={[styles.input, !!errorMessage && styles.inputError]}
-        placeholder="Usuário"
-        placeholderTextColor="#888"
-        value={usuario}
-        onChangeText={setUsuario}
-        autoCapitalize="none"
-      />
+        <TextInput
+          style={[styles.input, !!errorMessage && styles.inputError]}
+          placeholder="E-mail"
+          placeholderTextColor="#888"
+          value={usuario}
+          onChangeText={setUsuario}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
 
-      <TextInput
-        style={[styles.input, !!errorMessage && styles.inputError]}
-        placeholder="Senha"
-        placeholderTextColor="#888"
-        value={senha}
-        onChangeText={setSenha}
-        secureTextEntry
-      />
+        <TextInput
+          style={[styles.input, !!errorMessage && styles.inputError]}
+          placeholder="Senha"
+          placeholderTextColor="#888"
+          value={senha}
+          onChangeText={setSenha}
+          secureTextEntry
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Salvar e Cadastrar Biometria</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+          <Text style={styles.buttonText}>Salvar e Cadastrar Biometria</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.backButton} onPress={onBack}>
-        <Text style={styles.backButtonText}>Voltar</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Text style={styles.backButtonText}>Voltar</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -65,11 +73,16 @@ AuthRegisterScreen.propTypes = {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardContainer: {
     flex: 1,
+    backgroundColor: '#FAFAFA',
+  },
+  container: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
     backgroundColor: '#FAFAFA',
+    paddingVertical: 24,
   },
   title: {
     fontSize: 32,

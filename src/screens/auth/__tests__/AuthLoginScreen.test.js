@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { AuthLoginScreen } from '../AuthLoginScreen';
 
 describe('AuthLoginScreen Component', () => {
@@ -27,7 +28,7 @@ describe('AuthLoginScreen Component', () => {
     expect(getByText('Login')).toBeTruthy();
     expect(getByText('Entre com sua conta')).toBeTruthy();
 
-    const inputUsuario = getByPlaceholderText('Usuário');
+    const inputUsuario = getByPlaceholderText('E-mail');
     const inputSenha = getByPlaceholderText('Senha');
 
     fireEvent.changeText(inputUsuario, 'teste@email.com');
@@ -68,5 +69,15 @@ describe('AuthLoginScreen Component', () => {
     );
 
     expect(queryByText('Senha incorreta')).toBeNull();
+  });
+
+  it('deve renderizar corretamente no ambiente Android', () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'android';
+
+    const { getByText } = render(<AuthLoginScreen {...defaultProps} />);
+    expect(getByText('Login')).toBeTruthy();
+
+    Platform.OS = originalOS;
   });
 });

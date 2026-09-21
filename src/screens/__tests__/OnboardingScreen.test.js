@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import OnboardingScreen from '../OnboardingScreen';
+import { Platform } from 'react-native';
 
 // Mock do AsyncStorage para evitar erros no Jest
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -63,5 +64,17 @@ describe('OnboardingScreen Component', () => {
     await waitFor(() => {
       expect(getByTestId('button-complete')).toBeTruthy();
     });
+  });
+
+  it('deve renderizar corretamente no ambiente Android', () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'android';
+
+    const { getByTestId } = render(
+      <OnboardingScreen onComplete={mockOnComplete} />
+    );
+    expect(getByTestId('button-complete')).toBeTruthy();
+
+    Platform.OS = originalOS;
   });
 });

@@ -21,7 +21,7 @@ export const externalLinkService = {
     }
 
     const message = encodeURIComponent(
-      'Olá! Vi seu post sobre o pet no Find Pets e gostaria de ajudar.'
+      'Olá! Vi seu post sobre o pet no FindPets e gostaria de ajudar.'
     );
     Linking.openURL(`https://wa.me/${phoneNumber}?text=${message}`);
   },

@@ -1,5 +1,5 @@
 {
-  "name": "Find Pets",
+  "name": "FindPets",
   "slug": "find-pets",
   "version": "1.0.0",
   "main": "index.js",

@@ -69,7 +69,7 @@ describe('LoginScreen Component', () => {
     expect(getByText('Cadastro')).toBeTruthy();
     expect(getByText('Erro de teste')).toBeTruthy();
 
-    const inputUsuario = getByPlaceholderText('Usuário');
+    const inputUsuario = getByPlaceholderText('E-mail');
     const inputSenha = getByPlaceholderText('Senha');
 
     fireEvent.changeText(inputUsuario, 'novo@test.com');
@@ -111,7 +111,7 @@ describe('LoginScreen Component', () => {
 
     expect(getByText('Login')).toBeTruthy();
 
-    const inputUsuario = getByPlaceholderText('Usuário');
+    const inputUsuario = getByPlaceholderText('E-mail');
     const inputSenha = getByPlaceholderText('Senha');
 
     fireEvent.changeText(inputUsuario, 'user@test.com');

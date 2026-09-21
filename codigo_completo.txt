@@ -1,0 +1,1657 @@
+========================================
+ARQUIVO: src/constants/storageKeys.js
+========================================
+export const STORAGE_KEYS = {
+  SESSION: 'FindPets_session',
+  CREDENTIALS: 'FindPets_credentials',
+  PROFILE: 'FindPets_profile',
+  POSTS: 'FindPets_posts',
+};
+
+
+
+========================================
+ARQUIVO: src/hooks/useFeed.js
+========================================
+import { useState, useEffect, useCallback } from 'react';
+import { useCameraPermissions } from 'expo-camera';
+import { Alert } from 'react-native';
+import { postService } from '../services/postService';
+import { locationService } from '../services/locationService';
+import { onboardingService } from '../services/onboarding';
+
+export function useFeed() {
+  const [posts, setPosts] = useState([]);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [cameraRef, setCameraRef] = useState(null);
+
+  const loadPosts = useCallback(async () => {
+    try {
+      const loadedPosts = await postService.getPosts();
+      setPosts(loadedPosts);
+    } catch {
+      setPosts([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
+
+  const openCamera = async () => {
+    const hasPermission = cameraPermission?.granted === true;
+    if (hasPermission) {
+      setIsCameraOpen(true);
+      return;
+    }
+    const permissionResult = await requestCameraPermission();
+    if (permissionResult?.granted === true) {
+      setIsCameraOpen(true);
+    }
+  };
+
+  const closeCamera = () => {
+    setIsCameraOpen(false);
+  };
+
+  const takePicture = async () => {
+    if (!cameraRef) return;
+
+    try {
+      const photo = await cameraRef.takePictureAsync({ quality: 0.5 });
+      const locationData = await locationService.getCurrentLocation();
+      const userProfile = await onboardingService.getUserProfile();
+
+      const newPost = {
+        id: Date.now().toString(),
+        imageUri: photo.uri,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        location: locationData.address,
+        date: new Date().toLocaleDateString('pt-BR'),
+        type: 'Perdido',
+        contactPhone: userProfile?.whatsapp || null,
+      };
+
+      await postService.savePost(newPost);
+      await loadPosts();
+      setIsCameraOpen(false);
+    } catch {
+      setIsCameraOpen(false);
+      Alert.alert(
+        'Erro',
+        'Não foi possível capturar a foto ou obter a localização. Tente novamente.'
+      );
+    }
+  };
+
+  return {
+    posts,
+    isCameraOpen,
+    setCameraRef,
+    openCamera,
+    closeCamera,
+    takePicture,
+  };
+}
+
+
+
+========================================
+ARQUIVO: src/hooks/useLogin.js
+========================================
+// src/hooks/useLogin.js
+import { useState, useEffect, useCallback } from 'react';
+import { biometricService } from '../services/biometrics';
+import { sessionService } from '../services/session';
+
+export function useLogin(onSuccess) {
+  const [usuario, setUsuario] = useState('');
+  const [senha, setSenha] = useState('');
+  const [hasHardwareBiometric, setHasHardwareBiometric] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [authMode, setAuthMode] = useState('home'); // 'home', 'login', 'cadastro'
+
+  const checkBiometricSupport = useCallback(async () => {
+    const isAvailable = await biometricService.checkAvailability();
+    setHasHardwareBiometric(isAvailable);
+  }, []);
+
+  useEffect(() => {
+    checkBiometricSupport();
+  }, [checkBiometricSupport]);
+
+  // Função auxiliar para validar formato de e-mail
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // 1. CADASTRO: Salva usuário, senha e biometria (se o usuário aceitar)
+  const handleRegister = async () => {
+    setErrorMessage('');
+    if (!usuario.trim() || !senha.trim()) {
+      setErrorMessage('Preencha usuário e senha.');
+      return;
+    }
+
+    // Validar formato do e-mail
+    if (!isValidEmail(usuario.trim())) {
+      setErrorMessage('Insira um formato de e-mail válido.');
+      return;
+    }
+
+    try {
+      let cadastrouBiometria = false;
+
+      // Se o celular tiver leitor biométrico, tenta cadastrar/vincular
+      if (hasHardwareBiometric) {
+        const result = await biometricService.authenticate(
+          'Cadastre sua biometria para futuros logins'
+        );
+        if (result.success) {
+          cadastrouBiometria = true;
+        }
+      }
+
+      // Salva as credenciais e se a biometria foi habilitada
+      await sessionService.saveCredentials(
+        usuario.trim(),
+        senha,
+        cadastrouBiometria
+      );
+
+      alert('Cadastro realizado com sucesso! Faça o login.');
+      setAuthMode('home');
+      setUsuario('');
+      setSenha('');
+    } catch (error) {
+      setErrorMessage(error.message || 'Erro ao realizar o cadastro.');
+    }
+  };
+
+  // 2. LOGIN MANUAL: Valida usuário e senha estritos
+  const handleManualLogin = async () => {
+    setErrorMessage('');
+    if (!usuario.trim() || !senha.trim()) {
+      setErrorMessage('Preencha usuário e senha.');
+      return;
+    }
+
+    // Validar formato do e-mail também no login
+    if (!isValidEmail(usuario.trim())) {
+      setErrorMessage('Insira um formato de e-mail válido.');
+      return;
+    }
+
+    try {
+      const savedCreds = await sessionService.getCredentials();
+
+      const isPasswordValid = savedCreds
+        ? await sessionService.verifyPassword(senha, savedCreds.passwordHash)
+        : false;
+
+      if (
+        !savedCreds ||
+        savedCreds.usuario !== usuario.trim() ||
+        !isPasswordValid
+      ) {
+        setErrorMessage('Usuário não existe ou senha errada.');
+        return;
+      }
+
+      onSuccess?.({ type: 'credentials', usuario: savedCreds.usuario });
+    } catch (error) {
+      setErrorMessage(error.message || 'Erro ao realizar o login.');
+    }
+  };
+
+  // 3. LOGIN POR BIOMETRIA
+  const triggerBiometricAuth = async () => {
+    setErrorMessage('');
+    const savedCreds = await sessionService.getCredentials();
+
+    if (!savedCreds) {
+      setErrorMessage('Nenhum usuário cadastrado neste dispositivo.');
+      return;
+    }
+
+    if (!savedCreds.hasBiometrics) {
+      setErrorMessage('A biometria não foi cadastrada para este usuário.');
+      return;
+    }
+
+    const result = await biometricService.authenticate(
+      'Autentique-se com sua biometria'
+    );
+    if (result.success) {
+      onSuccess?.({ type: 'biometric', usuario: savedCreds.usuario });
+    } else if (result.error && result.error !== 'user_cancel') {
+      setErrorMessage('Biometria não reconhecida.');
+    }
+  };
+
+  return {
+    usuario,
+    setUsuario,
+    senha,
+    setSenha,
+    hasHardwareBiometric,
+    errorMessage,
+    authMode,
+    setAuthMode,
+    handleRegister,
+    handleManualLogin,
+    triggerBiometricAuth,
+  };
+}
+
+
+
+========================================
+ARQUIVO: src/hooks/useOnboarding.js
+========================================
+import { useState } from 'react';
+import { onboardingService } from '../services/onboarding';
+
+export function useOnboarding(onComplete) {
+  const [name, setName] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSaveProfile = async () => {
+    setErrorMessage('');
+    if (!name.trim() || !whatsapp.trim()) {
+      setErrorMessage('Preencha todos os campos.');
+      return;
+    }
+
+    const cleanedPhone = whatsapp.replace(/\D/g, '');
+    if (cleanedPhone.length < 10) {
+      setErrorMessage('Insira um número de WhatsApp válido com DDD.');
+      return;
+    }
+
+    try {
+      await onboardingService.saveUserProfile({ name, whatsapp: cleanedPhone });
+      onComplete?.({ name, whatsapp: cleanedPhone });
+    } catch (error) {
+      setErrorMessage(error.message || 'Erro ao salvar perfil.');
+    }
+  };
+
+  return {
+    name,
+    setName,
+    whatsapp,
+    setWhatsapp,
+    errorMessage,
+    handleSaveProfile,
+  };
+}
+
+
+
+========================================
+ARQUIVO: src/hooks/useSession.js
+========================================
+import { useState, useEffect, useCallback } from 'react';
+import { sessionService } from '../services/session';
+
+export function useSession() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState(null);
+
+  const checkSession = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const currentSession = await sessionService.getSession();
+      setSession(currentSession);
+    } catch {
+      setSession(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  const saveUserSession = async (userData) => {
+    await sessionService.saveSession(userData);
+    setSession(userData);
+  };
+
+  const logout = async () => {
+    await sessionService.clearSession();
+    setSession(null);
+  };
+
+  return {
+    isLoading,
+    session,
+    saveUserSession,
+    logout,
+    checkSession,
+  };
+}
+
+
+
+========================================
+ARQUIVO: src/screens/auth/AuthHomeScreen.js
+========================================
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import PropTypes from 'prop-types';
+
+export function AuthHomeScreen({ onNavigate }) {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>FindPets</Text>
+      <Text style={styles.subtitle}>Escolha uma opção</Text>
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => onNavigate('login')}
+      >
+        <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.button, styles.secondaryButton]}
+        onPress={() => onNavigate('cadastro')}
+      >
+        <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+          Cadastrar
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+AuthHomeScreen.propTypes = {
+  onNavigate: PropTypes.func.isRequired,
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: '#FAFAFA',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#4A90E2',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  button: {
+    height: 50,
+    backgroundColor: '#4A90E2',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  secondaryButton: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+    marginTop: 12,
+  },
+  secondaryButtonText: {
+    color: '#4A90E2',
+  },
+});
+
+
+
+========================================
+ARQUIVO: src/screens/auth/AuthLoginScreen.js
+========================================
+// src/screens/AuthLoginScreen.js
+import React from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import PropTypes from 'prop-types';
+
+export function AuthLoginScreen({
+  usuario,
+  setUsuario,
+  senha,
+  setSenha,
+  hasHardwareBiometric,
+  errorMessage,
+  handleManualLogin,
+  triggerBiometricAuth,
+  onBack,
+}) {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+      <Text style={styles.subtitle}>Entre com sua conta</Text>
+
+      {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+
+      <TextInput
+        style={[styles.input, !!errorMessage && styles.inputError]}
+        placeholder="Usuário"
+        placeholderTextColor="#888"
+        value={usuario}
+        onChangeText={setUsuario}
+        autoCapitalize="none"
+      />
+
+      <TextInput
+        style={[styles.input, !!errorMessage && styles.inputError]}
+        placeholder="Senha"
+        placeholderTextColor="#888"
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleManualLogin}>
+        <Text style={styles.buttonText}>Entrar com Senha</Text>
+      </TouchableOpacity>
+
+      {hasHardwareBiometric && (
+        <TouchableOpacity
+          style={styles.biometricButton}
+          onPress={triggerBiometricAuth}
+        >
+          <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <Text style={styles.backButtonText}>Voltar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+AuthLoginScreen.propTypes = {
+  usuario: PropTypes.string.isRequired,
+  setUsuario: PropTypes.func.isRequired,
+  senha: PropTypes.string.isRequired,
+  setSenha: PropTypes.func.isRequired,
+  hasHardwareBiometric: PropTypes.bool.isRequired,
+  errorMessage: PropTypes.string,
+  handleManualLogin: PropTypes.func.isRequired,
+  triggerBiometricAuth: PropTypes.func.isRequired,
+  onBack: PropTypes.func.isRequired,
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: '#FAFAFA',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#4A90E2',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  errorText: {
+    color: '#D0021B',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: '#FFF',
+    color: '#333',
+  },
+  inputError: {
+    borderColor: '#D0021B',
+  },
+  button: {
+    height: 50,
+    backgroundColor: '#4A90E2',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  biometricButton: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
+    backgroundColor: '#F0F4F8',
+  },
+  biometricButtonText: {
+    color: '#4A90E2',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  backButton: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#666',
+    fontSize: 14,
+  },
+});
+
+
+
+========================================
+ARQUIVO: src/screens/auth/AuthRegisterScreen.js
+========================================
+// src/screens/AuthRegisterScreen.js
+import React from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import PropTypes from 'prop-types';
+
+export function AuthRegisterScreen({
+  usuario,
+  setUsuario,
+  senha,
+  setSenha,
+  errorMessage,
+  handleRegister,
+  onBack,
+}) {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Cadastro</Text>
+      <Text style={styles.subtitle}>Crie seus dados de acesso</Text>
+
+      {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+
+      <TextInput
+        style={[styles.input, !!errorMessage && styles.inputError]}
+        placeholder="Usuário"
+        placeholderTextColor="#888"
+        value={usuario}
+        onChangeText={setUsuario}
+        autoCapitalize="none"
+      />
+
+      <TextInput
+        style={[styles.input, !!errorMessage && styles.inputError]}
+        placeholder="Senha"
+        placeholderTextColor="#888"
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
+      />
+
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Salvar e Cadastrar Biometria</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <Text style={styles.backButtonText}>Voltar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+AuthRegisterScreen.propTypes = {
+  usuario: PropTypes.string.isRequired,
+  setUsuario: PropTypes.func.isRequired,
+  senha: PropTypes.string.isRequired,
+  setSenha: PropTypes.func.isRequired,
+  errorMessage: PropTypes.string,
+  handleRegister: PropTypes.func.isRequired,
+  onBack: PropTypes.func.isRequired,
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: '#FAFAFA',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#4A90E2',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  errorText: {
+    color: '#D0021B',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: '#FFF',
+    color: '#333',
+  },
+  inputError: {
+    borderColor: '#D0021B',
+  },
+  button: {
+    height: 50,
+    backgroundColor: '#4A90E2',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  backButton: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#666',
+    fontSize: 14,
+  },
+});
+
+
+
+========================================
+ARQUIVO: src/screens/components/PetCard.js
+========================================
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import PropTypes from 'prop-types';
+
+export function PetCard({ item, onOpenMap, onOpenWhatsApp }) {
+  return (
+    <View style={styles.card}>
+      <Image
+        testID="pet-image"
+        source={{ uri: item.imageUri }}
+        style={styles.cardImage}
+      />
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardBadge}>{item.type}</Text>
+        <Text style={styles.cardDate}>Registrado em: {item.date}</Text>
+
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.mapButton]}
+            onPress={() =>
+              onOpenMap(item.latitude, item.longitude, item.location)
+            }
+          >
+            <Text style={styles.actionButtonText}>📍 Ver no Mapa</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.whatsappButton]}
+            onPress={() => onOpenWhatsApp(item.contactPhone)}
+          >
+            <Text style={styles.actionButtonText}>💬 WhatsApp</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+PetCard.propTypes = {
+  item: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    imageUri: PropTypes.string.isRequired,
+    type: PropTypes.string.isRequired,
+    date: PropTypes.string.isRequired,
+    latitude: PropTypes.number,
+    longitude: PropTypes.number,
+    location: PropTypes.string,
+    contactPhone: PropTypes.string,
+  }).isRequired,
+  onOpenMap: PropTypes.func.isRequired,
+  onOpenWhatsApp: PropTypes.func.isRequired,
+};
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  cardImage: { width: '100%', height: 250 },
+  cardInfo: { padding: 12 },
+  cardBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#ff9800',
+    color: '#fff',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    fontWeight: 'bold',
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  cardDate: { fontSize: 12, color: '#777', marginBottom: 12 },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapButton: {
+    backgroundColor: '#007AFF',
+  },
+  whatsappButton: {
+    backgroundColor: '#25D366',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 13,
+  },
+});
+
+
+
+========================================
+ARQUIVO: src/screens/FeedScreen.js
+========================================
+// src/screens/FeedScreen.js
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CameraView } from 'expo-camera';
+import PropTypes from 'prop-types';
+import { useFeed } from '../hooks/useFeed';
+import { externalLinkService } from '../services/externalLinkService';
+import { PetCard } from './components/PetCard';
+
+export default function FeedScreen({ onLogout }) {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const {
+    posts,
+    isCameraOpen,
+    setCameraRef,
+    openCamera,
+    closeCamera,
+    takePicture,
+  } = useFeed();
+
+  const handleLogoutPress = async () => {
+    try {
+      setIsLoggingOut(true);
+      await onLogout();
+    } catch (error) {
+      console.error('Erro ao realizar logout:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>FindPets - Feed</Text>
+        {onLogout && (
+          <TouchableOpacity
+            onPress={handleLogoutPress}
+            disabled={isLoggingOut}
+            style={[
+              styles.logoutButton,
+              isLoggingOut && styles.disabledLogoutButton,
+            ]}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.logoutText}>
+              {isLoggingOut ? 'Saindo...' : 'Sair'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Nenhum pet cadastrado ainda.</Text>
+            <Text style={styles.emptySubText}>
+              Toque na câmera para registrar o primeiro.
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <PetCard
+            item={item}
+            onOpenMap={(lat, lon, addr) =>
+              externalLinkService.openMap(lat, lon, addr)
+            }
+            onOpenWhatsApp={(phone) => externalLinkService.openWhatsApp(phone)}
+          />
+        )}
+      />
+
+      <TouchableOpacity style={styles.fab} onPress={openCamera}>
+        <Text style={styles.fabText}>📷</Text>
+      </TouchableOpacity>
+
+      <Modal visible={isCameraOpen} animationType="slide">
+        <View style={styles.cameraContainer}>
+          <CameraView style={styles.camera} ref={setCameraRef} />
+
+          <View style={styles.cameraButtonContainer}>
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={takePicture}
+            >
+              <View style={styles.captureInner} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.closeCameraButton}
+              onPress={closeCamera}
+            >
+              <Text style={styles.closeCameraText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+FeedScreen.propTypes = {
+  onLogout: PropTypes.func,
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  logoutButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#ff4d4d',
+    borderRadius: 6,
+  },
+  disabledLogoutButton: {
+    backgroundColor: '#ffb3b3',
+    opacity: 0.8,
+  },
+  logoutText: { color: '#fff', fontWeight: 'bold' },
+  listContainer: { padding: 16 },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 60,
+  },
+  emptyText: { fontSize: 16, fontWeight: 'bold', color: '#666' },
+  emptySubText: { fontSize: 14, color: '#999', marginTop: 4 },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    backgroundColor: '#007AFF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+  },
+  fabText: { fontSize: 24 },
+  cameraContainer: { flex: 1, backgroundColor: '#000' },
+  camera: { flex: 1 },
+  cameraButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    padding: 32,
+    alignItems: 'center',
+  },
+  captureButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  captureInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#fff',
+  },
+  closeCameraButton: { padding: 12 },
+  closeCameraText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+});
+
+
+
+========================================
+ARQUIVO: src/screens/LoginScreen.js
+========================================
+// src/screens/LoginScreen.js
+import React from 'react';
+import PropTypes from 'prop-types';
+import { useLogin } from '../hooks/useLogin';
+import { AuthHomeScreen } from './auth/AuthHomeScreen';
+import { AuthLoginScreen } from './auth/AuthLoginScreen';
+import { AuthRegisterScreen } from './auth/AuthRegisterScreen';
+
+export default function LoginScreen({ onLoginSuccess }) {
+  const {
+    usuario,
+    setUsuario,
+    senha,
+    setSenha,
+    hasHardwareBiometric,
+    errorMessage,
+    authMode,
+    setAuthMode,
+    handleRegister,
+    handleManualLogin,
+    triggerBiometricAuth,
+  } = useLogin(onLoginSuccess);
+
+  if (authMode === 'home') {
+    return <AuthHomeScreen onNavigate={setAuthMode} />;
+  }
+
+  if (authMode === 'cadastro') {
+    return (
+      <AuthRegisterScreen
+        usuario={usuario}
+        setUsuario={setUsuario}
+        senha={senha}
+        setSenha={setSenha}
+        errorMessage={errorMessage}
+        handleRegister={handleRegister}
+        onBack={() => setAuthMode('home')}
+      />
+    );
+  }
+
+  return (
+    <AuthLoginScreen
+      usuario={usuario}
+      setUsuario={setUsuario}
+      senha={senha}
+      setSenha={setSenha}
+      hasHardwareBiometric={hasHardwareBiometric}
+      errorMessage={errorMessage}
+      handleManualLogin={handleManualLogin}
+      triggerBiometricAuth={triggerBiometricAuth}
+      onBack={() => setAuthMode('home')}
+    />
+  );
+}
+
+LoginScreen.propTypes = {
+  onLoginSuccess: PropTypes.func.isRequired,
+};
+
+
+
+========================================
+ARQUIVO: src/screens/OnboardingScreen.js
+========================================
+import React from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import PropTypes from 'prop-types';
+import { useOnboarding } from '../hooks/useOnboarding';
+
+export default function OnboardingScreen({ onComplete }) {
+  const {
+    name,
+    setName,
+    whatsapp,
+    setWhatsapp,
+    errorMessage,
+    handleSaveProfile,
+  } = useOnboarding(onComplete);
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Complete seu Perfil</Text>
+      <Text style={styles.subtitle}>
+        Precisamos de algumas informações para facilitar o contato nos resgates.
+      </Text>
+
+      {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+
+      <TextInput
+        testID="input-name"
+        style={styles.input}
+        placeholder="Seu Nome"
+        value={name}
+        onChangeText={setName}
+      />
+
+      <TextInput
+        testID="input-whatsapp"
+        style={styles.input}
+        placeholder="WhatsApp (com DDD)"
+        value={whatsapp}
+        onChangeText={setWhatsapp}
+        keyboardType="phone-pad"
+      />
+
+      <TouchableOpacity
+        testID="button-complete"
+        style={styles.button}
+        onPress={handleSaveProfile}
+      >
+        <Text style={styles.buttonText}>Salvar e Continuar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+OnboardingScreen.propTypes = {
+  onComplete: PropTypes.func,
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: '#FAFAFA',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#4A90E2',
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  errorText: {
+    color: '#D0021B',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  input: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: '#FFF',
+  },
+  button: {
+    height: 50,
+    backgroundColor: '#4A90E2',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
+
+
+
+========================================
+ARQUIVO: src/services/biometrics.js
+========================================
+import * as LocalAuthentication from 'expo-local-authentication';
+
+export const biometricService = {
+  async checkAvailability() {
+    const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+    return hasHardware && isEnrolled;
+  },
+
+  async authenticate(promptMessage = 'Autentique-se para entrar no FindPets') {
+    return await LocalAuthentication.authenticateAsync({
+      promptMessage,
+      fallbackLabel: 'Usar senha',
+      cancelLabel: 'Cancelar',
+      disableDeviceFallback: true,
+    });
+  },
+};
+
+
+
+========================================
+ARQUIVO: src/services/externalLinkService.js
+========================================
+// src/services/externalLinkService.js
+import { Linking } from 'react-native';
+
+export const externalLinkService = {
+  openMap(latitude, longitude, address) {
+    let url = '';
+    if (latitude && longitude) {
+      url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+    } else if (address) {
+      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    } else {
+      return;
+    }
+    Linking.openURL(url);
+  },
+
+  openWhatsApp(phoneNumber) {
+    // Se não houver telefone cadastrado, encerra a execução para não abrir chat fictício
+    if (!phoneNumber) {
+      return;
+    }
+
+    const message = encodeURIComponent(
+      'Olá! Vi seu post sobre o pet no FindPets e gostaria de ajudar.'
+    );
+    Linking.openURL(`https://wa.me/${phoneNumber}?text=${message}`);
+  },
+};
+
+
+
+========================================
+ARQUIVO: src/services/locationService.js
+========================================
+import * as Location from 'expo-location';
+
+export const locationService = {
+  async getCurrentLocation() {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return {
+          latitude: null,
+          longitude: null,
+          address: 'Localização não permitida',
+        };
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      return {
+        latitude,
+        longitude,
+        address: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`,
+      };
+    } catch {
+      return {
+        latitude: null,
+        longitude: null,
+        address: 'Localização indisponível',
+      };
+    }
+  },
+};
+
+
+
+========================================
+ARQUIVO: src/services/onboarding.js
+========================================
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../constants/storageKeys';
+
+export const onboardingService = {
+  async saveUserProfile(profileData) {
+    if (!profileData || !profileData.name || !profileData.whatsapp) {
+      throw new Error('Dados inválidos para salvamento do perfil.');
+    }
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.PROFILE,
+        JSON.stringify(profileData)
+      );
+      return { success: true, data: profileData };
+    } catch (error) {
+      throw new Error(`Erro ao salvar perfil: ${error.message}`);
+    }
+  },
+
+  async getUserProfile() {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.PROFILE);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      throw new Error(`Erro ao buscar perfil: ${error.message}`);
+    }
+  },
+};
+
+
+
+========================================
+ARQUIVO: src/services/postService.js
+========================================
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../constants/storageKeys';
+
+export const postService = {
+  async getPosts() {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.POSTS);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      throw new Error(`Erro ao carregar as publicações: ${error.message}`);
+    }
+  },
+
+  async savePost(post) {
+    if (!post || !post.id) {
+      throw new Error('Dados do post inválidos.');
+    }
+
+    try {
+      const posts = await this.getPosts();
+      const newPosts = [post, ...posts];
+      await AsyncStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(newPosts));
+      return newPosts;
+    } catch (error) {
+      throw new Error(`Erro ao salvar a publicação: ${error.message}`);
+    }
+  },
+};
+
+
+
+========================================
+ARQUIVO: src/services/session.js
+========================================
+// src/services/session.js
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import bcrypt from 'bcryptjs';
+import { STORAGE_KEYS } from '../constants/storageKeys';
+
+export const sessionService = {
+  async saveCredentials(usuario, password, hasBiometrics = false) {
+    if (!usuario || !password) {
+      throw new Error('Usuário e senha são obrigatórios.');
+    }
+    try {
+      // Gera o hash seguro da senha com salt de 10 rounds
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      const data = JSON.stringify({ usuario, passwordHash, hasBiometrics });
+      await SecureStore.setItemAsync(STORAGE_KEYS.CREDENTIALS, data);
+    } catch (error) {
+      throw new Error(
+        `Erro ao salvar credenciais com segurança: ${error.message}`
+      );
+    }
+  },
+
+  async verifyPassword(inputPassword, storedHash) {
+    if (!inputPassword || !storedHash) return false;
+    return await bcrypt.compare(inputPassword, storedHash);
+  },
+
+  async getCredentials() {
+    try {
+      const data = await SecureStore.getItemAsync(STORAGE_KEYS.CREDENTIALS);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      throw new Error(`Erro ao recuperar credenciais: ${error.message}`);
+    }
+  },
+
+  async saveSession(userData) {
+    if (!userData) {
+      throw new Error('Dados de sessão inválidos.');
+    }
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.SESSION,
+        JSON.stringify(userData)
+      );
+    } catch (error) {
+      throw new Error(`Erro ao persistir sessão: ${error.message}`);
+    }
+  },
+
+  async getSession() {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.SESSION);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      throw new Error(`Erro ao buscar sessão ativa: ${error.message}`);
+    }
+  },
+
+  async clearSession() {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.SESSION);
+    } catch (error) {
+      throw new Error(`Erro ao encerrar a sessão: ${error.message}`);
+    }
+  },
+};
+
+
+
+========================================
+ARQUIVO: App.js
+========================================
+// App.js
+import 'react-native-get-random-values';
+import React, { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
+import LoginScreen from './src/screens/LoginScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
+import FeedScreen from './src/screens/FeedScreen';
+
+import { useSession } from './src/hooks/useSession';
+import { sessionService } from './src/services/session';
+import { onboardingService } from './src/services/onboarding';
+
+export default function App() {
+  const { isLoading, session, saveUserSession, logout } = useSession();
+  const [currentStep, setCurrentStep] = useState('loading');
+
+  const determineInitialStep = useCallback(async () => {
+    if (isLoading) return;
+
+    try {
+      if (!session) {
+        setCurrentStep('login');
+        return;
+      }
+
+      // Se há sessão ativa, valida se o perfil de onboarding já existe
+      const profile = await onboardingService.getUserProfile();
+      setCurrentStep(profile ? 'home' : 'onboarding');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        `Não foi possível carregar os dados do usuário: ${error.message}`
+      );
+      setCurrentStep('login');
+    }
+  }, [isLoading, session]);
+
+  useEffect(() => {
+    determineInitialStep();
+  }, [determineInitialStep]);
+
+  const handleLoginSuccess = async (data) => {
+    const welcomeMessage =
+      data.type === 'biometric'
+        ? 'Login realizado via Biometria com sucesso.'
+        : `Bem-vindo de volta, ${data.usuario}!`;
+
+    Alert.alert('Sucesso!', welcomeMessage);
+    await saveUserSession(data);
+
+    try {
+      const profile = await onboardingService.getUserProfile();
+      setCurrentStep(profile ? 'home' : 'onboarding');
+    } catch {
+      setCurrentStep('onboarding');
+    }
+  };
+
+  const handleOnboardingComplete = async (profileData) => {
+    Alert.alert(
+      'Perfil Completo!',
+      `Seja bem-vindo, ${profileData.name}! Seu cadastro foi salvo com sucesso.`
+    );
+
+    try {
+      const currentSession = (await sessionService.getSession()) || {};
+      const updatedSession = { ...currentSession, profile: profileData };
+      await saveUserSession(updatedSession);
+      setCurrentStep('home');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        `Falha ao salvar sessão com o perfil: ${error.message}`
+      );
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setCurrentStep('login');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        `Não foi possível encerrar a sessão: ${error.message}`
+      );
+    }
+  };
+
+  if (isLoading || currentStep === 'loading') {
+    return (
+      <SafeAreaProvider>
+        <SafeAreaView style={[styles.container, styles.centered]}>
+          <ActivityIndicator size="large" color="#4A90E2" />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    );
+  }
+
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+
+        {currentStep === 'login' && (
+          <LoginScreen onLoginSuccess={handleLoginSuccess} />
+        )}
+
+        {currentStep === 'onboarding' && (
+          <OnboardingScreen onComplete={handleOnboardingComplete} />
+        )}
+
+        {currentStep === 'home' && <FeedScreen onLogout={handleLogout} />}
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FAFAFA',
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+});
+
+
+
+========================================
+ARQUIVO: package.json
+========================================
+{
+  "name": "FindPets",
+  "slug": "find-pets",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "test": "jest --ci --coverage",
+    "prepare": "husky"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "jest-expo"
+      ]
+    }
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
+    ],
+    "collectCoverageFrom": [
+      "**/*.{js,jsx}",
+      "!**/node_modules/**",
+      "!**/coverage/**",
+      "!**/babel.config.js",
+      "!**/eslint.config.js",
+      "!**/commitlint.config.js",
+      "!**/index.js",
+      "!**/App.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    }
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "bcryptjs": "^3.0.3",
+    "expo": "~57.0.24",
+    "expo-camera": "~57.0.5",
+    "expo-local-authentication": "~57.0.3",
+    "expo-location": "~57.0.19",
+    "expo-secure-store": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "jest-expo": "~57.0.0",
+    "prop-types": "^15.8.1",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-get-random-values": "~1.11.0",
+    "react-native-safe-area-context": "~5.7.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.3",
+    "@commitlint/config-conventional": "^20.5.3",
+    "@react-native/jest-preset": "^0.86.3",
+    "@testing-library/react-native": "^13.3.3",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-native": "^5.0.0",
+    "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "prettier": "^3.9.6",
+    "react-test-renderer": "^19.1.0"
+  }
+}
+
+
+

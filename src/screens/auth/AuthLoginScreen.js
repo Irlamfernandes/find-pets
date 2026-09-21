@@ -1,11 +1,11 @@
-// src/screens/AuthLoginScreen.js
 import React from 'react';
 import {
-  View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import PropTypes from 'prop-types';
 
@@ -21,47 +21,55 @@ export function AuthLoginScreen({
   onBack,
 }) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <Text style={styles.subtitle}>Entre com sua conta</Text>
+    <KeyboardAvoidingView style={styles.keyboardContainer} behavior="padding">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.title}>Login</Text>
+        <Text style={styles.subtitle}>Entre com sua conta</Text>
 
-      {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
 
-      <TextInput
-        style={[styles.input, !!errorMessage && styles.inputError]}
-        placeholder="Usuário"
-        placeholderTextColor="#888"
-        value={usuario}
-        onChangeText={setUsuario}
-        autoCapitalize="none"
-      />
+        <TextInput
+          style={[styles.input, !!errorMessage && styles.inputError]}
+          placeholder="E-mail"
+          placeholderTextColor="#888"
+          value={usuario}
+          onChangeText={setUsuario}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
 
-      <TextInput
-        style={[styles.input, !!errorMessage && styles.inputError]}
-        placeholder="Senha"
-        placeholderTextColor="#888"
-        value={senha}
-        onChangeText={setSenha}
-        secureTextEntry
-      />
+        <TextInput
+          style={[styles.input, !!errorMessage && styles.inputError]}
+          placeholder="Senha"
+          placeholderTextColor="#888"
+          value={senha}
+          onChangeText={setSenha}
+          secureTextEntry
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleManualLogin}>
-        <Text style={styles.buttonText}>Entrar com Senha</Text>
-      </TouchableOpacity>
-
-      {hasHardwareBiometric && (
-        <TouchableOpacity
-          style={styles.biometricButton}
-          onPress={triggerBiometricAuth}
-        >
-          <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
+        <TouchableOpacity style={styles.button} onPress={handleManualLogin}>
+          <Text style={styles.buttonText}>Entrar com Senha</Text>
         </TouchableOpacity>
-      )}
 
-      <TouchableOpacity style={styles.backButton} onPress={onBack}>
-        <Text style={styles.backButtonText}>Voltar</Text>
-      </TouchableOpacity>
-    </View>
+        {hasHardwareBiometric && (
+          <TouchableOpacity
+            style={styles.biometricButton}
+            onPress={triggerBiometricAuth}
+          >
+            <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+          <Text style={styles.backButtonText}>Voltar</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -78,11 +86,16 @@ AuthLoginScreen.propTypes = {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardContainer: {
     flex: 1,
+    backgroundColor: '#FAFAFA',
+  },
+  container: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
     backgroundColor: '#FAFAFA',
+    paddingVertical: 24,
   },
   title: {
     fontSize: 32,

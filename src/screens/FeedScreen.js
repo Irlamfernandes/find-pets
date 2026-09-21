@@ -40,7 +40,7 @@ export default function FeedScreen({ onLogout }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Find Pets - Feed</Text>
+        <Text style={styles.headerTitle}>FindPets - Feed</Text>
         {onLogout && (
           <TouchableOpacity
             onPress={handleLogoutPress}

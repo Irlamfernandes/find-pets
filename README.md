@@ -1,6 +1,6 @@
-# Find Pets
+# FindPets
 
-O **Find Pets** é um aplicativo mobile desenvolvido para auxiliar na localização, cadastro e resgate de animais de estimação perdidos, facilitando a conexão rápida entre tutores e a comunidade.
+O **FindPets** é um aplicativo mobile desenvolvido para auxiliar na localização, cadastro e resgate de animais de estimação perdidos, facilitando a conexão rápida entre tutores e a comunidade.
 
 ---
 

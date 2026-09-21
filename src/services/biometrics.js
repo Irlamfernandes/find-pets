@@ -7,7 +7,7 @@ export const biometricService = {
     return hasHardware && isEnrolled;
   },
 
-  async authenticate(promptMessage = 'Autentique-se para entrar no Find Pets') {
+  async authenticate(promptMessage = 'Autentique-se para entrar no FindPets') {
     return await LocalAuthentication.authenticateAsync({
       promptMessage,
       fallbackLabel: 'Usar senha',

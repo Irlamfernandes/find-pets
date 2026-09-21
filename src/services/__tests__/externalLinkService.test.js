@@ -49,7 +49,7 @@ describe('externalLinkService', () => {
     it('deve abrir o WhatsApp com o telefone fornecido', () => {
       const phone = '5511988887777';
       const expectedMessage = encodeURIComponent(
-        'Olá! Vi seu post sobre o pet no Find Pets e gostaria de ajudar.'
+        'Olá! Vi seu post sobre o pet no FindPets e gostaria de ajudar.'
       );
 
       externalLinkService.openWhatsApp(phone);

@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import { Platform } from 'react-native';
 import { AuthRegisterScreen } from '../AuthRegisterScreen';
 
 describe('AuthRegisterScreen Component', () => {
@@ -25,7 +26,7 @@ describe('AuthRegisterScreen Component', () => {
     expect(getByText('Cadastro')).toBeTruthy();
     expect(getByText('Crie seus dados de acesso')).toBeTruthy();
 
-    const inputUsuario = getByPlaceholderText('Usuário');
+    const inputUsuario = getByPlaceholderText('E-mail');
     const inputSenha = getByPlaceholderText('Senha');
 
     fireEvent.changeText(inputUsuario, 'novo@email.com');
@@ -55,5 +56,15 @@ describe('AuthRegisterScreen Component', () => {
     );
 
     expect(queryByText('Preencha os campos')).toBeNull();
+  });
+
+  it('deve renderizar corretamente no ambiente Android', () => {
+    const originalOS = Platform.OS;
+    Platform.OS = 'android';
+
+    const { getByText } = render(<AuthRegisterScreen {...defaultProps} />);
+    expect(getByText('Cadastro')).toBeTruthy();
+
+    Platform.OS = originalOS;
   });
 });

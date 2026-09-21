@@ -30,7 +30,7 @@ describe('biometricService', () => {
     const result = await biometricService.authenticate();
 
     expect(LocalAuthentication.authenticateAsync).toHaveBeenCalledWith({
-      promptMessage: 'Autentique-se para entrar no Find Pets',
+      promptMessage: 'Autentique-se para entrar no FindPets',
       fallbackLabel: 'Usar senha',
       cancelLabel: 'Cancelar',
       disableDeviceFallback: true,

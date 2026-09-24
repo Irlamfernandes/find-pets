@@ -71,6 +71,33 @@ export function useFeed() {
     }
   };
 
+  // Função para excluir um post pelo ID com confirmação
+  const deletePost = async (postId) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza de que deseja excluir este registro?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Filtra a lista removendo o post selecionado
+              const updatedPosts = posts.filter((post) => post.id !== postId);
+              setPosts(updatedPosts);
+              
+              // Se o seu postService tiver um método para apagar permanentemente, pode chamá-lo aqui:
+              // Exemplo: await postService.deletePost(postId);
+            } catch {
+              Alert.alert('Erro', 'Não foi possível excluir o registro.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return {
     posts,
     isCameraOpen,
@@ -78,5 +105,6 @@ export function useFeed() {
     openCamera,
     closeCamera,
     takePicture,
+    deletePost,
   };
 }

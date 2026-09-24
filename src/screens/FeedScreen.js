@@ -1,4 +1,3 @@
-// src/screens/FeedScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -24,6 +23,7 @@ export default function FeedScreen({ onLogout }) {
     openCamera,
     closeCamera,
     takePicture,
+    deletePost,
   } = useFeed();
 
   const handleLogoutPress = async () => {
@@ -77,6 +77,7 @@ export default function FeedScreen({ onLogout }) {
               externalLinkService.openMap(lat, lon, addr)
             }
             onOpenWhatsApp={(phone) => externalLinkService.openWhatsApp(phone)}
+            onDelete={() => deletePost(item.id)}
           />
         )}
       />

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import PropTypes from 'prop-types';
 
-export function PetCard({ item, onOpenMap, onOpenWhatsApp }) {
+export function PetCard({ item, onOpenMap, onOpenWhatsApp, onDelete }) {
   return (
     <View style={styles.card}>
       <Image
@@ -31,6 +31,14 @@ export function PetCard({ item, onOpenMap, onOpenWhatsApp }) {
             <Text style={styles.actionButtonText}>💬 WhatsApp</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Botão de Excluir adicionado */}
+        <TouchableOpacity
+          style={[styles.actionButton, styles.deleteButton]}
+          onPress={onDelete}
+        >
+          <Text style={styles.actionButtonText}>🗑️ Excluir</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -49,6 +57,7 @@ PetCard.propTypes = {
   }).isRequired,
   onOpenMap: PropTypes.func.isRequired,
   onOpenWhatsApp: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
 };
 
 const styles = StyleSheet.create({
@@ -78,6 +87,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 8,
+    marginBottom: 8,
   },
   actionButton: {
     flex: 1,
@@ -91,6 +101,10 @@ const styles = StyleSheet.create({
   },
   whatsappButton: {
     backgroundColor: '#25D366',
+  },
+  deleteButton: {
+    backgroundColor: '#ff4d4d',
+    marginTop: 4,
   },
   actionButtonText: {
     color: '#fff',

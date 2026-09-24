@@ -14,10 +14,11 @@ import { useFeed } from '../hooks/useFeed';
 import { externalLinkService } from '../services/externalLinkService';
 import { PetCard } from './components/PetCard';
 
-export default function FeedScreen({ onLogout }) {
+export default function FeedScreen({ onLogout, onOpenProfile }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const {
     posts,
+    userName,
     isCameraOpen,
     setCameraRef,
     openCamera,
@@ -40,22 +41,40 @@ export default function FeedScreen({ onLogout }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>FindPets - Feed</Text>
-        {onLogout && (
-          <TouchableOpacity
-            onPress={handleLogoutPress}
-            disabled={isLoggingOut}
-            style={[
-              styles.logoutButton,
-              isLoggingOut && styles.disabledLogoutButton,
-            ]}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.logoutText}>
-              {isLoggingOut ? 'Saindo...' : 'Sair'}
-            </Text>
-          </TouchableOpacity>
-        )}
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>FindPets - Feed</Text>
+          {userName ? (
+            <Text style={styles.welcomeText}>Olá, {userName}</Text>
+          ) : null}
+        </View>
+
+        <View style={styles.headerButtons}>
+          {onOpenProfile && (
+            <TouchableOpacity
+              onPress={onOpenProfile}
+              style={styles.profileButton}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.profileButtonText}>⚙️ Perfil</Text>
+            </TouchableOpacity>
+          )}
+
+          {onLogout && (
+            <TouchableOpacity
+              onPress={handleLogoutPress}
+              disabled={isLoggingOut}
+              style={[
+                styles.logoutButton,
+                isLoggingOut && styles.disabledLogoutButton,
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.logoutText}>
+                {isLoggingOut ? 'Saindo...' : 'Sair'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <FlatList
@@ -112,6 +131,7 @@ export default function FeedScreen({ onLogout }) {
 
 FeedScreen.propTypes = {
   onLogout: PropTypes.func,
+  onOpenProfile: PropTypes.func,
 };
 
 const styles = StyleSheet.create({
@@ -125,7 +145,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
   },
+  headerTitleContainer: {
+    flex: 1,
+  },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+  welcomeText: { fontSize: 13, color: '#666', marginTop: 2 },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  profileButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#007AFF',
+    borderRadius: 6,
+  },
+  profileButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 },
   logoutButton: {
     paddingVertical: 6,
     paddingHorizontal: 12,

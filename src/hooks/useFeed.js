@@ -7,6 +7,7 @@ import { onboardingService } from '../services/onboarding';
 
 export function useFeed() {
   const [posts, setPosts] = useState([]);
+  const [userName, setUserName] = useState('');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraRef, setCameraRef] = useState(null);
@@ -20,9 +21,21 @@ export function useFeed() {
     }
   }, []);
 
+  const loadUserProfile = useCallback(async () => {
+    try {
+      const profile = await onboardingService.getUserProfile();
+      if (profile && profile.name) {
+        setUserName(profile.name);
+      }
+    } catch {
+      setUserName('');
+    }
+  }, []);
+
   useEffect(() => {
     loadPosts();
-  }, [loadPosts]);
+    loadUserProfile();
+  }, [loadPosts, loadUserProfile]);
 
   const openCamera = async () => {
     const hasPermission = cameraPermission?.granted === true;
@@ -83,12 +96,8 @@ export function useFeed() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Filtra a lista removendo o post selecionado
               const updatedPosts = posts.filter((post) => post.id !== postId);
               setPosts(updatedPosts);
-              
-              // Se o seu postService tiver um método para apagar permanentemente, pode chamá-lo aqui:
-              // Exemplo: await postService.deletePost(postId);
             } catch {
               Alert.alert('Erro', 'Não foi possível excluir o registro.');
             }
@@ -100,6 +109,7 @@ export function useFeed() {
 
   return {
     posts,
+    userName,
     isCameraOpen,
     setCameraRef,
     openCamera,

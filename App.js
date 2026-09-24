@@ -7,6 +7,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import LoginScreen from './src/screens/LoginScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import FeedScreen from './src/screens/FeedScreen';
+import ProfileScreen from './src/screens/ProfileScreen'; // <-- Importado aqui
 
 import { useSession } from './src/hooks/useSession';
 import { sessionService } from './src/services/session';
@@ -25,7 +26,7 @@ export default function App() {
         return;
       }
 
-      // Se há sessão ativa, valida se o perfil de onboarding já existe
+      // Se há sessão ativa, valida se o perfil de onboarding já existe[cite: 2]
       const profile = await onboardingService.getUserProfile();
       setCurrentStep(profile ? 'home' : 'onboarding');
     } catch (error) {
@@ -112,7 +113,16 @@ export default function App() {
           <OnboardingScreen onComplete={handleOnboardingComplete} />
         )}
 
-        {currentStep === 'home' && <FeedScreen onLogout={handleLogout} />}
+        {currentStep === 'home' && (
+          <FeedScreen
+            onLogout={handleLogout}
+            onOpenProfile={() => setCurrentStep('profile')}
+          />
+        )}
+
+        {currentStep === 'profile' && (
+          <ProfileScreen onBack={() => setCurrentStep('home')} />
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );

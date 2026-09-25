@@ -13,8 +13,7 @@ import { palette } from './src/theme/colors';
 import { useSession } from './src/hooks/useSession';
 import { sessionService } from './src/services/session';
 import { onboardingService } from './src/services/onboarding';
-import { AppAlertProvider } from './src/components/AppAlert';
-import { useAppAlert } from './src/components/AppAlert';
+import { AppAlertProvider, useAppAlert } from './src/components/AppAlert';
 
 function AppContent() {
   const { isLoading, session, saveUserSession, logout } = useSession();

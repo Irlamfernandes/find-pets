@@ -27,7 +27,7 @@ export function useFeed() {
   const loadUserProfile = useCallback(async () => {
     try {
       const profile = await onboardingService.getUserProfile();
-      if (profile && profile.name) {
+      if (profile?.name) {
         setUserName(profile.name);
       }
     } catch {

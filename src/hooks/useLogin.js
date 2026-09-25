@@ -1,4 +1,3 @@
-// src/hooks/useLogin.js
 import { useState, useEffect, useCallback } from 'react';
 import { biometricService } from '../services/biometrics';
 import { sessionService } from '../services/session';
@@ -21,9 +20,8 @@ export function useLogin(onSuccess) {
     checkBiometricSupport();
   }, [checkBiometricSupport]);
 
-  // Função auxiliar para validar formato de e-mail
   const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     return emailRegex.test(email);
   };
 

@@ -4,7 +4,7 @@ import { sessionService } from './session';
 
 export const onboardingService = {
   async saveUserProfile(profileData, usuario) {
-    if (!profileData || !profileData.name || !profileData.whatsapp) {
+    if (!profileData?.name || !profileData?.whatsapp) {
       throw new Error('Dados inválidos para salvamento do perfil.');
     }
     try {
@@ -14,12 +14,15 @@ export const onboardingService = {
       const savedProfiles = savedData ? JSON.parse(savedData) : null;
 
       if (profileUser) {
-        const profiles =
-          savedProfiles && !Array.isArray(savedProfiles)
-            ? savedProfiles.name
-              ? { [profileUser]: savedProfiles }
-              : savedProfiles
-            : {};
+        let profiles = {};
+        if (savedProfiles && !Array.isArray(savedProfiles)) {
+          if (savedProfiles.name) {
+            profiles = { [profileUser]: savedProfiles };
+          } else {
+            profiles = savedProfiles;
+          }
+        }
+
         profiles[profileUser] = profileData;
         await AsyncStorage.setItem(
           STORAGE_KEYS.PROFILE,

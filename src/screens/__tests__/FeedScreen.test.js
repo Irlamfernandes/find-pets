@@ -163,7 +163,8 @@ describe('FeedScreen Component - 100% Coverage', () => {
       posts: [{ id: '1', type: 'Perdido', author: 'user2@test.com' }],
     });
 
-    render(<FeedScreen />);
+    const { queryByTestId } = render(<FeedScreen />);
+    expect(queryByTestId('mark-found-1')).toBeNull();
   });
 
   it('deve renderizar o modal da câmera quando isCameraOpen for true', () => {

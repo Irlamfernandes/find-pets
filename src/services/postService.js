@@ -12,7 +12,7 @@ export const postService = {
   },
 
   async savePost(post) {
-    if (!post || !post.id) {
+    if (!post?.id) {
       throw new Error('Dados do post inválidos.');
     }
 

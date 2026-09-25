@@ -50,6 +50,16 @@ describe('AuthRegisterScreen Component', () => {
     expect(getByText('Preencha os campos')).toBeTruthy();
   });
 
+  it('deve executar o cadastro ao confirmar no teclado', () => {
+    const { getByPlaceholderText } = render(
+      <AuthRegisterScreen {...defaultProps} />
+    );
+
+    fireEvent(getByPlaceholderText('Senha'), 'submitEditing');
+
+    expect(defaultProps.handleRegister).toHaveBeenCalledTimes(1);
+  });
+
   it('não deve exibir mensagem de erro quando errorMessage estiver vazio no cadastro', () => {
     const { queryByText } = render(
       <AuthRegisterScreen {...defaultProps} errorMessage="" />

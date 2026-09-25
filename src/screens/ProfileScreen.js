@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Keyboard,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -82,7 +84,14 @@ export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Editar Perfil</Text>
+        <View style={styles.headerTitleContainer}>
+          <Image
+            source={require('../../assets/adaptive-icon.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.headerTitle}>Editar Perfil</Text>
+        </View>
         {onLogout ? (
           <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
             <Text style={styles.logoutButtonText}>Sair</Text>
@@ -97,6 +106,8 @@ export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
           value={name}
           onChangeText={setName}
           placeholder="Seu nome"
+          selectionColor={palette.primary}
+          returnKeyType="next"
         />
 
         <Text style={styles.label}>WhatsApp</Text>
@@ -106,6 +117,8 @@ export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
           onChangeText={setWhatsapp}
           placeholder="Seu WhatsApp"
           keyboardType="phone-pad"
+          selectionColor={palette.primary}
+          returnKeyType="next"
         />
 
         <Text style={styles.label}>Nova Senha (Opcional)</Text>
@@ -115,9 +128,21 @@ export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
           onChangeText={setNewPassword}
           placeholder="Digite uma nova senha se desejar alterar"
           secureTextEntry
+          selectionColor={palette.primary}
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            Keyboard.dismiss();
+            handleSaveChanges();
+          }}
         />
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={() => {
+            Keyboard.dismiss();
+            handleSaveChanges();
+          }}
+        >
           <Text style={styles.saveButtonText}>Salvar Alterações</Text>
         </TouchableOpacity>
       </View>
@@ -165,6 +190,15 @@ const styles = StyleSheet.create({
   backButton: { padding: 4 },
   backButtonText: { fontSize: 20, color: palette.primary, fontWeight: 'bold' },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: palette.text },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerLogo: {
+    width: 30,
+    height: 30,
+    marginRight: 8,
+  },
   logoutButton: {
     backgroundColor: palette.accentSoft,
     paddingHorizontal: 10,

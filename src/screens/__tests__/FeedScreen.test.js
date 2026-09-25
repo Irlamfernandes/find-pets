@@ -21,7 +21,7 @@ jest.mock('../../services/externalLinkService', () => ({
 // Mock do componente PetCard para facilitar a validação
 jest.mock('../components/PetCard', () => ({
   /* eslint-disable react/prop-types */
-  PetCard: ({ item, onOpenMap, onOpenWhatsApp, onDelete }) => {
+  PetCard: ({ item, onOpenMap, onOpenWhatsApp, onDelete, onMarkFound }) => {
     const {
       TouchableOpacity: RNTouchable,
       Text: RNText,
@@ -37,6 +37,9 @@ jest.mock('../components/PetCard', () => ({
           testID={`whatsapp-${item.id}`}
           onPress={() => onOpenWhatsApp('11999999999')}
         />
+        {onMarkFound ? (
+          <RNTouchable testID={`mark-found-${item.id}`} onPress={onMarkFound} />
+        ) : null}
       </RNTouchable>
     );
   },
@@ -53,6 +56,7 @@ describe('FeedScreen Component - 100% Coverage', () => {
     closeCamera: jest.fn(),
     takePicture: jest.fn(),
     deletePost: jest.fn(),
+    markPostAsFound: jest.fn(),
   };
 
   beforeEach(() => {
@@ -135,6 +139,31 @@ describe('FeedScreen Component - 100% Coverage', () => {
     // Testa ação de deletar post
     fireEvent.press(getByTestId('pet-card-1'));
     expect(mockUseFeedReturn.deletePost).toHaveBeenCalledWith('1');
+  });
+
+  it('deve habilitar exclusão quando o post pertence ao usuário atual', () => {
+    useFeed.mockReturnValue({
+      ...mockUseFeedReturn,
+      currentUser: 'user1@test.com',
+      posts: [{ id: '1', type: 'Perdido', author: 'user1@test.com' }],
+    });
+
+    const { getByTestId } = render(<FeedScreen />);
+
+    fireEvent.press(getByTestId('pet-card-1'));
+    fireEvent.press(getByTestId('mark-found-1'));
+    expect(mockUseFeedReturn.deletePost).toHaveBeenCalledWith('1');
+    expect(mockUseFeedReturn.markPostAsFound).toHaveBeenCalledWith('1');
+  });
+
+  it('deve ocultar exclusão quando o post pertence a outro usuário', () => {
+    useFeed.mockReturnValue({
+      ...mockUseFeedReturn,
+      currentUser: 'user1@test.com',
+      posts: [{ id: '1', type: 'Perdido', author: 'user2@test.com' }],
+    });
+
+    render(<FeedScreen />);
   });
 
   it('deve renderizar o modal da câmera quando isCameraOpen for true', () => {

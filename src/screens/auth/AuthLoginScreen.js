@@ -6,6 +6,8 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   ScrollView,
+  Keyboard,
+  Image,
 } from 'react-native';
 import PropTypes from 'prop-types';
 import { palette } from '../../theme/colors';
@@ -27,6 +29,11 @@ export function AuthLoginScreen({
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
+        <Image
+          source={require('../../../assets/adaptive-icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Login</Text>
         <Text style={styles.subtitle}>Entre com sua conta</Text>
 
@@ -42,6 +49,9 @@ export function AuthLoginScreen({
           onChangeText={setUsuario}
           autoCapitalize="none"
           keyboardType="email-address"
+          selectionColor={palette.primary}
+          caretHidden={false}
+          returnKeyType="next"
         />
 
         <TextInput
@@ -51,22 +61,43 @@ export function AuthLoginScreen({
           value={senha}
           onChangeText={setSenha}
           secureTextEntry
+          selectionColor={palette.primary}
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            Keyboard.dismiss();
+            handleManualLogin();
+          }}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleManualLogin}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            Keyboard.dismiss();
+            handleManualLogin();
+          }}
+        >
           <Text style={styles.buttonText}>Entrar com Senha</Text>
         </TouchableOpacity>
 
         {hasHardwareBiometric && (
           <TouchableOpacity
             style={styles.biometricButton}
-            onPress={triggerBiometricAuth}
+            onPress={() => {
+              Keyboard.dismiss();
+              triggerBiometricAuth();
+            }}
           >
             <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => {
+            Keyboard.dismiss();
+            onBack();
+          }}
+        >
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -103,6 +134,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: palette.primary,
     textAlign: 'center',
+  },
+  logo: {
+    width: 72,
+    height: 72,
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,

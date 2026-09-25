@@ -66,4 +66,42 @@ describe('PetCard Component', () => {
     fireEvent.press(getByText('💬 WhatsApp'));
     expect(mockOnOpenWhatsApp).toHaveBeenCalledWith(mockItem.contactPhone);
   });
+
+  it('deve exibir o botão de excluir somente quando onDelete for informado', () => {
+    const { queryByText, getByText } = render(
+      <PetCard
+        item={mockItem}
+        onOpenMap={mockOnOpenMap}
+        onOpenWhatsApp={mockOnOpenWhatsApp}
+      />
+    );
+
+    expect(queryByText('🗑️ Excluir')).toBeNull();
+
+    const { getByText: getByTextWithDelete } = render(
+      <PetCard
+        item={mockItem}
+        onOpenMap={mockOnOpenMap}
+        onOpenWhatsApp={mockOnOpenWhatsApp}
+        onDelete={jest.fn()}
+      />
+    );
+
+    expect(getByTextWithDelete('🗑️ Excluir')).toBeTruthy();
+    expect(getByText).toBeDefined();
+  });
+
+  it('deve exibir o status Encontrado e o botão de finalizar', () => {
+    const { getByText } = render(
+      <PetCard
+        item={{ ...mockItem, status: 'Encontrado' }}
+        onOpenMap={mockOnOpenMap}
+        onOpenWhatsApp={mockOnOpenWhatsApp}
+        onMarkFound={jest.fn()}
+      />
+    );
+
+    expect(getByText('Encontrado')).toBeTruthy();
+    expect(getByText('✅ Finalizado')).toBeTruthy();
+  });
 });

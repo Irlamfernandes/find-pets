@@ -55,6 +55,16 @@ describe('AuthLoginScreen Component', () => {
     expect(queryByText('Entrar com Biometria')).toBeNull();
   });
 
+  it('deve executar o login ao confirmar no teclado', () => {
+    const { getByPlaceholderText } = render(
+      <AuthLoginScreen {...defaultProps} />
+    );
+
+    fireEvent(getByPlaceholderText('Senha'), 'submitEditing');
+
+    expect(defaultProps.handleManualLogin).toHaveBeenCalledTimes(1);
+  });
+
   it('deve exibir mensagem de erro quando errorMessage for fornecido', () => {
     const { getByText } = render(
       <AuthLoginScreen {...defaultProps} errorMessage="Senha incorreta" />

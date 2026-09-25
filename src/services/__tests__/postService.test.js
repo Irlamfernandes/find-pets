@@ -69,4 +69,69 @@ describe('Post Service', () => {
       'Erro ao salvar a publicação: Erro storage'
     );
   });
+
+  it('deve excluir e persistir o post informado', async () => {
+    const posts = [
+      { id: '1', type: 'Perdido' },
+      { id: '2', type: 'Avistado' },
+    ];
+    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(posts));
+    AsyncStorage.setItem.mockResolvedValueOnce();
+
+    await expect(postService.deletePost('1')).resolves.toEqual([posts[1]]);
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      STORAGE_KEYS.POSTS,
+      JSON.stringify([posts[1]])
+    );
+  });
+
+  it('deve rejeitar exclusão sem ID', async () => {
+    await expect(postService.deletePost('')).rejects.toThrow(
+      'ID da publicação é obrigatório.'
+    );
+  });
+
+  it('deve lançar erro se falhar ao excluir post', async () => {
+    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([{ id: '1' }]));
+    AsyncStorage.setItem.mockRejectedValueOnce(new Error('Erro storage'));
+
+    await expect(postService.deletePost('1')).rejects.toThrow(
+      'Erro ao excluir a publicação: Erro storage'
+    );
+  });
+
+  it('deve atualizar e persistir o status da publicação', async () => {
+    const posts = [
+      { id: '1', type: 'Perdido', status: 'Perdido' },
+      { id: '2', type: 'Perdido', status: 'Perdido' },
+    ];
+    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(posts));
+    AsyncStorage.setItem.mockResolvedValueOnce();
+
+    await expect(
+      postService.updatePostStatus('1', 'Encontrado')
+    ).resolves.toEqual([{ ...posts[0], status: 'Encontrado' }, posts[1]]);
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      STORAGE_KEYS.POSTS,
+      JSON.stringify([{ ...posts[0], status: 'Encontrado' }, posts[1]])
+    );
+  });
+
+  it('deve rejeitar atualização sem ID ou status', async () => {
+    await expect(
+      postService.updatePostStatus('', 'Encontrado')
+    ).rejects.toThrow('ID e status da publicação são obrigatórios.');
+    await expect(postService.updatePostStatus('1', '')).rejects.toThrow(
+      'ID e status da publicação são obrigatórios.'
+    );
+  });
+
+  it('deve lançar erro se falhar ao atualizar o status', async () => {
+    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([{ id: '1' }]));
+    AsyncStorage.setItem.mockRejectedValueOnce(new Error('Erro storage'));
+
+    await expect(
+      postService.updatePostStatus('1', 'Encontrado')
+    ).rejects.toThrow('Erro ao atualizar a publicação: Erro storage');
+  });
 });

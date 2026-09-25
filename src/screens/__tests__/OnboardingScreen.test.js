@@ -54,6 +54,23 @@ describe('OnboardingScreen Component', () => {
     });
   });
 
+  it('deve salvar ao confirmar no teclado do campo WhatsApp', async () => {
+    const { getByTestId } = render(
+      <OnboardingScreen onComplete={mockOnComplete} />
+    );
+
+    fireEvent.changeText(getByTestId('input-name'), 'Irlam');
+    fireEvent.changeText(getByTestId('input-whatsapp'), '11999999999');
+    fireEvent(getByTestId('input-whatsapp'), 'submitEditing');
+
+    await waitFor(() => {
+      expect(mockOnComplete).toHaveBeenCalledWith({
+        name: 'Irlam',
+        whatsapp: '11999999999',
+      });
+    });
+  });
+
   it('deve executar sem quebrar se onComplete não for passado para a tela', async () => {
     const { getByTestId } = render(<OnboardingScreen />);
 

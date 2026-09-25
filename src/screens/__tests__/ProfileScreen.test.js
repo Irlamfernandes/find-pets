@@ -320,4 +320,28 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       );
     });
   });
+
+  it('deve salvar ao confirmar no teclado da nova senha', async () => {
+    onboardingService.saveUserProfile.mockResolvedValueOnce();
+
+    const { getByPlaceholderText } = render(<ProfileScreen />);
+
+    await waitFor(() => {
+      expect(getByPlaceholderText('Seu nome')).toBeTruthy();
+    });
+
+    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
+    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '11999999999');
+    fireEvent(
+      getByPlaceholderText('Digite uma nova senha se desejar alterar'),
+      'submitEditing'
+    );
+
+    await waitFor(() => {
+      expect(onboardingService.saveUserProfile).toHaveBeenCalledWith({
+        name: 'Irlam',
+        whatsapp: '11999999999',
+      });
+    });
+  });
 });

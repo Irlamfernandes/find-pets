@@ -3,7 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import PropTypes from 'prop-types';
 import { palette } from '../../theme/colors';
 
-export function PetCard({ item, onOpenMap, onOpenWhatsApp, onDelete }) {
+export function PetCard({
+  item,
+  onOpenMap,
+  onOpenWhatsApp,
+  onDelete,
+  onMarkFound,
+}) {
   return (
     <View style={styles.card}>
       <Image
@@ -12,7 +18,14 @@ export function PetCard({ item, onOpenMap, onOpenWhatsApp, onDelete }) {
         style={styles.cardImage}
       />
       <View style={styles.cardInfo}>
-        <Text style={styles.cardBadge}>{item.type}</Text>
+        <Text
+          style={[
+            styles.cardBadge,
+            (item.status || item.type) === 'Encontrado' && styles.foundBadge,
+          ]}
+        >
+          {item.status || item.type}
+        </Text>
         <Text style={styles.cardDate}>Registrado em: {item.date}</Text>
 
         <View style={styles.actionButtonsContainer}>
@@ -33,13 +46,23 @@ export function PetCard({ item, onOpenMap, onOpenWhatsApp, onDelete }) {
           </TouchableOpacity>
         </View>
 
-        {/* Botão de Excluir adicionado */}
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={onDelete}
-        >
-          <Text style={styles.actionButtonText}>🗑️ Excluir</Text>
-        </TouchableOpacity>
+        {onDelete ? (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={onDelete}
+          >
+            <Text style={styles.actionButtonText}>🗑️ Excluir</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {onMarkFound ? (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.foundButton]}
+            onPress={onMarkFound}
+          >
+            <Text style={styles.actionButtonText}>✅ Finalizado</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </View>
   );
@@ -50,6 +73,7 @@ PetCard.propTypes = {
     id: PropTypes.string.isRequired,
     imageUri: PropTypes.string.isRequired,
     type: PropTypes.string.isRequired,
+    status: PropTypes.string,
     date: PropTypes.string.isRequired,
     latitude: PropTypes.number,
     longitude: PropTypes.number,
@@ -58,7 +82,8 @@ PetCard.propTypes = {
   }).isRequired,
   onOpenMap: PropTypes.func.isRequired,
   onOpenWhatsApp: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
+  onDelete: PropTypes.func,
+  onMarkFound: PropTypes.func,
 };
 
 const styles = StyleSheet.create({
@@ -111,6 +136,14 @@ const styles = StyleSheet.create({
   deleteButton: {
     backgroundColor: palette.error,
     marginTop: 4,
+  },
+  foundButton: {
+    backgroundColor: palette.success,
+    marginTop: 4,
+  },
+  foundBadge: {
+    backgroundColor: palette.success,
+    color: palette.white,
   },
   actionButtonText: {
     color: palette.white,

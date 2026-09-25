@@ -1,0 +1,16 @@
+export const palette = {
+  primary: '#3B82F6',
+  primaryDark: '#2563EB',
+  primarySoft: '#DBEAFE',
+  accent: '#FBBF24',
+  accentSoft: '#FEF3C7',
+  background: '#F8FAFC',
+  surface: '#FFFFFF',
+  cardBorder: '#E5E7EB',
+  text: '#1F2937',
+  textMuted: '#6B7280',
+  success: '#10B981',
+  error: '#EF4444',
+  white: '#FFFFFF',
+  neutral: '#E5E7EB',
+};

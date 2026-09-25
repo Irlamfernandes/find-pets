@@ -7,6 +7,7 @@ import { onboardingService } from '../services/onboarding';
 
 export function useFeed() {
   const [posts, setPosts] = useState([]);
+  const [userName, setUserName] = useState('');
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [cameraRef, setCameraRef] = useState(null);
@@ -20,9 +21,21 @@ export function useFeed() {
     }
   }, []);
 
+  const loadUserProfile = useCallback(async () => {
+    try {
+      const profile = await onboardingService.getUserProfile();
+      if (profile && profile.name) {
+        setUserName(profile.name);
+      }
+    } catch {
+      setUserName('');
+    }
+  }, []);
+
   useEffect(() => {
     loadPosts();
-  }, [loadPosts]);
+    loadUserProfile();
+  }, [loadPosts, loadUserProfile]);
 
   const openCamera = async () => {
     const hasPermission = cameraPermission?.granted === true;
@@ -71,12 +84,33 @@ export function useFeed() {
     }
   };
 
+  // Função para excluir um post pelo ID com confirmação
+  const deletePost = async (postId) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Tem certeza de que deseja excluir este registro?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            const updatedPosts = posts.filter((post) => post.id !== postId);
+            setPosts(updatedPosts);
+          },
+        },
+      ]
+    );
+  };
+
   return {
     posts,
+    userName,
     isCameraOpen,
     setCameraRef,
     openCamera,
     closeCamera,
     takePicture,
+    deletePost,
   };
 }

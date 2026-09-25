@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
+import { palette } from '../../theme/colors';
 
 export function AuthHomeScreen({ onNavigate }) {
   return (
@@ -36,40 +37,45 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: palette.background,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: palette.primary,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: palette.textMuted,
     textAlign: 'center',
     marginBottom: 24,
   },
   button: {
-    height: 50,
-    backgroundColor: '#4A90E2',
-    borderRadius: 8,
+    height: 52,
+    backgroundColor: palette.primary,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: '#3B82F6',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 4,
   },
   buttonText: {
-    color: '#FFF',
+    color: palette.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
   secondaryButton: {
-    backgroundColor: '#FFF',
+    backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: palette.primarySoft,
     marginTop: 12,
   },
   secondaryButtonText: {
-    color: '#4A90E2',
+    color: palette.primary,
   },
 });

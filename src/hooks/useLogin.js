@@ -83,7 +83,7 @@ export function useLogin(onSuccess) {
     }
 
     try {
-      const savedCreds = await sessionService.getCredentials();
+      const savedCreds = await sessionService.getCredentials(usuario.trim());
 
       const isPasswordValid = savedCreds
         ? await sessionService.verifyPassword(senha, savedCreds.passwordHash)

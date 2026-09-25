@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   Keyboard,
   Image,
 } from 'react-native';
@@ -15,8 +14,10 @@ import PropTypes from 'prop-types';
 import { onboardingService } from '../services/onboarding';
 import { sessionService } from '../services/session';
 import { palette } from '../theme/colors';
+import { useAppAlert } from '../components/AppAlert';
 
 export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
+  const showAlert = useAppAlert();
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -33,19 +34,31 @@ export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
         setWhatsapp(profile.whatsapp || '');
       }
     } catch {
-      Alert.alert('Erro', 'Não foi possível carregar os dados do perfil.');
+      showAlert({
+        type: 'danger',
+        title: 'Perfil indisponível',
+        message: 'Não foi possível carregar seus dados agora.',
+      });
     }
   };
 
   const handleSaveChanges = async () => {
     if (!name.trim() || !whatsapp.trim()) {
-      Alert.alert('Atenção', 'Nome e WhatsApp não podem estar vazios.');
+      showAlert({
+        type: 'warning',
+        title: 'Confira seus dados',
+        message: 'Nome e WhatsApp precisam ser preenchidos.',
+      });
       return;
     }
 
     const cleanedPhone = whatsapp.replace(/\D/g, '');
     if (cleanedPhone.length < 10) {
-      Alert.alert('Atenção', 'Insira um número de WhatsApp válido com DDD.');
+      showAlert({
+        type: 'warning',
+        title: 'WhatsApp inválido',
+        message: 'Informe um número válido com DDD para continuar.',
+      });
       return;
     }
 
@@ -68,13 +81,18 @@ export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
         }
       }
 
-      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
+      showAlert({
+        type: 'success',
+        title: 'Perfil atualizado',
+        message: 'Suas informações foram salvas com sucesso.',
+      });
       if (onBack) onBack();
     } catch (error) {
-      Alert.alert(
-        'Erro',
-        `Não foi possível salvar as alterações: ${error.message}`
-      );
+      showAlert({
+        type: 'danger',
+        title: 'Não foi possível salvar',
+        message: `Tente novamente. ${error.message}`,
+      });
     }
   };
 

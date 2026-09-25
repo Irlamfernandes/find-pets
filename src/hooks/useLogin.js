@@ -2,8 +2,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { biometricService } from '../services/biometrics';
 import { sessionService } from '../services/session';
+import { useAppAlert } from '../components/AppAlert';
 
 export function useLogin(onSuccess) {
+  const showAlert = useAppAlert();
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [hasHardwareBiometric, setHasHardwareBiometric] = useState(false);
@@ -59,7 +61,11 @@ export function useLogin(onSuccess) {
         cadastrouBiometria
       );
 
-      alert('Cadastro realizado com sucesso! Faça o login.');
+      showAlert({
+        type: 'success',
+        title: 'Cadastro realizado',
+        message: 'Sua conta foi criada. Agora faça login para continuar.',
+      });
       setAuthMode('home');
       setUsuario('');
       setSenha('');

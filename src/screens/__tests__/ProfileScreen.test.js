@@ -73,8 +73,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
-        'Erro',
-        'Não foi possível carregar os dados do perfil.'
+        'Perfil indisponível',
+        'Não foi possível carregar seus dados agora.'
       );
     });
   });
@@ -106,8 +106,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     fireEvent.press(getByText('Salvar Alterações'));
 
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Atenção',
-      'Nome e WhatsApp não podem estar vazios.'
+      'Confira seus dados',
+      'Nome e WhatsApp precisam ser preenchidos.'
     );
   });
 
@@ -125,8 +125,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     fireEvent.press(getByText('Salvar Alterações'));
 
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Atenção',
-      'Insira um número de WhatsApp válido com DDD.'
+      'WhatsApp inválido',
+      'Informe um número válido com DDD para continuar.'
     );
   });
 
@@ -154,8 +154,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         whatsapp: '11988887777',
       });
       expect(Alert.alert).toHaveBeenCalledWith(
-        'Sucesso',
-        'Perfil atualizado com sucesso!'
+        'Perfil atualizado',
+        'Suas informações foram salvas com sucesso.'
       );
       expect(mockOnBack).toHaveBeenCalledTimes(1);
     });
@@ -192,8 +192,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         true
       );
       expect(Alert.alert).toHaveBeenCalledWith(
-        'Sucesso',
-        'Perfil atualizado com sucesso!'
+        'Perfil atualizado',
+        'Suas informações foram salvas com sucesso.'
       );
       expect(mockOnBack).toHaveBeenCalledTimes(1);
     });
@@ -222,8 +222,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     await waitFor(() => {
       expect(sessionService.saveCredentials).not.toHaveBeenCalled();
       expect(Alert.alert).toHaveBeenCalledWith(
-        'Sucesso',
-        'Perfil atualizado com sucesso!'
+        'Perfil atualizado',
+        'Suas informações foram salvas com sucesso.'
       );
     });
   });
@@ -247,8 +247,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
-        'Erro',
-        'Não foi possível salvar as alterações: Falha ao salvar'
+        'Não foi possível salvar',
+        'Tente novamente. Falha ao salvar'
       );
     });
   });
@@ -294,8 +294,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     await waitFor(() => {
       expect(sessionService.saveCredentials).not.toHaveBeenCalled();
       expect(Alert.alert).toHaveBeenCalledWith(
-        'Sucesso',
-        'Perfil atualizado com sucesso!'
+        'Perfil atualizado',
+        'Suas informações foram salvas com sucesso.'
       );
     });
   });
@@ -315,8 +315,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
-        'Sucesso',
-        'Perfil atualizado com sucesso!'
+        'Perfil atualizado',
+        'Suas informações foram salvas com sucesso.'
       );
     });
   });

@@ -1,11 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import PropTypes from 'prop-types';
 import { palette } from '../../theme/colors';
 
 export function AuthHomeScreen({ onNavigate }) {
   return (
     <View style={styles.container}>
+      <Image
+        source={require('../../../assets/adaptive-icon.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
       <Text style={styles.title}>FindPets</Text>
       <Text style={styles.subtitle}>Escolha uma opção</Text>
 
@@ -44,6 +49,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: palette.primary,
     textAlign: 'center',
+  },
+  logo: {
+    width: 92,
+    height: 92,
+    alignSelf: 'center',
+    marginBottom: 14,
   },
   subtitle: {
     fontSize: 16,

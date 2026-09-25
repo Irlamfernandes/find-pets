@@ -7,6 +7,8 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Keyboard,
+  Image,
 } from 'react-native';
 import PropTypes from 'prop-types';
 import { useOnboarding } from '../hooks/useOnboarding';
@@ -31,6 +33,11 @@ export default function OnboardingScreen({ onComplete }) {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
+        <Image
+          source={require('../../assets/adaptive-icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Complete seu Perfil</Text>
         <Text style={styles.subtitle}>
           Precisamos de algumas informações para facilitar o contato nos
@@ -47,6 +54,8 @@ export default function OnboardingScreen({ onComplete }) {
           placeholder="Seu Nome"
           value={name}
           onChangeText={setName}
+          selectionColor={palette.primary}
+          returnKeyType="next"
         />
 
         <TextInput
@@ -56,12 +65,21 @@ export default function OnboardingScreen({ onComplete }) {
           value={whatsapp}
           onChangeText={setWhatsapp}
           keyboardType="phone-pad"
+          selectionColor={palette.primary}
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            Keyboard.dismiss();
+            handleSaveProfile();
+          }}
         />
 
         <TouchableOpacity
           testID="button-complete"
           style={styles.button}
-          onPress={handleSaveProfile}
+          onPress={() => {
+            Keyboard.dismiss();
+            handleSaveProfile();
+          }}
         >
           <Text style={styles.buttonText}>Salvar e Continuar</Text>
         </TouchableOpacity>
@@ -91,6 +109,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: palette.primary,
     textAlign: 'center',
+  },
+  logo: {
+    width: 64,
+    height: 64,
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 14,

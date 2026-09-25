@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   Modal,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView } from 'expo-camera';
@@ -24,12 +25,14 @@ export default function FeedScreen({
   const {
     posts,
     userName,
+    currentUser,
     isCameraOpen,
     setCameraRef,
     openCamera,
     closeCamera,
     takePicture,
     deletePost,
+    markPostAsFound,
   } = useFeed();
 
   useEffect(() => {
@@ -42,6 +45,11 @@ export default function FeedScreen({
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <Image
+          source={require('../../assets/adaptive-icon.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>FindPets</Text>
           {userName ? (
@@ -70,7 +78,17 @@ export default function FeedScreen({
               externalLinkService.openMap(lat, lon, addr)
             }
             onOpenWhatsApp={(phone) => externalLinkService.openWhatsApp(phone)}
-            onDelete={() => deletePost(item.id)}
+            onDelete={
+              item.author === currentUser
+                ? () => deletePost(item.id)
+                : undefined
+            }
+            onMarkFound={
+              item.author === currentUser &&
+              (item.status || item.type) !== 'Encontrado'
+                ? () => markPostAsFound(item.id)
+                : undefined
+            }
           />
         )}
       />
@@ -143,6 +161,11 @@ const styles = StyleSheet.create({
   },
   headerTitleContainer: {
     flex: 1,
+  },
+  headerLogo: {
+    width: 34,
+    height: 34,
+    marginRight: 10,
   },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: palette.text },
   welcomeText: { fontSize: 13, color: palette.textMuted, marginTop: 2 },

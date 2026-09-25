@@ -3,6 +3,7 @@ import { useFeed } from '../useFeed';
 import { postService } from '../../services/postService';
 import { locationService } from '../../services/locationService';
 import { onboardingService } from '../../services/onboarding';
+import { sessionService } from '../../services/session';
 import { Alert } from 'react-native';
 
 let mockCameraPermissionValue = { granted: true };
@@ -13,6 +14,7 @@ jest.mock('../../services/postService', () => ({
     getPosts: jest.fn(),
     savePost: jest.fn(),
     deletePost: jest.fn(),
+    updatePostStatus: jest.fn(),
   },
 }));
 
@@ -25,6 +27,12 @@ jest.mock('../../services/locationService', () => ({
 jest.mock('../../services/onboarding', () => ({
   onboardingService: {
     getUserProfile: jest.fn(),
+  },
+}));
+
+jest.mock('../../services/session', () => ({
+  sessionService: {
+    getSession: jest.fn().mockResolvedValue({ usuario: 'user1@test.com' }),
   },
 }));
 
@@ -46,6 +54,7 @@ describe('useFeed Hook - 100% Coverage', () => {
       name: 'Irlam',
       whatsapp: '11999999999',
     });
+    sessionService.getSession.mockResolvedValue({ usuario: 'user1@test.com' });
     locationService.getCurrentLocation.mockResolvedValue({
       latitude: -22.5,
       longitude: -44.1,
@@ -70,6 +79,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     onboardingService.getUserProfile.mockRejectedValueOnce(
       new Error('Erro perfil')
     );
+    sessionService.getSession.mockRejectedValueOnce(new Error('Erro sessão'));
 
     const { result } = renderHook(() => useFeed());
 
@@ -194,6 +204,7 @@ describe('useFeed Hook - 100% Coverage', () => {
       expect.objectContaining({
         imageUri: 'file://photo.jpg',
         contactPhone: '11999999999',
+        author: 'user1@test.com',
       })
     );
     expect(result.current.isCameraOpen).toBe(false);
@@ -202,6 +213,7 @@ describe('useFeed Hook - 100% Coverage', () => {
   it('deve tirar a foto e salvar o post sem WhatsApp se o perfil não o possuir', async () => {
     postService.getPosts.mockResolvedValue([]);
     postService.savePost.mockResolvedValueOnce();
+    sessionService.getSession.mockResolvedValue(null);
     onboardingService.getUserProfile.mockResolvedValue({
       name: 'Irlam',
       whatsapp: null,
@@ -228,6 +240,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     expect(postService.savePost).toHaveBeenCalledWith(
       expect.objectContaining({
         contactPhone: null,
+        author: null,
       })
     );
   });
@@ -261,8 +274,9 @@ describe('useFeed Hook - 100% Coverage', () => {
   });
 
   it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
-    const mockPosts = [{ id: '1', type: 'Perdido' }];
+    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
+    postService.deletePost.mockResolvedValueOnce([]);
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
@@ -283,9 +297,29 @@ describe('useFeed Hook - 100% Coverage', () => {
     expect(result.current.posts).toEqual([]);
   });
 
-  it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
-    const mockPosts = [{ id: '1', type: 'Perdido' }];
+  it('não deve abrir confirmação para excluir post de outro usuário', async () => {
+    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user2@test.com' }];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+
+    await act(async () => {
+      await result.current.deletePost('1');
+    });
+
+    expect(Alert.alert).not.toHaveBeenCalledWith(
+      'Confirmar Exclusão',
+      expect.anything(),
+      expect.anything()
+    );
+    expect(result.current.posts).toEqual(mockPosts);
+  });
+
+  it('deve exibir erro quando a exclusão persistida falhar', async () => {
+    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
+    postService.getPosts.mockResolvedValueOnce(mockPosts);
+    postService.deletePost.mockRejectedValueOnce(new Error('Erro storage'));
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
@@ -300,9 +334,114 @@ describe('useFeed Hook - 100% Coverage', () => {
     const deleteButton = alertCall[2].find((btn) => btn.text === 'Excluir');
 
     await act(async () => {
-      deleteButton.onPress();
+      await deleteButton.onPress();
+    });
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Erro',
+      'Não foi possível excluir a publicação. Tente novamente.'
+    );
+  });
+
+  it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
+    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
+    postService.getPosts.mockResolvedValueOnce(mockPosts);
+    postService.deletePost.mockResolvedValueOnce([]);
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+
+    await act(async () => {
+      await result.current.deletePost('1');
+    });
+
+    const alertCall = Alert.alert.mock.calls.find(
+      (call) => call[0] === 'Confirmar Exclusão'
+    );
+    const deleteButton = alertCall[2].find((btn) => btn.text === 'Excluir');
+
+    await act(async () => {
+      await deleteButton.onPress();
     });
 
     expect(result.current.posts).toEqual([]);
+    expect(postService.deletePost).toHaveBeenCalledWith('1');
+  });
+
+  it('deve marcar como encontrado e manter o post no feed', async () => {
+    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
+    const updatedPosts = [{ ...mockPosts[0], status: 'Encontrado' }];
+    postService.getPosts.mockResolvedValueOnce(mockPosts);
+    postService.updatePostStatus.mockResolvedValueOnce(updatedPosts);
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+    await act(async () => {
+      await result.current.markPostAsFound('1');
+    });
+
+    const alertCall = Alert.alert.mock.calls.find(
+      (call) => call[0] === 'Confirmar finalização'
+    );
+    const finishButton = alertCall[2].find((btn) => btn.text === 'Finalizado');
+
+    await act(async () => {
+      await finishButton.onPress();
+    });
+
+    expect(postService.updatePostStatus).toHaveBeenCalledWith(
+      '1',
+      'Encontrado'
+    );
+    expect(result.current.posts).toEqual(updatedPosts);
+  });
+
+  it('não deve finalizar post de outro usuário ou já encontrado', async () => {
+    const mockPosts = [
+      { id: '1', type: 'Perdido', author: 'user2@test.com' },
+      {
+        id: '2',
+        type: 'Perdido',
+        author: 'user1@test.com',
+        status: 'Encontrado',
+      },
+    ];
+    postService.getPosts.mockResolvedValueOnce(mockPosts);
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+    await act(async () => {
+      await result.current.markPostAsFound('1');
+      await result.current.markPostAsFound('2');
+    });
+
+    expect(postService.updatePostStatus).not.toHaveBeenCalled();
+  });
+
+  it('deve exibir erro quando a finalização persistida falhar', async () => {
+    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
+    postService.getPosts.mockResolvedValueOnce(mockPosts);
+    postService.updatePostStatus.mockRejectedValueOnce(
+      new Error('Erro storage')
+    );
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+    await act(async () => {
+      await result.current.markPostAsFound('1');
+    });
+
+    const alertCall = Alert.alert.mock.calls.find(
+      (call) => call[0] === 'Confirmar finalização'
+    );
+    const finishButton = alertCall[2].find((btn) => btn.text === 'Finalizado');
+    await act(async () => {
+      await finishButton.onPress();
+    });
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Erro',
+      'Não foi possível finalizar a publicação. Tente novamente.'
+    );
   });
 });

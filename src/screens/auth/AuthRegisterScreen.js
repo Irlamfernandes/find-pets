@@ -6,6 +6,8 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   ScrollView,
+  Keyboard,
+  Image,
 } from 'react-native';
 import PropTypes from 'prop-types';
 import { palette } from '../../theme/colors';
@@ -25,6 +27,11 @@ export function AuthRegisterScreen({
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
+        <Image
+          source={require('../../../assets/adaptive-icon.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Cadastro</Text>
         <Text style={styles.subtitle}>Crie seus dados de acesso</Text>
 
@@ -40,6 +47,9 @@ export function AuthRegisterScreen({
           onChangeText={setUsuario}
           autoCapitalize="none"
           keyboardType="email-address"
+          selectionColor={palette.primary}
+          caretHidden={false}
+          returnKeyType="next"
         />
 
         <TextInput
@@ -49,13 +59,31 @@ export function AuthRegisterScreen({
           value={senha}
           onChangeText={setSenha}
           secureTextEntry
+          selectionColor={palette.primary}
+          returnKeyType="done"
+          onSubmitEditing={() => {
+            Keyboard.dismiss();
+            handleRegister();
+          }}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            Keyboard.dismiss();
+            handleRegister();
+          }}
+        >
           <Text style={styles.buttonText}>Salvar e Cadastrar Biometria</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => {
+            Keyboard.dismiss();
+            onBack();
+          }}
+        >
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -90,6 +118,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: palette.primary,
     textAlign: 'center',
+  },
+  logo: {
+    width: 72,
+    height: 72,
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,

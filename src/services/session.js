@@ -19,11 +19,14 @@ export const sessionService = {
         STORAGE_KEYS.CREDENTIALS
       );
       const savedCredentials = savedData ? JSON.parse(savedData) : null;
-      const credentials = Array.isArray(savedCredentials)
-        ? savedCredentials
-        : savedCredentials
-          ? [savedCredentials]
-          : [];
+
+      let credentials = [];
+      if (Array.isArray(savedCredentials)) {
+        credentials = savedCredentials;
+      } else if (savedCredentials) {
+        credentials = [savedCredentials];
+      }
+
       const updatedCredentials = [
         ...credentials.filter((item) => item.usuario !== usuario),
         newCredentials,

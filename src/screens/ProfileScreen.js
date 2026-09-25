@@ -72,7 +72,7 @@ export default function ProfileScreen({ onBack, onOpenCamera, onLogout }) {
       // Se o utilizador preencheu uma nova senha, atualiza as credenciais seguras
       if (newPassword.trim()) {
         const creds = await sessionService.getCredentials();
-        if (creds && creds.usuario) {
+        if (creds?.usuario) {
           await sessionService.saveCredentials(
             creds.usuario,
             newPassword.trim(),

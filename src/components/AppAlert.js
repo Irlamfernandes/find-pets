@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert } from 'react-native';
 import { palette } from '../theme/colors';
 
 const AlertContext = createContext(null);
@@ -65,10 +64,11 @@ export function nativeAlert({
 export function AppAlertProvider({ children }) {
   const [alert, setAlert] = useState(null);
 
-  const showAlert = (options) =>
-    new Promise((resolve) => {
+  const showAlert = useCallback((options) => {
+    return new Promise((resolve) => {
       setAlert({ ...options, resolve });
     });
+  }, []);
 
   const closeAlert = (confirmed) => {
     if (!alert) return;

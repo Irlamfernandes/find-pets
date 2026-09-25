@@ -7,7 +7,8 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import LoginScreen from './src/screens/LoginScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import FeedScreen from './src/screens/FeedScreen';
-import ProfileScreen from './src/screens/ProfileScreen'; // <-- Importado aqui
+import ProfileScreen from './src/screens/ProfileScreen';
+import { palette } from './src/theme/colors';
 
 import { useSession } from './src/hooks/useSession';
 import { sessionService } from './src/services/session';
@@ -16,6 +17,7 @@ import { onboardingService } from './src/services/onboarding';
 export default function App() {
   const { isLoading, session, saveUserSession, logout } = useSession();
   const [currentStep, setCurrentStep] = useState('loading');
+  const [shouldOpenCamera, setShouldOpenCamera] = useState(false);
 
   const determineInitialStep = useCallback(async () => {
     if (isLoading) return;
@@ -90,11 +92,20 @@ export default function App() {
     }
   };
 
+  const handleOpenCamera = () => {
+    setShouldOpenCamera(true);
+    setCurrentStep('home');
+  };
+
+  const handleCameraRequestHandled = useCallback(() => {
+    setShouldOpenCamera(false);
+  }, []);
+
   if (isLoading || currentStep === 'loading') {
     return (
       <SafeAreaProvider>
         <SafeAreaView style={[styles.container, styles.centered]}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color={palette.primary} />
         </SafeAreaView>
       </SafeAreaProvider>
     );
@@ -103,7 +114,10 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+        <StatusBar
+          barStyle="dark-content"
+          backgroundColor={palette.background}
+        />
 
         {currentStep === 'login' && (
           <LoginScreen onLoginSuccess={handleLoginSuccess} />
@@ -115,13 +129,18 @@ export default function App() {
 
         {currentStep === 'home' && (
           <FeedScreen
-            onLogout={handleLogout}
             onOpenProfile={() => setCurrentStep('profile')}
+            openCameraOnMount={shouldOpenCamera}
+            onCameraRequestHandled={handleCameraRequestHandled}
           />
         )}
 
         {currentStep === 'profile' && (
-          <ProfileScreen onBack={() => setCurrentStep('home')} />
+          <ProfileScreen
+            onBack={() => setCurrentStep('home')}
+            onOpenCamera={handleOpenCamera}
+            onLogout={handleLogout}
+          />
         )}
       </SafeAreaView>
     </SafeAreaProvider>
@@ -131,7 +150,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: palette.background,
   },
   centered: {
     justifyContent: 'center',

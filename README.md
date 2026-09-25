@@ -39,5 +39,7 @@ O **FindPets** é um aplicativo mobile desenvolvido para auxiliar na localizaç�
    ```bash
    git clone [https://github.com/Irlamfernandes/find-pets.git](https://github.com/Irlamfernandes/find-pets.git)
    ```
+
 ## atualizações
+
 adicionamos as interações (excluir e editar) solicitadas pelo professor na última previa do projeto.

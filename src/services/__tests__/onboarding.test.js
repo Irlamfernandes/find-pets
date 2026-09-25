@@ -62,6 +62,76 @@ describe('onboardingService', () => {
     expect(result).toBeNull();
   });
 
+  it('deve salvar perfis separados para usuários diferentes', async () => {
+    const profile = { name: 'Segundo', whatsapp: '11888888888' };
+    AsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify({
+        'primeiro@test.com': { name: 'Primeiro', whatsapp: '11999999999' },
+      })
+    );
+
+    await onboardingService.saveUserProfile(profile, 'segundo@test.com');
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      'FindPets_profile',
+      JSON.stringify({
+        'primeiro@test.com': {
+          name: 'Primeiro',
+          whatsapp: '11999999999',
+        },
+        'segundo@test.com': profile,
+      })
+    );
+  });
+
+  it('deve buscar o perfil do usuário solicitado', async () => {
+    const profiles = {
+      'primeiro@test.com': { name: 'Primeiro', whatsapp: '11999999999' },
+      'segundo@test.com': { name: 'Segundo', whatsapp: '11888888888' },
+    };
+    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(profiles));
+
+    await expect(
+      onboardingService.getUserProfile('segundo@test.com')
+    ).resolves.toEqual(profiles['segundo@test.com']);
+  });
+
+  it('deve migrar um perfil legado ao salvar para um usuário identificado', async () => {
+    const profile = { name: 'Atualizado', whatsapp: '11777777777' };
+    AsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify({ name: 'Legado', whatsapp: '11999999999' })
+    );
+
+    await onboardingService.saveUserProfile(profile, 'usuario@test.com');
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      'FindPets_profile',
+      JSON.stringify({ 'usuario@test.com': profile })
+    );
+  });
+
+  it('deve criar o mapa de perfis quando o usuário ainda não possui perfil', async () => {
+    const profile = { name: 'Novo', whatsapp: '11666666666' };
+    AsyncStorage.getItem.mockResolvedValueOnce(null);
+
+    await onboardingService.saveUserProfile(profile, 'novo@test.com');
+
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      'FindPets_profile',
+      JSON.stringify({ 'novo@test.com': profile })
+    );
+  });
+
+  it('deve retornar null quando o perfil solicitado não existir', async () => {
+    AsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify({ 'primeiro@test.com': { name: 'Primeiro' } })
+    );
+
+    await expect(
+      onboardingService.getUserProfile('inexistente@test.com')
+    ).resolves.toBeNull();
+  });
+
   it('deve lançar erro se houver exceção no AsyncStorage ao buscar o perfil', async () => {
     AsyncStorage.getItem.mockRejectedValueOnce(new Error('Storage error'));
 

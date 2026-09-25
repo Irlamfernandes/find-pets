@@ -94,13 +94,9 @@ export function useFeed() {
         {
           text: 'Excluir',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              const updatedPosts = posts.filter((post) => post.id !== postId);
-              setPosts(updatedPosts);
-            } catch {
-              Alert.alert('Erro', 'Não foi possível excluir o registro.');
-            }
+          onPress: () => {
+            const updatedPosts = posts.filter((post) => post.id !== postId);
+            setPosts(updatedPosts);
           },
         },
       ]

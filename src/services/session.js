@@ -14,7 +14,23 @@ export const sessionService = {
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(password, salt);
 
-      const data = JSON.stringify({ usuario, passwordHash, hasBiometrics });
+      const newCredentials = { usuario, passwordHash, hasBiometrics };
+      const savedData = await SecureStore.getItemAsync(
+        STORAGE_KEYS.CREDENTIALS
+      );
+      const savedCredentials = savedData ? JSON.parse(savedData) : null;
+      const credentials = Array.isArray(savedCredentials)
+        ? savedCredentials
+        : savedCredentials
+          ? [savedCredentials]
+          : [];
+      const updatedCredentials = [
+        ...credentials.filter((item) => item.usuario !== usuario),
+        newCredentials,
+      ];
+      const data = JSON.stringify(
+        updatedCredentials.length === 1 ? newCredentials : updatedCredentials
+      );
       await SecureStore.setItemAsync(STORAGE_KEYS.CREDENTIALS, data);
     } catch (error) {
       throw new Error(
@@ -28,10 +44,21 @@ export const sessionService = {
     return await bcrypt.compare(inputPassword, storedHash);
   },
 
-  async getCredentials() {
+  async getCredentials(usuario) {
     try {
       const data = await SecureStore.getItemAsync(STORAGE_KEYS.CREDENTIALS);
-      return data ? JSON.parse(data) : null;
+      if (!data) return null;
+
+      const savedCredentials = JSON.parse(data);
+      if (!Array.isArray(savedCredentials)) {
+        return !usuario || savedCredentials.usuario === usuario
+          ? savedCredentials
+          : null;
+      }
+
+      return usuario
+        ? savedCredentials.find((item) => item.usuario === usuario) || null
+        : savedCredentials[0] || null;
     } catch (error) {
       throw new Error(`Erro ao recuperar credenciais: ${error.message}`);
     }

@@ -65,6 +65,49 @@ describe('sessionService', () => {
     ).rejects.toThrow('Erro ao salvar credenciais com segurança: Secure error');
   });
 
+  it('deve adicionar um segundo usuário sem substituir o primeiro', async () => {
+    SecureStore.getItemAsync.mockResolvedValueOnce(
+      JSON.stringify({
+        usuario: 'primeiro@test.com',
+        passwordHash: 'hash1',
+        hasBiometrics: false,
+      })
+    );
+    SecureStore.setItemAsync.mockResolvedValueOnce();
+
+    await sessionService.saveCredentials('segundo@test.com', '123456');
+
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      STORAGE_KEYS.CREDENTIALS,
+      JSON.stringify([
+        {
+          usuario: 'primeiro@test.com',
+          passwordHash: 'hash1',
+          hasBiometrics: false,
+        },
+        {
+          usuario: 'segundo@test.com',
+          passwordHash: 'mockPasswordHash',
+          hasBiometrics: false,
+        },
+      ])
+    );
+  });
+
+  it('deve atualizar a lista existente ao cadastrar outro usuário', async () => {
+    SecureStore.getItemAsync.mockResolvedValueOnce(
+      JSON.stringify([{ usuario: 'primeiro@test.com', passwordHash: 'hash1' }])
+    );
+    SecureStore.setItemAsync.mockResolvedValueOnce();
+
+    await sessionService.saveCredentials('segundo@test.com', '123456');
+
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      STORAGE_KEYS.CREDENTIALS,
+      expect.stringContaining('segundo@test.com')
+    );
+  });
+
   it('deve retornar as credenciais quando elas existirem', async () => {
     const creds = {
       usuario: 'teste@test.com',
@@ -85,6 +128,56 @@ describe('sessionService', () => {
 
     const result = await sessionService.getCredentials();
     expect(result).toBeNull();
+  });
+
+  it('deve buscar um usuário específico quando houver vários cadastrados', async () => {
+    const credentials = [
+      { usuario: 'primeiro@test.com', passwordHash: 'hash1' },
+      { usuario: 'segundo@test.com', passwordHash: 'hash2' },
+    ];
+    SecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(credentials));
+
+    await expect(
+      sessionService.getCredentials('segundo@test.com')
+    ).resolves.toEqual(credentials[1]);
+  });
+
+  it('deve retornar a primeira credencial quando não houver usuário informado', async () => {
+    const credentials = [
+      { usuario: 'primeiro@test.com', passwordHash: 'hash1' },
+      { usuario: 'segundo@test.com', passwordHash: 'hash2' },
+    ];
+    SecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify(credentials));
+
+    await expect(sessionService.getCredentials()).resolves.toEqual(
+      credentials[0]
+    );
+  });
+
+  it('deve retornar null quando a lista de credenciais estiver vazia', async () => {
+    SecureStore.getItemAsync.mockResolvedValueOnce(JSON.stringify([]));
+
+    await expect(sessionService.getCredentials()).resolves.toBeNull();
+  });
+
+  it('deve retornar null quando o usuário procurado não existir', async () => {
+    SecureStore.getItemAsync.mockResolvedValueOnce(
+      JSON.stringify([{ usuario: 'primeiro@test.com', passwordHash: 'hash1' }])
+    );
+
+    await expect(
+      sessionService.getCredentials('inexistente@test.com')
+    ).resolves.toBeNull();
+  });
+
+  it('deve rejeitar credencial legada de outro usuário', async () => {
+    SecureStore.getItemAsync.mockResolvedValueOnce(
+      JSON.stringify({ usuario: 'primeiro@test.com', passwordHash: 'hash1' })
+    );
+
+    await expect(
+      sessionService.getCredentials('segundo@test.com')
+    ).resolves.toBeNull();
   });
 
   it('deve lançar erro caso ocorra exceção ao buscar as credenciais', async () => {

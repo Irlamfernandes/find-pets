@@ -1,7 +1,7 @@
 // App.js
 import 'react-native-get-random-values';
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -13,9 +13,12 @@ import { palette } from './src/theme/colors';
 import { useSession } from './src/hooks/useSession';
 import { sessionService } from './src/services/session';
 import { onboardingService } from './src/services/onboarding';
+import { AppAlertProvider } from './src/components/AppAlert';
+import { useAppAlert } from './src/components/AppAlert';
 
-export default function App() {
+function AppContent() {
   const { isLoading, session, saveUserSession, logout } = useSession();
+  const showAlert = useAppAlert();
   const [currentStep, setCurrentStep] = useState('loading');
   const [shouldOpenCamera, setShouldOpenCamera] = useState(false);
 
@@ -32,10 +35,11 @@ export default function App() {
       const profile = await onboardingService.getUserProfile();
       setCurrentStep(profile ? 'home' : 'onboarding');
     } catch (error) {
-      Alert.alert(
-        'Erro',
-        `Não foi possível carregar os dados do usuário: ${error.message}`
-      );
+      showAlert({
+        type: 'danger',
+        title: 'Não foi possível iniciar',
+        message: `Não foi possível carregar os dados do usuário. ${error.message}`,
+      });
       setCurrentStep('login');
     }
   }, [isLoading, session]);
@@ -50,7 +54,11 @@ export default function App() {
         ? 'Login realizado via Biometria com sucesso.'
         : `Bem-vindo de volta, ${data.usuario}!`;
 
-    Alert.alert('Sucesso!', welcomeMessage);
+    showAlert({
+      type: 'success',
+      title: 'Login realizado',
+      message: welcomeMessage,
+    });
     await saveUserSession(data);
 
     try {
@@ -62,10 +70,11 @@ export default function App() {
   };
 
   const handleOnboardingComplete = async (profileData) => {
-    Alert.alert(
-      'Perfil Completo!',
-      `Seja bem-vindo, ${profileData.name}! Seu cadastro foi salvo com sucesso.`
-    );
+    showAlert({
+      type: 'success',
+      title: 'Perfil completo',
+      message: `Seja bem-vindo, ${profileData.name}! Seu cadastro foi salvo com sucesso.`,
+    });
 
     try {
       const currentSession = (await sessionService.getSession()) || {};
@@ -73,10 +82,11 @@ export default function App() {
       await saveUserSession(updatedSession);
       setCurrentStep('home');
     } catch (error) {
-      Alert.alert(
-        'Erro',
-        `Falha ao salvar sessão com o perfil: ${error.message}`
-      );
+      showAlert({
+        type: 'danger',
+        title: 'Não foi possível concluir',
+        message: `Falha ao salvar sessão com o perfil. ${error.message}`,
+      });
     }
   };
 
@@ -85,10 +95,11 @@ export default function App() {
       await logout();
       setCurrentStep('login');
     } catch (error) {
-      Alert.alert(
-        'Erro',
-        `Não foi possível encerrar a sessão: ${error.message}`
-      );
+      showAlert({
+        type: 'danger',
+        title: 'Não foi possível sair',
+        message: `Tente novamente. ${error.message}`,
+      });
     }
   };
 
@@ -103,46 +114,49 @@ export default function App() {
 
   if (isLoading || currentStep === 'loading') {
     return (
-      <SafeAreaProvider>
-        <SafeAreaView style={[styles.container, styles.centered]}>
-          <ActivityIndicator size="large" color={palette.primary} />
-        </SafeAreaView>
-      </SafeAreaProvider>
+      <SafeAreaView style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={palette.primary} />
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
-        <StatusBar
-          barStyle="dark-content"
-          backgroundColor={palette.background}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={palette.background} />
+
+      {currentStep === 'login' && (
+        <LoginScreen onLoginSuccess={handleLoginSuccess} />
+      )}
+
+      {currentStep === 'onboarding' && (
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      )}
+
+      {currentStep === 'home' && (
+        <FeedScreen
+          onOpenProfile={() => setCurrentStep('profile')}
+          openCameraOnMount={shouldOpenCamera}
+          onCameraRequestHandled={handleCameraRequestHandled}
         />
+      )}
 
-        {currentStep === 'login' && (
-          <LoginScreen onLoginSuccess={handleLoginSuccess} />
-        )}
+      {currentStep === 'profile' && (
+        <ProfileScreen
+          onBack={() => setCurrentStep('home')}
+          onOpenCamera={handleOpenCamera}
+          onLogout={handleLogout}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
 
-        {currentStep === 'onboarding' && (
-          <OnboardingScreen onComplete={handleOnboardingComplete} />
-        )}
-
-        {currentStep === 'home' && (
-          <FeedScreen
-            onOpenProfile={() => setCurrentStep('profile')}
-            openCameraOnMount={shouldOpenCamera}
-            onCameraRequestHandled={handleCameraRequestHandled}
-          />
-        )}
-
-        {currentStep === 'profile' && (
-          <ProfileScreen
-            onBack={() => setCurrentStep('home')}
-            onOpenCamera={handleOpenCamera}
-            onLogout={handleLogout}
-          />
-        )}
-      </SafeAreaView>
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppAlertProvider>
+        <AppContent />
+      </AppAlertProvider>
     </SafeAreaProvider>
   );
 }

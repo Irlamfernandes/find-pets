@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCameraPermissions } from 'expo-camera';
-import { Alert } from 'react-native';
 import { postService } from '../services/postService';
 import { locationService } from '../services/locationService';
 import { onboardingService } from '../services/onboarding';
 import { sessionService } from '../services/session';
+import { useAppAlert } from '../components/AppAlert';
 
 export function useFeed() {
+  const showAlert = useAppAlert();
   const [posts, setPosts] = useState([]);
   const [userName, setUserName] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
@@ -92,10 +93,12 @@ export function useFeed() {
       setIsCameraOpen(false);
     } catch {
       setIsCameraOpen(false);
-      Alert.alert(
-        'Erro',
-        'Não foi possível capturar a foto ou obter a localização. Tente novamente.'
-      );
+      showAlert({
+        type: 'danger',
+        title: 'Não foi possível publicar',
+        message:
+          'Não conseguimos capturar a foto ou obter a localização. Tente novamente.',
+      });
     }
   };
 
@@ -110,26 +113,28 @@ export function useFeed() {
       return;
     }
 
-    Alert.alert('Confirmar finalização', 'Este animal foi encontrado?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Finalizado',
-        onPress: async () => {
-          try {
-            const updatedPosts = await postService.updatePostStatus(
-              postId,
-              'Encontrado'
-            );
-            setPosts(updatedPosts);
-          } catch {
-            Alert.alert(
-              'Erro',
-              'Não foi possível finalizar a publicação. Tente novamente.'
-            );
-          }
-        },
+    showAlert({
+      type: 'success',
+      title: 'Confirmar finalização',
+      message: 'Este animal foi encontrado? O card continuará no feed.',
+      confirmText: 'Finalizado',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          const updatedPosts = await postService.updatePostStatus(
+            postId,
+            'Encontrado'
+          );
+          setPosts(updatedPosts);
+        } catch {
+          showAlert({
+            type: 'danger',
+            title: 'Não foi possível finalizar',
+            message: 'Tente novamente em alguns instantes.',
+          });
+        }
       },
-    ]);
+    });
   };
 
   // Função para excluir um post pelo ID com confirmação
@@ -137,28 +142,25 @@ export function useFeed() {
     const post = posts.find((item) => item.id === postId);
     if (!post || !currentUser || post.author !== currentUser) return;
 
-    Alert.alert(
-      'Confirmar Exclusão',
-      'Tem certeza de que deseja excluir este registro?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const updatedPosts = await postService.deletePost(postId);
-              setPosts(updatedPosts);
-            } catch {
-              Alert.alert(
-                'Erro',
-                'Não foi possível excluir a publicação. Tente novamente.'
-              );
-            }
-          },
-        },
-      ]
-    );
+    showAlert({
+      type: 'danger',
+      title: 'Confirmar Exclusão',
+      message: 'Essa publicação será removida definitivamente do feed.',
+      confirmText: 'Excluir',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        try {
+          const updatedPosts = await postService.deletePost(postId);
+          setPosts(updatedPosts);
+        } catch {
+          showAlert({
+            type: 'danger',
+            title: 'Não foi possível excluir',
+            message: 'Tente novamente em alguns instantes.',
+          });
+        }
+      },
+    });
   };
 
   return {

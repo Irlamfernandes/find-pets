@@ -46,7 +46,7 @@ describe('PetCard Component', () => {
       />
     );
 
-    fireEvent.press(getByText('📍 Ver no Mapa'));
+    fireEvent.press(getByText('Ver no mapa'));
     expect(mockOnOpenMap).toHaveBeenCalledWith(
       mockItem.latitude,
       mockItem.longitude,
@@ -63,7 +63,7 @@ describe('PetCard Component', () => {
       />
     );
 
-    fireEvent.press(getByText('💬 WhatsApp'));
+    fireEvent.press(getByText('WhatsApp'));
     expect(mockOnOpenWhatsApp).toHaveBeenCalledWith(mockItem.contactPhone);
   });
 
@@ -76,7 +76,7 @@ describe('PetCard Component', () => {
       />
     );
 
-    expect(queryByText('🗑️ Excluir')).toBeNull();
+    expect(queryByText('Excluir')).toBeNull();
 
     const { getByText: getByTextWithDelete } = render(
       <PetCard
@@ -87,7 +87,7 @@ describe('PetCard Component', () => {
       />
     );
 
-    expect(getByTextWithDelete('🗑️ Excluir')).toBeTruthy();
+    expect(getByTextWithDelete('Excluir')).toBeTruthy();
     expect(getByText).toBeDefined();
   });
 
@@ -102,6 +102,6 @@ describe('PetCard Component', () => {
     );
 
     expect(getByText('Encontrado')).toBeTruthy();
-    expect(getByText('✅ Finalizado')).toBeTruthy();
+    expect(getByText('Finalizado')).toBeTruthy();
   });
 });

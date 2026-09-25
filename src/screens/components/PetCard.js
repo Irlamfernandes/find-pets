@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { palette } from '../../theme/colors';
 
@@ -35,14 +36,24 @@ export function PetCard({
               onOpenMap(item.latitude, item.longitude, item.location)
             }
           >
-            <Text style={styles.actionButtonText}>📍 Ver no Mapa</Text>
+            <View style={styles.actionButtonContent}>
+              <Ionicons
+                name="location-outline"
+                size={18}
+                color={palette.white}
+              />
+              <Text style={styles.actionButtonText}>Ver no mapa</Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.actionButton, styles.whatsappButton]}
             onPress={() => onOpenWhatsApp(item.contactPhone)}
           >
-            <Text style={styles.actionButtonText}>💬 WhatsApp</Text>
+            <View style={styles.actionButtonContent}>
+              <Ionicons name="logo-whatsapp" size={18} color={palette.white} />
+              <Text style={styles.actionButtonText}>WhatsApp</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -51,7 +62,10 @@ export function PetCard({
             style={[styles.actionButton, styles.deleteButton]}
             onPress={onDelete}
           >
-            <Text style={styles.actionButtonText}>🗑️ Excluir</Text>
+            <View style={styles.actionButtonContent}>
+              <Ionicons name="trash-outline" size={18} color={palette.white} />
+              <Text style={styles.actionButtonText}>Excluir</Text>
+            </View>
           </TouchableOpacity>
         ) : null}
 
@@ -60,7 +74,14 @@ export function PetCard({
             style={[styles.actionButton, styles.foundButton]}
             onPress={onMarkFound}
           >
-            <Text style={styles.actionButtonText}>✅ Finalizado</Text>
+            <View style={styles.actionButtonContent}>
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={18}
+                color={palette.white}
+              />
+              <Text style={styles.actionButtonText}>Finalizado</Text>
+            </View>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -122,7 +143,8 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 10,
+    minHeight: 44,
+    paddingHorizontal: 10,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -148,6 +170,12 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: palette.white,
     fontWeight: 'bold',
-    fontSize: 13,
+    fontSize: 12,
+  },
+  actionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
 });

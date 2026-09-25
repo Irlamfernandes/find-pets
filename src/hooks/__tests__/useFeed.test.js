@@ -267,8 +267,8 @@ describe('useFeed Hook - 100% Coverage', () => {
     });
 
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Erro',
-      'Não foi possível capturar a foto ou obter a localização. Tente novamente.'
+      'Não foi possível publicar',
+      'Não conseguimos capturar a foto ou obter a localização. Tente novamente.'
     );
     expect(result.current.isCameraOpen).toBe(false);
   });
@@ -338,8 +338,8 @@ describe('useFeed Hook - 100% Coverage', () => {
     });
 
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Erro',
-      'Não foi possível excluir a publicação. Tente novamente.'
+      'Não foi possível excluir',
+      'Tente novamente em alguns instantes.'
     );
   });
 
@@ -440,8 +440,8 @@ describe('useFeed Hook - 100% Coverage', () => {
     });
 
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Erro',
-      'Não foi possível finalizar a publicação. Tente novamente.'
+      'Não foi possível finalizar',
+      'Tente novamente em alguns instantes.'
     );
   });
 });

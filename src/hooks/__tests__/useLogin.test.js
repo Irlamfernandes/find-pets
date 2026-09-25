@@ -3,6 +3,7 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useLogin } from '../useLogin';
 import { biometricService } from '../../services/biometrics';
 import { sessionService } from '../../services/session';
+import { Alert } from 'react-native';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
@@ -11,7 +12,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('../../services/biometrics');
 jest.mock('../../services/session');
 
-global.alert = jest.fn();
+jest.spyOn(Alert, 'alert');
 
 describe('useLogin Hook', () => {
   beforeEach(() => {
@@ -270,8 +271,9 @@ describe('useLogin Hook', () => {
       await result.current.handleRegister();
     });
 
-    expect(global.alert).toHaveBeenCalledWith(
-      'Cadastro realizado com sucesso! Faça o login.'
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Cadastro realizado',
+      'Sua conta foi criada. Agora faça login para continuar.'
     );
     expect(result.current.errorMessage).toBe('');
     expect(result.current.authMode).toBe('home');
@@ -320,8 +322,9 @@ describe('useLogin Hook', () => {
       '123456',
       false
     );
-    expect(global.alert).toHaveBeenCalledWith(
-      'Cadastro realizado com sucesso! Faça o login.'
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Cadastro realizado',
+      'Sua conta foi criada. Agora faça login para continuar.'
     );
   });
 
@@ -373,8 +376,9 @@ describe('useLogin Hook', () => {
       '123456',
       false
     );
-    expect(global.alert).toHaveBeenCalledWith(
-      'Cadastro realizado com sucesso! Faça o login.'
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Cadastro realizado',
+      'Sua conta foi criada. Agora faça login para continuar.'
     );
   });
 

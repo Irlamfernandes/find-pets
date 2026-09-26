@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { FlatList } from 'react-native';
 import FeedScreen from '../FeedScreen';
 import { FeedGuideCard } from '../../components/FeedGuideCard';
@@ -124,10 +124,20 @@ describe('FeedScreen', () => {
     confirmFound: jest.fn(),
   };
 
+  // A FlatList agenda atualizações internas com timers; com timers simulados
+  // elas rodam dentro do act(...) ao fim de cada teste
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
     useFeed.mockReturnValue(mockUseFeedReturn);
     useFeedGuide.mockReturnValue(mockGuide);
+  });
+
+  afterEach(() => {
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
   });
 
   it('deve renderizar o cabeçalho e as abas, sem texto de lista vazia', () => {

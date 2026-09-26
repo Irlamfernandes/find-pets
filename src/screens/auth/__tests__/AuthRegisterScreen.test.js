@@ -1,7 +1,12 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { Platform } from 'react-native';
+import { Platform, TextInput, BackHandler } from 'react-native';
 import { AuthRegisterScreen } from '../AuthRegisterScreen';
+
+const pressHardwareBack = () => {
+  const [, listener] = BackHandler.addEventListener.mock.calls.at(-1);
+  return listener();
+};
 
 describe('AuthRegisterScreen Component', () => {
   const defaultProps = {
@@ -35,7 +40,7 @@ describe('AuthRegisterScreen Component', () => {
     expect(defaultProps.setUsuario).toHaveBeenCalledWith('novo@email.com');
     expect(defaultProps.setSenha).toHaveBeenCalledWith('abcdef');
 
-    fireEvent.press(getByText('Salvar e Cadastrar Biometria'));
+    fireEvent.press(getByText('Criar conta'));
     expect(defaultProps.handleRegister).toHaveBeenCalled();
 
     fireEvent.press(getByText('Voltar'));
@@ -76,5 +81,27 @@ describe('AuthRegisterScreen Component', () => {
     expect(getByText('Cadastro')).toBeTruthy();
 
     Platform.OS = originalOS;
+  });
+
+  it('deve ir para o campo de senha ao confirmar o e-mail no teclado', () => {
+    const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
+    const { getByPlaceholderText } = render(
+      <AuthRegisterScreen {...defaultProps} />
+    );
+
+    fireEvent(getByPlaceholderText('E-mail'), 'submitEditing');
+
+    expect(focusSpy).toHaveBeenCalledTimes(1);
+    expect(defaultProps.handleRegister).not.toHaveBeenCalled();
+    focusSpy.mockRestore();
+  });
+
+  it('deve executar a seta de voltar ao usar o voltar do Android', () => {
+    jest.spyOn(BackHandler, 'addEventListener');
+    render(<AuthRegisterScreen {...defaultProps} />);
+
+    expect(pressHardwareBack()).toBe(true);
+    expect(defaultProps.onBack).toHaveBeenCalledTimes(1);
+    BackHandler.addEventListener.mockRestore();
   });
 });

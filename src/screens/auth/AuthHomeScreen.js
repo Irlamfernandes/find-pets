@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import PropTypes from 'prop-types';
+import { SafeTouchable } from '../../components/SafeTouchable';
 import { palette } from '../../theme/colors';
 
 export function AuthHomeScreen({ onNavigate }) {
@@ -14,21 +15,18 @@ export function AuthHomeScreen({ onNavigate }) {
       <Text style={styles.title}>FindPets</Text>
       <Text style={styles.subtitle}>Escolha uma opção</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => onNavigate('login')}
-      >
+      <SafeTouchable style={styles.button} onPress={() => onNavigate('login')}>
         <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+      </SafeTouchable>
 
-      <TouchableOpacity
+      <SafeTouchable
         style={[styles.button, styles.secondaryButton]}
         onPress={() => onNavigate('cadastro')}
       >
         <Text style={[styles.buttonText, styles.secondaryButtonText]}>
           Cadastrar
         </Text>
-      </TouchableOpacity>
+      </SafeTouchable>
     </View>
   );
 }

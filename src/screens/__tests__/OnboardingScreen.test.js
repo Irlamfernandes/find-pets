@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import OnboardingScreen from '../OnboardingScreen';
-import { Platform } from 'react-native';
+import { Platform, TextInput } from 'react-native';
 
 // Mock do AsyncStorage para evitar erros no Jest
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -21,7 +21,7 @@ describe('OnboardingScreen Component', () => {
 
     expect(getByText('Complete seu Perfil')).toBeTruthy();
     expect(getByPlaceholderText('Seu Nome')).toBeTruthy();
-    expect(getByPlaceholderText('WhatsApp (com DDD)')).toBeTruthy();
+    expect(getByPlaceholderText('WhatsApp: +55 (11) 99999-9999')).toBeTruthy();
     expect(getByTestId('button-complete')).toBeTruthy();
 
     expect(queryByText('Preencha todos os campos.')).toBeNull();
@@ -43,13 +43,13 @@ describe('OnboardingScreen Component', () => {
     );
 
     fireEvent.changeText(getByTestId('input-name'), 'Irlam');
-    fireEvent.changeText(getByTestId('input-whatsapp'), '11999999999');
+    fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
     fireEvent.press(getByTestId('button-complete'));
 
     await waitFor(() => {
       expect(mockOnComplete).toHaveBeenCalledWith({
         name: 'Irlam',
-        whatsapp: '11999999999',
+        whatsapp: '5511999999999',
       });
     });
   });
@@ -60,13 +60,13 @@ describe('OnboardingScreen Component', () => {
     );
 
     fireEvent.changeText(getByTestId('input-name'), 'Irlam');
-    fireEvent.changeText(getByTestId('input-whatsapp'), '11999999999');
+    fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
     fireEvent(getByTestId('input-whatsapp'), 'submitEditing');
 
     await waitFor(() => {
       expect(mockOnComplete).toHaveBeenCalledWith({
         name: 'Irlam',
-        whatsapp: '11999999999',
+        whatsapp: '5511999999999',
       });
     });
   });
@@ -75,7 +75,7 @@ describe('OnboardingScreen Component', () => {
     const { getByTestId } = render(<OnboardingScreen />);
 
     fireEvent.changeText(getByTestId('input-name'), 'Irlam');
-    fireEvent.changeText(getByTestId('input-whatsapp'), '11999999999');
+    fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
     fireEvent.press(getByTestId('button-complete'));
 
     await waitFor(() => {
@@ -93,5 +93,15 @@ describe('OnboardingScreen Component', () => {
     expect(getByTestId('button-complete')).toBeTruthy();
 
     Platform.OS = originalOS;
+  });
+
+  it('deve ir para o campo de WhatsApp ao confirmar o nome no teclado', () => {
+    const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
+    const { getByTestId } = render(<OnboardingScreen />);
+
+    fireEvent(getByTestId('input-name'), 'submitEditing');
+
+    expect(focusSpy).toHaveBeenCalledTimes(1);
+    focusSpy.mockRestore();
   });
 });

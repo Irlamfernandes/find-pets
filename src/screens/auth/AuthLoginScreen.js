@@ -1,16 +1,13 @@
-import React from 'react';
-import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  ScrollView,
-  Keyboard,
-  Image,
-} from 'react-native';
+import React, { useRef } from 'react';
+import { Text, StyleSheet, Image } from 'react-native';
 import PropTypes from 'prop-types';
+import { SafeTouchable } from '../../components/SafeTouchable';
+import { useBackHandler } from '../../hooks/useBackHandler';
+import { FormScrollView, FormTextInput } from '../../components/FormScrollView';
+import { dismissKeyboardAnd } from '../../utils/keyboard';
+import { useSingleFlight } from '../../hooks/useSingleFlight';
 import { palette } from '../../theme/colors';
+import { maskEmail } from '../../utils/maskEmail';
 
 export function AuthLoginScreen({
   usuario,
@@ -18,90 +15,85 @@ export function AuthLoginScreen({
   senha,
   setSenha,
   hasHardwareBiometric,
+  biometricOwner,
   errorMessage,
   handleManualLogin,
   triggerBiometricAuth,
   onBack,
 }) {
+  const passwordRef = useRef(null);
+  useBackHandler(dismissKeyboardAnd(onBack));
+  // Botão e tecla "concluir" compartilham a mesma trava
+  const login = useSingleFlight(dismissKeyboardAnd(handleManualLogin));
+
   return (
-    <KeyboardAvoidingView style={styles.keyboardContainer} behavior="padding">
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+    <FormScrollView
+      style={styles.keyboardContainer}
+      contentContainerStyle={styles.container}
+    >
+      <Image
+        source={require('../../../assets/adaptive-icon.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <Text style={styles.title}>Login</Text>
+      <Text style={styles.subtitle}>Entre com sua conta</Text>
+
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+
+      <FormTextInput
+        style={[styles.input, !!errorMessage && styles.inputError]}
+        placeholder="E-mail"
+        placeholderTextColor="#888"
+        value={usuario}
+        onChangeText={setUsuario}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        selectionColor={palette.primary}
+        caretHidden={false}
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+      />
+
+      <FormTextInput
+        ref={passwordRef}
+        style={[styles.input, !!errorMessage && styles.inputError]}
+        placeholder="Senha"
+        placeholderTextColor="#888"
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
+        selectionColor={palette.primary}
+        returnKeyType="done"
+        onSubmitEditing={login}
+      />
+
+      <SafeTouchable style={styles.button} onPress={login}>
+        <Text style={styles.buttonText}>Entrar com Senha</Text>
+      </SafeTouchable>
+
+      {hasHardwareBiometric && biometricOwner ? (
+        <SafeTouchable
+          style={styles.biometricButton}
+          onPress={dismissKeyboardAnd(triggerBiometricAuth)}
+        >
+          <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
+          <Text style={styles.biometricOwnerText}>
+            {maskEmail(biometricOwner)}
+          </Text>
+        </SafeTouchable>
+      ) : null}
+
+      <SafeTouchable
+        style={styles.backButton}
+        onPress={dismissKeyboardAnd(onBack)}
       >
-        <Image
-          source={require('../../../assets/adaptive-icon.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.title}>Login</Text>
-        <Text style={styles.subtitle}>Entre com sua conta</Text>
-
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
-
-        <TextInput
-          style={[styles.input, !!errorMessage && styles.inputError]}
-          placeholder="E-mail"
-          placeholderTextColor="#888"
-          value={usuario}
-          onChangeText={setUsuario}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          selectionColor={palette.primary}
-          caretHidden={false}
-          returnKeyType="next"
-        />
-
-        <TextInput
-          style={[styles.input, !!errorMessage && styles.inputError]}
-          placeholder="Senha"
-          placeholderTextColor="#888"
-          value={senha}
-          onChangeText={setSenha}
-          secureTextEntry
-          selectionColor={palette.primary}
-          returnKeyType="done"
-          onSubmitEditing={() => {
-            Keyboard.dismiss();
-            handleManualLogin();
-          }}
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => {
-            Keyboard.dismiss();
-            handleManualLogin();
-          }}
-        >
-          <Text style={styles.buttonText}>Entrar com Senha</Text>
-        </TouchableOpacity>
-
-        {hasHardwareBiometric && (
-          <TouchableOpacity
-            style={styles.biometricButton}
-            onPress={() => {
-              Keyboard.dismiss();
-              triggerBiometricAuth();
-            }}
-          >
-            <Text style={styles.biometricButtonText}>Entrar com Biometria</Text>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => {
-            Keyboard.dismiss();
-            onBack();
-          }}
-        >
-          <Text style={styles.backButtonText}>Voltar</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Text style={styles.backButtonText}>Voltar</Text>
+      </SafeTouchable>
+    </FormScrollView>
   );
 }
 
@@ -111,6 +103,7 @@ AuthLoginScreen.propTypes = {
   senha: PropTypes.string.isRequired,
   setSenha: PropTypes.func.isRequired,
   hasHardwareBiometric: PropTypes.bool.isRequired,
+  biometricOwner: PropTypes.string,
   errorMessage: PropTypes.string,
   handleManualLogin: PropTypes.func.isRequired,
   triggerBiometricAuth: PropTypes.func.isRequired,
@@ -179,7 +172,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   biometricButton: {
-    height: 52,
+    minHeight: 56,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: palette.primarySoft,
     borderRadius: 12,
@@ -187,6 +181,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     backgroundColor: palette.primarySoft,
+  },
+  biometricOwnerText: {
+    color: palette.primary,
+    fontSize: 12,
+    marginTop: 2,
   },
   biometricButtonText: {
     color: palette.primary,

@@ -270,4 +270,114 @@ describe('sessionService', () => {
       'Erro ao encerrar a sessão: Storage error'
     );
   });
+
+  describe('getBiometricOwner', () => {
+    it('deve retornar a conta que tem a biometria vinculada', async () => {
+      SecureStore.getItemAsync.mockResolvedValueOnce(
+        JSON.stringify([
+          { usuario: 'a@test.com', hasBiometrics: false },
+          { usuario: 'b@test.com', hasBiometrics: true },
+        ])
+      );
+
+      await expect(sessionService.getBiometricOwner()).resolves.toEqual({
+        usuario: 'b@test.com',
+        hasBiometrics: true,
+      });
+    });
+
+    it('deve aceitar a credencial legada salva como objeto único', async () => {
+      SecureStore.getItemAsync.mockResolvedValueOnce(
+        JSON.stringify({ usuario: 'a@test.com', hasBiometrics: true })
+      );
+
+      await expect(sessionService.getBiometricOwner()).resolves.toEqual({
+        usuario: 'a@test.com',
+        hasBiometrics: true,
+      });
+    });
+
+    it('deve retornar null sem credenciais ou sem biometria', async () => {
+      SecureStore.getItemAsync.mockResolvedValueOnce(null);
+      await expect(sessionService.getBiometricOwner()).resolves.toBeNull();
+
+      SecureStore.getItemAsync.mockResolvedValueOnce(
+        JSON.stringify([{ usuario: 'a@test.com', hasBiometrics: false }])
+      );
+      await expect(sessionService.getBiometricOwner()).resolves.toBeNull();
+    });
+
+    it('deve lançar erro se falhar ao ler as credenciais', async () => {
+      SecureStore.getItemAsync.mockRejectedValueOnce(new Error('falha'));
+
+      await expect(sessionService.getBiometricOwner()).rejects.toThrow(
+        'Erro ao verificar a biometria: falha'
+      );
+    });
+  });
+
+  describe('setBiometrics', () => {
+    const stored = () =>
+      JSON.parse(SecureStore.setItemAsync.mock.calls.at(-1)[1]);
+
+    it('deve ativar a biometria na conta quando nenhuma outra a usa', async () => {
+      SecureStore.getItemAsync.mockResolvedValueOnce(
+        JSON.stringify([
+          { usuario: 'a@test.com', hasBiometrics: false },
+          { usuario: 'b@test.com', hasBiometrics: false },
+        ])
+      );
+
+      await sessionService.setBiometrics('b@test.com', true);
+
+      expect(stored()).toEqual([
+        { usuario: 'a@test.com', hasBiometrics: false },
+        { usuario: 'b@test.com', hasBiometrics: true },
+      ]);
+    });
+
+    it('deve impedir ativar quando outra conta já usa a biometria', async () => {
+      SecureStore.getItemAsync.mockResolvedValueOnce(
+        JSON.stringify([
+          { usuario: 'a@test.com', hasBiometrics: true },
+          { usuario: 'b@test.com', hasBiometrics: false },
+        ])
+      );
+
+      await expect(
+        sessionService.setBiometrics('b@test.com', true)
+      ).rejects.toThrow(
+        'Erro ao atualizar a biometria: A biometria deste aparelho já está em uso.'
+      );
+      expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
+    });
+
+    it('deve desativar mesmo com outra conta marcada e aceitar conta única', async () => {
+      SecureStore.getItemAsync.mockResolvedValueOnce(
+        JSON.stringify({ usuario: 'a@test.com', hasBiometrics: true })
+      );
+      await sessionService.setBiometrics('a@test.com', false);
+      expect(stored()).toEqual({ usuario: 'a@test.com', hasBiometrics: false });
+
+      SecureStore.getItemAsync.mockResolvedValueOnce(
+        JSON.stringify([
+          { usuario: 'a@test.com', hasBiometrics: true },
+          { usuario: 'b@test.com', hasBiometrics: true },
+        ])
+      );
+      await sessionService.setBiometrics('b@test.com', false);
+      expect(stored()[1]).toEqual({
+        usuario: 'b@test.com',
+        hasBiometrics: false,
+      });
+    });
+
+    it('deve lançar erro para conta inexistente ou sem credenciais', async () => {
+      SecureStore.getItemAsync.mockResolvedValueOnce(null);
+
+      await expect(
+        sessionService.setBiometrics('x@test.com', true)
+      ).rejects.toThrow('Erro ao atualizar a biometria: Conta não encontrada.');
+    });
+  });
 });

@@ -60,15 +60,15 @@ describe('useOnboarding Hook (via Componente)', () => {
     );
   });
 
-  it('deve exibir erro se o número de WhatsApp for inválido (menos de 10 dígitos)', async () => {
+  it('deve exibir erro se o número de WhatsApp for inválido (menos de 12 dígitos)', async () => {
     const { getByTestId } = render(<TestComponent />);
 
     fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '119999999');
+    fireEvent.changeText(getByTestId('whatsapp'), '55119999999');
     fireEvent.press(getByTestId('save'));
 
     expect(getByTestId('error').props.children).toBe(
-      'Insira um número de WhatsApp válido com DDD.'
+      'Insira um número de WhatsApp válido com código do país e DDD.'
     );
     expect(onboardingService.saveUserProfile).not.toHaveBeenCalled();
   });
@@ -78,14 +78,14 @@ describe('useOnboarding Hook (via Componente)', () => {
     const { getByTestId } = render(<TestComponent onComplete={mockComplete} />);
 
     fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '11999999999');
+    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
     fireEvent.press(getByTestId('save'));
 
     await waitFor(() => {
       expect(mockComplete).toHaveBeenCalledWith({
         name: 'Irlam',
-        whatsapp: '11999999999',
+        whatsapp: '5511999999999',
       });
     });
   });
@@ -94,7 +94,7 @@ describe('useOnboarding Hook (via Componente)', () => {
     const { getByTestId } = render(<TestComponent />);
 
     fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '11999999999');
+    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
     fireEvent.press(getByTestId('save'));
 
@@ -112,7 +112,7 @@ describe('useOnboarding Hook (via Componente)', () => {
     const { getByTestId } = render(<TestComponent onComplete={mockComplete} />);
 
     fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '11999999999');
+    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
     fireEvent.press(getByTestId('save'));
 
@@ -129,7 +129,7 @@ describe('useOnboarding Hook (via Componente)', () => {
     const { getByTestId } = render(<TestComponent />);
 
     fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '11999999999');
+    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
     fireEvent.press(getByTestId('save'));
 

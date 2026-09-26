@@ -16,6 +16,22 @@
       },
       "package": "com.anonymous.findpets"
     },
-    "plugins": ["expo-status-bar", "expo-secure-store"]
+    "plugins": [
+      "expo-status-bar",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O FindPets precisa acessar suas fotos para anexar imagens do pet desaparecido.",
+          "cameraPermission": "O FindPets precisa da câmera para fotografar o pet desaparecido."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O FindPets usa sua localização para marcar onde o pet desapareceu."
+        }
+      ]
+    ]
   }
 }

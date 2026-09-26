@@ -29,12 +29,16 @@ async function migrateAccountsToList() {
 // O perfil de quem usava o app sozinho era gravado solto ({ name, ... }),
 // sem indicar a conta. Ele passa a pertencer à conta conectada (ou à única
 // cadastrada); sem conta nenhuma, é descartado.
+async function findProfileOwner(accounts) {
+  const session = await sessionStore.read();
+  return session?.usuario || accounts[0]?.usuario || null;
+}
+
 async function migrateProfilesByAccount(accounts) {
   const profiles = await profilesStore.read();
   if (!profiles?.name) return;
 
-  const session = await sessionStore.read();
-  const owner = session?.usuario || accounts[0]?.usuario;
+  const owner = await findProfileOwner(accounts);
   await profilesStore.write(owner ? { [owner]: profiles } : {});
 }
 

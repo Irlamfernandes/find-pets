@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, FlatList } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PropTypes from 'prop-types';
 import { useFeed } from '../hooks/useFeed';
 import { useFeedGuide } from '../hooks/useFeedGuide';
 import { useSharePost } from '../hooks/useSharePost';
-import { canManage, isOwnedBy } from '../domain/post';
 import { getPostImages } from '../utils/postImages';
-import { PetCard } from '../components/PetCard';
+import { PetList } from '../components/PetList';
 import { FoundPetModal } from '../components/FoundPetModal';
 import { FeedGuideCard } from '../components/FeedGuideCard';
 import { FeedHeader } from '../components/FeedHeader';
@@ -42,18 +41,6 @@ export default function FeedScreen({
   const openPhotos = (post, index = 0) =>
     setPhotoViewer({ images: getPostImages(post), index });
 
-  // Ações que só o autor vê no próprio card
-  const getOwnerActions = (post) => {
-    const manageable = canManage(post, currentUser);
-    return {
-      onEdit: manageable && onEditPost ? () => onEditPost(post) : undefined,
-      onDelete: isOwnedBy(post, currentUser)
-        ? () => feed.deletePost(post.id)
-        : undefined,
-      onMarkFound: manageable ? () => feed.markPostAsFound(post.id) : undefined,
-    };
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <FeedHeader
@@ -73,27 +60,24 @@ export default function FeedScreen({
           onOpenRoute={openRoute}
         />
       ) : (
-        <FlatList
-          data={posts}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          ListHeaderComponent={
+        <PetList
+          posts={posts}
+          currentUser={currentUser}
+          header={
             guide.isGuideVisible ? (
               <FeedGuideCard onDismiss={guide.dismissGuide} />
             ) : null
           }
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <PetCard
-              item={item}
-              onOpenPhoto={(index) => openPhotos(item, index)}
-              onOpenMap={() => setMapPost(item)}
-              onOpenWhatsApp={openWhatsApp}
-              onOpenRoute={() => openRoute(item)}
-              onShare={() => openShare(item)}
-              {...getOwnerActions(item)}
-            />
-          )}
+          onOpenPhoto={openPhotos}
+          onOpenMap={setMapPost}
+          onOpenWhatsApp={openWhatsApp}
+          onOpenRoute={openRoute}
+          onShare={openShare}
+          ownerHandlers={{
+            onEdit: onEditPost,
+            onDelete: feed.deletePost,
+            onMarkFound: feed.markPostAsFound,
+          }}
         />
       )}
 
@@ -133,9 +117,4 @@ FeedScreen.propTypes = {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 120,
-  },
 });

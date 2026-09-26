@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Modal, StyleSheet, Text, View, Alert } from 'react-native';
 import { SafeTouchable } from './SafeTouchable';
 import { Ionicons } from '@expo/vector-icons';
+import PropTypes from 'prop-types';
 import { palette } from '../theme/colors';
 
 const AlertContext = createContext(null);
@@ -62,6 +63,56 @@ export function nativeAlert({
   });
 }
 
+function AlertDialog({ alert, onClose }) {
+  const style = alertStyles[alert.type || 'info'];
+
+  return (
+    <View style={styles.overlay}>
+      <View style={styles.dialog}>
+        <View
+          style={[
+            styles.iconContainer,
+            { backgroundColor: style.backgroundColor },
+          ]}
+        >
+          <Ionicons name={style.icon} size={28} color={style.color} />
+        </View>
+        <Text style={styles.title}>{alert.title}</Text>
+        <Text style={styles.message}>{alert.message}</Text>
+        <View style={styles.actions}>
+          {alert.cancelText ? (
+            <SafeTouchable
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => onClose(false)}
+            >
+              <Text style={styles.cancelText}>{alert.cancelText}</Text>
+            </SafeTouchable>
+          ) : null}
+          <SafeTouchable
+            style={[styles.button, { backgroundColor: style.color }]}
+            onPress={() => onClose(true)}
+          >
+            <Text style={styles.confirmText}>
+              {alert.confirmText || 'Entendi'}
+            </Text>
+          </SafeTouchable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+AlertDialog.propTypes = {
+  alert: PropTypes.shape({
+    type: PropTypes.string,
+    title: PropTypes.string,
+    message: PropTypes.string,
+    confirmText: PropTypes.string,
+    cancelText: PropTypes.string,
+  }).isRequired,
+  onClose: PropTypes.func.isRequired,
+};
+
 export function AppAlertProvider({ children }) {
   const [alert, setAlert] = useState(null);
 
@@ -78,8 +129,6 @@ export function AppAlertProvider({ children }) {
     setAlert(null);
   };
 
-  const style = alertStyles[alert?.type || 'info'];
-
   return (
     <AlertContext.Provider value={showAlert}>
       {children}
@@ -89,38 +138,7 @@ export function AppAlertProvider({ children }) {
         animationType="fade"
         onRequestClose={() => closeAlert(false)}
       >
-        <View style={styles.overlay}>
-          <View style={styles.dialog}>
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: style.backgroundColor },
-              ]}
-            >
-              <Ionicons name={style.icon} size={28} color={style.color} />
-            </View>
-            <Text style={styles.title}>{alert?.title}</Text>
-            <Text style={styles.message}>{alert?.message}</Text>
-            <View style={styles.actions}>
-              {alert?.cancelText ? (
-                <SafeTouchable
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={() => closeAlert(false)}
-                >
-                  <Text style={styles.cancelText}>{alert.cancelText}</Text>
-                </SafeTouchable>
-              ) : null}
-              <SafeTouchable
-                style={[styles.button, { backgroundColor: style.color }]}
-                onPress={() => closeAlert(true)}
-              >
-                <Text style={styles.confirmText}>
-                  {alert?.confirmText || 'Entendi'}
-                </Text>
-              </SafeTouchable>
-            </View>
-          </View>
-        </View>
+        {alert ? <AlertDialog alert={alert} onClose={closeAlert} /> : null}
       </Modal>
     </AlertContext.Provider>
   );
@@ -131,7 +149,7 @@ export function useAppAlert() {
 }
 
 AppAlertProvider.propTypes = {
-  children: require('prop-types').node.isRequired,
+  children: PropTypes.node.isRequired,
 };
 
 const styles = StyleSheet.create({

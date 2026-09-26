@@ -13,7 +13,68 @@ const secretInputProps = {
   selectionColor: palette.primary,
 };
 
-// Nova senha (opcional) e, depois de digitada, a confirmação
+function VisibilityToggle({ isVisible, onToggle }) {
+  return (
+    <SafeTouchable
+      testID="button-toggle-password-visibility"
+      accessibilityLabel={isVisible ? 'Ocultar senha' : 'Mostrar senha'}
+      style={styles.toggle}
+      onPress={onToggle}
+    >
+      <Ionicons
+        name={isVisible ? 'eye-off-outline' : 'eye-outline'}
+        size={22}
+        color={palette.textMuted}
+      />
+    </SafeTouchable>
+  );
+}
+
+VisibilityToggle.propTypes = {
+  isVisible: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+};
+
+function ConfirmPasswordField({
+  inputRef,
+  value,
+  isVisible,
+  mismatch,
+  onChange,
+  onSubmit,
+}) {
+  return (
+    <>
+      <Text style={formStyles.label}>Confirmar nova senha</Text>
+      <FormTextInput
+        ref={inputRef}
+        style={[formStyles.input, mismatch && formStyles.inputError]}
+        value={value}
+        onChangeText={onChange}
+        placeholder="Digite a nova senha novamente"
+        secureTextEntry={!isVisible}
+        {...secretInputProps}
+        returnKeyType="done"
+        onSubmitEditing={onSubmit}
+      />
+      {mismatch ? (
+        <Text style={formStyles.fieldError}>As senhas não conferem.</Text>
+      ) : null}
+    </>
+  );
+}
+
+ConfirmPasswordField.propTypes = {
+  inputRef: PropTypes.object.isRequired,
+  value: PropTypes.string.isRequired,
+  isVisible: PropTypes.bool.isRequired,
+  mismatch: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+};
+
+// Nova senha (opcional) e, depois de digitada, a confirmação. Com a nova
+// senha preenchida, o teclado leva à confirmação; sem ela, salva.
 export function PasswordChangeFields({
   newPasswordRef,
   newPassword,
@@ -26,6 +87,17 @@ export function PasswordChangeFields({
 }) {
   const confirmRef = useRef(null);
   const hasNewPassword = Boolean(newPassword);
+  const submitProps = hasNewPassword
+    ? {
+        returnKeyType: 'next',
+        submitBehavior: 'submit',
+        onSubmitEditing: () => confirmRef.current?.focus(),
+      }
+    : {
+        returnKeyType: 'done',
+        submitBehavior: 'blurAndSubmit',
+        onSubmitEditing: onSubmit,
+      };
 
   return (
     <>
@@ -39,44 +111,20 @@ export function PasswordChangeFields({
           placeholder="Digite uma nova senha se desejar alterar"
           secureTextEntry={!isVisible}
           {...secretInputProps}
-          returnKeyType={hasNewPassword ? 'next' : 'done'}
-          submitBehavior={hasNewPassword ? 'submit' : 'blurAndSubmit'}
-          onSubmitEditing={
-            hasNewPassword ? () => confirmRef.current?.focus() : onSubmit
-          }
+          {...submitProps}
         />
-        <SafeTouchable
-          testID="button-toggle-password-visibility"
-          accessibilityLabel={isVisible ? 'Ocultar senha' : 'Mostrar senha'}
-          style={styles.toggle}
-          onPress={onToggleVisibility}
-        >
-          <Ionicons
-            name={isVisible ? 'eye-off-outline' : 'eye-outline'}
-            size={22}
-            color={palette.textMuted}
-          />
-        </SafeTouchable>
+        <VisibilityToggle isVisible={isVisible} onToggle={onToggleVisibility} />
       </View>
 
       {hasNewPassword ? (
-        <>
-          <Text style={formStyles.label}>Confirmar nova senha</Text>
-          <FormTextInput
-            ref={confirmRef}
-            style={[formStyles.input, mismatch && formStyles.inputError]}
-            value={confirmPassword}
-            onChangeText={(text) => onChange('confirmPassword', text)}
-            placeholder="Digite a nova senha novamente"
-            secureTextEntry={!isVisible}
-            {...secretInputProps}
-            returnKeyType="done"
-            onSubmitEditing={onSubmit}
-          />
-          {mismatch ? (
-            <Text style={formStyles.fieldError}>As senhas não conferem.</Text>
-          ) : null}
-        </>
+        <ConfirmPasswordField
+          inputRef={confirmRef}
+          value={confirmPassword}
+          isVisible={isVisible}
+          mismatch={mismatch}
+          onChange={(text) => onChange('confirmPassword', text)}
+          onSubmit={onSubmit}
+        />
       ) : null}
     </>
   );

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
-import { getPosterContent } from '../utils/posterContent';
+import { getPosterContent, getPosterInfoLines } from '../utils/posterContent';
 import { PetInfoGrid } from './PetInfoGrid';
 import { palette } from '../../../shared/theme/colors';
 
@@ -10,14 +10,7 @@ import { palette } from '../../../shared/theme/colors';
 export function SharePoster({ post, viewRef, onImageLoadEnd }) {
   const content = getPosterContent(post);
 
-  const infoLines = [
-    !content.isFound && content.occurredAt
-      ? { icon: 'time-outline', text: `Desapareceu em ${content.occurredAt}` }
-      : null,
-    content.location
-      ? { icon: 'location-outline', text: content.location }
-      : null,
-  ].filter(Boolean);
+  const infoLines = getPosterInfoLines(content);
 
   return (
     <View

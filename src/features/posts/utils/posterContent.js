@@ -3,6 +3,12 @@ import { formatPhone, withCountryCode } from '../../../shared/utils/phoneMask';
 import { getPostImages } from './postImages';
 import { getPetFields, getPetTitle } from './petDescription';
 
+// Depois do reencontro, o contato não precisa mais circular
+function getPosterPhone(post, isFound) {
+  if (isFound || !post.contactPhone) return '';
+  return formatPhone(withCountryCode(post.contactPhone));
+}
+
 // Informações exibidas no cartaz de compartilhamento
 export function getPosterContent(post) {
   const isFound = isFoundPost(post);
@@ -17,10 +23,19 @@ export function getPosterContent(post) {
     occurredAt: getOccurredAtLabel(post),
     location: post.location || '',
     description: post.description || '',
-    // Depois do reencontro, o contato não precisa mais circular
-    phone:
-      post.contactPhone && !isFound
-        ? formatPhone(withCountryCode(post.contactPhone))
-        : '',
+    phone: getPosterPhone(post, isFound),
   };
+}
+
+// Linhas com ícone do cartaz; a data do desaparecimento sai depois do
+// reencontro
+export function getPosterInfoLines(content) {
+  return [
+    !content.isFound &&
+      content.occurredAt && {
+        icon: 'time-outline',
+        text: `Desapareceu em ${content.occurredAt}`,
+      },
+    content.location && { icon: 'location-outline', text: content.location },
+  ].filter(Boolean);
 }

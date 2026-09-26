@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { usePetPhotos, MAX_PHOTOS } from './usePetPhotos';
+import { usePetPhotos } from './usePetPhotos';
 import { publishLostPost, updateLostPost } from '../services/lostPostPublisher';
 import { rule, validate } from '../../../shared/utils/validation';
 import { useAppAlert } from '../../../shared/components/AppAlert';
 import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 
-export { MAX_PHOTOS };
+export { MAX_PHOTOS } from './usePetPhotos';
 
 // Campos descritivos do pet, na ordem em que aparecem no formulário
 const PET_FIELDS = [

@@ -10,8 +10,22 @@ export function validate(values, rules) {
 
 export const isFilled = (value) => Boolean(value?.trim());
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-export const isValidEmail = (email) => EMAIL_PATTERN.test(email || '');
+const WHITESPACE = /\s/;
+
+// nome@dominio.ext: sem espaços, um único "@", nome não vazio e domínio com
+// um ponto que tenha ao menos 1 caractere antes e 2 depois. Feito sem uma
+// expressão regular única, que teria desempenho ruim (backtracking) com
+// textos longos.
+export function isValidEmail(email) {
+  const value = email || '';
+  const parts = value.split('@');
+  if (WHITESPACE.test(value) || parts.length !== 2) return false;
+
+  const [name, domain] = parts;
+  // Ponto mais à esquerda (depois do 1º caractere): deixa o máximo depois
+  const dot = domain.indexOf('.', 1);
+  return name.length > 0 && dot !== -1 && domain.length - dot - 1 >= 2;
+}
 
 // E-mails são comparados sem diferenciar maiúsculas nem espaços nas pontas
 export const normalizeEmail = (email) => (email || '').trim().toLowerCase();

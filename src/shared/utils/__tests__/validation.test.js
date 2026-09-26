@@ -43,6 +43,24 @@ describe('validation', () => {
     expect(isValidEmail(null)).toBe(false);
   });
 
+  it('isValidEmail deve tratar os casos de borda como antes', () => {
+    expect(isValidEmail('ana.silva@mail.com.br')).toBe(true);
+    expect(isValidEmail('a@b.cc.d')).toBe(true);
+    expect(isValidEmail('a@b.c')).toBe(false);
+    expect(isValidEmail('a@.com')).toBe(false);
+    expect(isValidEmail('@x.com')).toBe(false);
+    expect(isValidEmail('a@@x.com')).toBe(false);
+    expect(isValidEmail('a@x.com ')).toBe(false);
+    expect(isValidEmail('semarroba.com')).toBe(false);
+  });
+
+  it('isValidEmail deve responder rápido mesmo com textos enormes', () => {
+    const huge = `${'a'.repeat(50000)}@${'b'.repeat(50000)}`;
+    const start = Date.now();
+    expect(isValidEmail(huge)).toBe(false);
+    expect(Date.now() - start).toBeLessThan(100);
+  });
+
   it('normalizeEmail deve ignorar maiúsculas e espaços nas pontas', () => {
     expect(normalizeEmail(' Ana@X.COM ')).toBe('ana@x.com');
     expect(normalizeEmail(undefined)).toBe('');

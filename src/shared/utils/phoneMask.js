@@ -4,7 +4,7 @@ export const PHONE_MIN_DIGITS = 12;
 const DEFAULT_COUNTRY_CODE = '55';
 
 export function onlyDigits(value) {
-  return (value || '').replace(/\D/g, '').slice(0, PHONE_MAX_DIGITS);
+  return (value || '').replaceAll(/\D/g, '').slice(0, PHONE_MAX_DIGITS);
 }
 
 // Números antigos foram salvos sem o código do país (apenas DDD + número)

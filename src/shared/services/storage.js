@@ -44,7 +44,10 @@ export function createJsonStore(
   key,
   { adapter = asyncStorageAdapter, fallback = null, normalize = (v) => v } = {}
 ) {
-  const emptyValue = () => JSON.parse(JSON.stringify(fallback));
+  // Cópia nova do padrão a cada leitura, lida do JSON guardado uma vez.
+  // (structuredClone não é garantido no Hermes, o motor do Expo Go.)
+  const emptyJson = JSON.stringify(fallback);
+  const emptyValue = () => JSON.parse(emptyJson);
 
   const read = async () => {
     const raw = await adapter.getItem(key);

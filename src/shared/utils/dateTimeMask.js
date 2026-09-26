@@ -1,13 +1,13 @@
 // Máscaras e validação de data (dd/mm/aaaa) e hora (HH:MM) digitadas pelo usuário
 
 export function formatDateInput(value) {
-  const digits = (value || '').replace(/\D/g, '').slice(0, 8);
+  const digits = (value || '').replaceAll(/\D/g, '').slice(0, 8);
   const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)];
   return parts.filter(Boolean).join('/');
 }
 
 export function formatTimeInput(value) {
-  const digits = (value || '').replace(/\D/g, '').slice(0, 4);
+  const digits = (value || '').replaceAll(/\D/g, '').slice(0, 4);
   return digits.length > 2
     ? `${digits.slice(0, 2)}:${digits.slice(2)}`
     : digits;

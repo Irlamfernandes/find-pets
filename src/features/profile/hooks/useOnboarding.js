@@ -21,10 +21,11 @@ const onboardingRules = [
 
 export function useOnboarding(onComplete) {
   const [name, setName] = useState('');
-  const [whatsapp, setWhatsappState] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const setWhatsapp = (value) => setWhatsappState(formatPhone(value));
+  // Aplica a máscara enquanto a pessoa digita
+  const changeWhatsapp = (value) => setWhatsapp(formatPhone(value));
 
   const handleSaveProfile = async () => {
     const invalid = validate({ name, whatsapp }, onboardingRules);
@@ -44,7 +45,7 @@ export function useOnboarding(onComplete) {
     name,
     setName,
     whatsapp,
-    setWhatsapp,
+    setWhatsapp: changeWhatsapp,
     errorMessage,
     handleSaveProfile,
   };

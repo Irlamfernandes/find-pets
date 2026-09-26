@@ -23,7 +23,7 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { FOUND_RELATIONS } from '../domain/foundForm';
 import { useFoundForm } from '../hooks/useFoundForm';
 
-export { FOUND_RELATIONS };
+export { FOUND_RELATIONS } from '../domain/foundForm';
 
 function FoundModalHeader() {
   return (

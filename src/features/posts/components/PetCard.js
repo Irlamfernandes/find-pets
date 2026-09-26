@@ -15,7 +15,7 @@ import { PhotoCarousel } from './PhotoCarousel';
 import { FoundInfoBox } from './FoundInfoBox';
 import { ContactButtons } from './ContactButtons';
 
-export { getPostImages };
+export { getPostImages } from '../utils/postImages';
 
 // Ações exclusivas de quem registrou; cada uma aparece se a prop existir
 const OWNER_ACTIONS = [

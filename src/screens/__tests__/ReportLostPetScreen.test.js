@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { Keyboard, BackHandler } from 'react-native';
+import { Keyboard, BackHandler, TextInput } from 'react-native';
 import ReportLostPetScreen from '../ReportLostPetScreen';
 import { useReportLostPet } from '../../hooks/useReportLostPet';
 
@@ -18,9 +18,18 @@ describe('ReportLostPetScreen', () => {
   const onBack = jest.fn();
   const onSaved = jest.fn();
   const hookValue = {
+    isEditing: false,
     photos: [],
-    description: '',
-    setDescription: jest.fn(),
+    petData: {
+      petName: '',
+      species: '',
+      size: '',
+      sex: '',
+      color: '',
+      breed: '',
+      description: '',
+    },
+    setPetField: jest.fn(),
     address: '',
     setAddress: jest.fn(),
     isSaving: false,
@@ -41,11 +50,18 @@ describe('ReportLostPetScreen', () => {
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
-    expect(useReportLostPet).toHaveBeenCalledWith(onSaved);
+    expect(useReportLostPet).toHaveBeenCalledWith(onSaved, null);
     expect(getByText('Fotos do pet (0/5)')).toBeTruthy();
     expect(getByTestId('button-take-photo')).toBeTruthy();
     expect(getByTestId('button-pick-gallery')).toBeTruthy();
     expect(getByText('Endereço (opcional)')).toBeTruthy();
+    expect(getByText('Sobre o pet')).toBeTruthy();
+    expect(getByText('Espécie *')).toBeTruthy();
+    expect(
+      getByText(
+        'Sem endereço, usamos a localização da foto ou a sua localização atual.'
+      )
+    ).toBeTruthy();
   });
 
   it('deve disparar as ações do formulário', () => {
@@ -57,13 +73,22 @@ describe('ReportLostPetScreen', () => {
     fireEvent.press(getByTestId('button-take-photo'));
     fireEvent.press(getByTestId('button-pick-gallery'));
     fireEvent.changeText(getByTestId('input-description'), 'Cão marrom');
+    fireEvent.changeText(getByTestId('input-pet-name'), 'Rex');
+    fireEvent.changeText(getByTestId('input-pet-color'), 'Caramelo');
+    fireEvent.changeText(getByTestId('input-pet-breed'), 'Vira-lata');
     fireEvent.changeText(getByTestId('input-address'), 'Rua A');
     fireEvent.press(getByTestId('button-submit-report'));
 
     expect(onBack).toHaveBeenCalledTimes(1);
     expect(hookValue.takePhoto).toHaveBeenCalledTimes(1);
     expect(hookValue.pickFromGallery).toHaveBeenCalledTimes(1);
-    expect(hookValue.setDescription).toHaveBeenCalledWith('Cão marrom');
+    expect(hookValue.setPetField).toHaveBeenCalledWith(
+      'description',
+      'Cão marrom'
+    );
+    expect(hookValue.setPetField).toHaveBeenCalledWith('petName', 'Rex');
+    expect(hookValue.setPetField).toHaveBeenCalledWith('color', 'Caramelo');
+    expect(hookValue.setPetField).toHaveBeenCalledWith('breed', 'Vira-lata');
     expect(hookValue.setAddress).toHaveBeenCalledWith('Rua A');
     expect(hookValue.submit).toHaveBeenCalledTimes(1);
   });
@@ -140,5 +165,55 @@ describe('ReportLostPetScreen', () => {
     expect(pressHardwareBack()).toBe(true);
     expect(onBack).toHaveBeenCalledTimes(1);
     BackHandler.addEventListener.mockRestore();
+  });
+
+  it('deve escolher espécie, porte e sexo pelas opções', () => {
+    const { getByText } = render(
+      <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
+    );
+
+    fireEvent.press(getByText('Gato'));
+    fireEvent.press(getByText('Grande'));
+    fireEvent.press(getByText('Fêmea'));
+
+    expect(hookValue.setPetField).toHaveBeenCalledWith('species', 'Gato');
+    expect(hookValue.setPetField).toHaveBeenCalledWith('size', 'Grande');
+    expect(hookValue.setPetField).toHaveBeenCalledWith('sex', 'Fêmea');
+  });
+
+  it('deve avançar de cor para raça e detalhes pelo teclado', () => {
+    const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
+    const { getByTestId } = render(
+      <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
+    );
+
+    fireEvent(getByTestId('input-pet-color'), 'submitEditing');
+    fireEvent(getByTestId('input-pet-breed'), 'submitEditing');
+
+    expect(focusSpy).toHaveBeenCalledTimes(2);
+    focusSpy.mockRestore();
+  });
+
+  it('deve mostrar títulos e dicas de edição e repassar o registro ao hook', () => {
+    const post = { id: '1', species: 'Cachorro' };
+    useReportLostPet.mockReturnValue({ ...hookValue, isEditing: true });
+
+    const { getByText, queryByText } = render(
+      <ReportLostPetScreen
+        onBack={onBack}
+        onSaved={onSaved}
+        initialPost={post}
+      />
+    );
+
+    expect(useReportLostPet).toHaveBeenCalledWith(onSaved, post);
+    expect(getByText('Editar registro')).toBeTruthy();
+    expect(getByText('Salvar alterações')).toBeTruthy();
+    expect(getByText('Adicione ou remova fotos do registro.')).toBeTruthy();
+    expect(
+      getByText('Mudar o endereço atualiza o ponto no mapa.')
+    ).toBeTruthy();
+    expect(getByText('Endereço')).toBeTruthy();
+    expect(queryByText('Registrar desaparecimento')).toBeNull();
   });
 });

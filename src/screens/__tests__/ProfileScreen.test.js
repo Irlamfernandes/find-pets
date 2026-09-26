@@ -10,7 +10,7 @@ import ProfileScreen from '../ProfileScreen';
 import { onboardingService } from '../../services/onboarding';
 import { sessionService } from '../../services/session';
 import { photoService } from '../../services/photoService';
-import { profilePhotoStorage } from '../../services/profilePhotoStorage';
+import { profilePhotoStorage } from '../../services/photoStorage';
 import { Alert, TextInput, BackHandler } from 'react-native';
 import { useKeyboardVisible } from '../../hooks/useKeyboardVisible';
 
@@ -35,7 +35,7 @@ jest.mock('../../services/photoService', () => ({
   photoService: { pickProfilePhoto: jest.fn() },
 }));
 
-jest.mock('../../services/profilePhotoStorage', () => ({
+jest.mock('../../services/photoStorage', () => ({
   profilePhotoStorage: {
     persist: jest.fn(async (uri) =>
       uri && !uri.startsWith('stored:') ? `stored:${uri}` : uri

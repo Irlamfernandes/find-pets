@@ -5,12 +5,13 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../components/SafeTouchable';
 import { palette } from '../../theme/colors';
 import { LocationMap } from '../../components/LocationMap';
-import { formatDateTime } from '../../utils/photoMetadata';
+import { formatDateTime } from '../../utils/timeZone';
+import { getPetFields } from '../../utils/petDescription';
+import { PetInfoGrid } from '../../components/PetInfoGrid';
 
-// Registros antigos tinham apenas uma foto em imageUri
-export function getPostImages(item) {
-  return item.images?.length ? item.images : [item.imageUri];
-}
+import { getPostImages } from '../../utils/postImages';
+
+export { getPostImages };
 
 export function PetCard({
   item,
@@ -18,6 +19,8 @@ export function PetCard({
   onOpenMap,
   onOpenWhatsApp,
   onOpenRoute,
+  onShare,
+  onEdit,
   onDelete,
   onMarkFound,
 }) {
@@ -27,8 +30,9 @@ export function PetCard({
   const status = item.status || item.type;
   const hasCoords =
     Number.isFinite(item.latitude) && Number.isFinite(item.longitude);
+  const petFields = getPetFields(item);
   const occurredAt = item.occurredAt
-    ? formatDateTime(item.occurredAt)
+    ? formatDateTime(item.occurredAt, item.occurredZone)
     : item.date;
 
   const handleScrollEnd = (event) => {
@@ -77,14 +81,18 @@ export function PetCard({
       </View>
 
       <View style={styles.cardInfo}>
-        <Text
-          style={[
-            styles.cardBadge,
-            status === 'Encontrado' && styles.foundBadge,
-          ]}
-        >
-          {status}
-        </Text>
+        <View style={styles.badgesRow}>
+          <Text
+            style={[
+              styles.cardBadge,
+              status === 'Encontrado' && styles.foundBadge,
+            ]}
+          >
+            {status}
+          </Text>
+        </View>
+
+        <PetInfoGrid fields={petFields} />
 
         {item.foundInfo ? (
           <View testID="found-info" style={styles.foundInfo}>
@@ -96,7 +104,8 @@ export function PetCard({
               {`Com: ${item.foundInfo.receiverName} (${item.foundInfo.receiverRelation})`}
             </Text>
             <Text style={styles.foundInfoText}>
-              Em: {formatDateTime(item.foundInfo.foundAt)}
+              Em:{' '}
+              {formatDateTime(item.foundInfo.foundAt, item.foundInfo.foundZone)}
             </Text>
             {item.foundInfo.foundLocation ? (
               <Text style={styles.foundInfoText}>
@@ -176,7 +185,24 @@ export function PetCard({
           ) : null}
         </View>
 
-        {onDelete || onMarkFound ? (
+        <SafeTouchable
+          accessibilityLabel="Compartilhar este registro"
+          style={[styles.actionButton, styles.shareButton]}
+          onPress={onShare}
+        >
+          <View style={styles.actionButtonContent}>
+            <Ionicons
+              name="share-social-outline"
+              size={18}
+              color={palette.primary}
+            />
+            <Text style={[styles.actionButtonText, styles.shareButtonText]}>
+              Compartilhar
+            </Text>
+          </View>
+        </SafeTouchable>
+
+        {onDelete || onMarkFound || onEdit ? (
           <View style={styles.actionButtonsContainer}>
             {onMarkFound ? (
               <SafeTouchable
@@ -191,6 +217,23 @@ export function PetCard({
                     color={palette.white}
                   />
                   <Text style={styles.actionButtonText}>Encontrado</Text>
+                </View>
+              </SafeTouchable>
+            ) : null}
+
+            {onEdit ? (
+              <SafeTouchable
+                accessibilityLabel="Editar registro"
+                style={[styles.actionButton, styles.editButton]}
+                onPress={onEdit}
+              >
+                <View style={styles.actionButtonContent}>
+                  <Ionicons
+                    name="create-outline"
+                    size={18}
+                    color={palette.white}
+                  />
+                  <Text style={styles.actionButtonText}>Editar</Text>
                 </View>
               </SafeTouchable>
             ) : null}
@@ -227,14 +270,28 @@ PetCard.propTypes = {
     status: PropTypes.string,
     date: PropTypes.string.isRequired,
     occurredAt: PropTypes.string,
+    occurredZone: PropTypes.shape({
+      offsetMinutes: PropTypes.number,
+      abbreviation: PropTypes.string,
+    }),
     latitude: PropTypes.number,
     longitude: PropTypes.number,
     location: PropTypes.string,
     contactPhone: PropTypes.string,
+    petName: PropTypes.string,
+    species: PropTypes.string,
+    size: PropTypes.string,
+    sex: PropTypes.string,
+    color: PropTypes.string,
+    breed: PropTypes.string,
     foundInfo: PropTypes.shape({
       receiverName: PropTypes.string,
       receiverRelation: PropTypes.string,
       foundAt: PropTypes.string,
+      foundZone: PropTypes.shape({
+        offsetMinutes: PropTypes.number,
+        abbreviation: PropTypes.string,
+      }),
       foundLocation: PropTypes.string,
       notes: PropTypes.string,
     }),
@@ -243,6 +300,8 @@ PetCard.propTypes = {
   onOpenMap: PropTypes.func.isRequired,
   onOpenWhatsApp: PropTypes.func.isRequired,
   onOpenRoute: PropTypes.func.isRequired,
+  onShare: PropTypes.func.isRequired,
+  onEdit: PropTypes.func,
   onDelete: PropTypes.func,
   onMarkFound: PropTypes.func,
 };
@@ -293,6 +352,15 @@ const styles = StyleSheet.create({
   },
   foundInfoTitle: { fontWeight: 'bold', color: palette.text },
   foundInfoText: { fontSize: 13, color: palette.text },
+  badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  shareButton: {
+    marginTop: 8,
+    backgroundColor: palette.surface,
+    borderWidth: 1,
+    borderColor: palette.primary,
+  },
+  shareButtonText: { color: palette.primary },
+  editButton: { backgroundColor: palette.primaryDark },
   description: {
     fontSize: 15,
     color: palette.text,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -17,12 +17,23 @@ import { palette } from '../theme/colors';
 import { FormScrollView, FormTextInput } from '../components/FormScrollView';
 import { dismissKeyboardAnd } from '../utils/keyboard';
 import { useBackHandler } from '../hooks/useBackHandler';
+import { ChipSelector } from '../components/ChipSelector';
+import {
+  SPECIES_OPTIONS,
+  SIZE_OPTIONS,
+  SEX_OPTIONS,
+} from '../constants/petOptions';
 
-export default function ReportLostPetScreen({ onBack, onSaved }) {
+export default function ReportLostPetScreen({
+  onBack,
+  onSaved,
+  initialPost = null,
+}) {
   const {
+    isEditing,
     photos,
-    description,
-    setDescription,
+    petData,
+    setPetField,
     address,
     setAddress,
     isSaving,
@@ -31,8 +42,10 @@ export default function ReportLostPetScreen({ onBack, onSaved }) {
     takePhoto,
     removePhoto,
     submit,
-  } = useReportLostPet(onSaved);
+  } = useReportLostPet(onSaved, initialPost);
   useBackHandler(dismissKeyboardAnd(onBack));
+  const breedRef = useRef(null);
+  const descriptionRef = useRef(null);
 
   const canAddPhotos = remainingPhotos > 0;
 
@@ -47,7 +60,9 @@ export default function ReportLostPetScreen({ onBack, onSaved }) {
         >
           <Ionicons name="arrow-back" size={22} color={palette.primary} />
         </SafeTouchable>
-        <Text style={styles.headerTitle}>Registrar desaparecimento</Text>
+        <Text style={styles.headerTitle}>
+          {isEditing ? 'Editar registro' : 'Registrar desaparecimento'}
+        </Text>
       </View>
 
       <FormScrollView
@@ -58,8 +73,9 @@ export default function ReportLostPetScreen({ onBack, onSaved }) {
           Fotos do pet ({photos.length}/{MAX_PHOTOS})
         </Text>
         <Text style={styles.hint}>
-          A localização e a data/hora das fotos serão usadas no registro, quando
-          disponíveis.
+          {isEditing
+            ? 'Adicione ou remova fotos do registro.'
+            : 'A localização e a data/hora das fotos serão usadas no registro, quando disponíveis.'}
         </Text>
 
         <ScrollView
@@ -115,20 +131,89 @@ export default function ReportLostPetScreen({ onBack, onSaved }) {
           ) : null}
         </ScrollView>
 
-        <Text style={styles.label}>Descrição</Text>
+        <Text style={styles.sectionTitle}>Sobre o pet</Text>
+
+        <Text style={styles.label}>Espécie *</Text>
+        <ChipSelector
+          options={SPECIES_OPTIONS}
+          value={petData.species}
+          onChange={(value) => setPetField('species', value)}
+          required
+        />
+
+        <Text style={styles.label}>Nome (opcional)</Text>
         <FormTextInput
+          testID="input-pet-name"
+          style={styles.input}
+          value={petData.petName}
+          onChangeText={(text) => setPetField('petName', text)}
+          placeholder="Como ele atende? Ex.: Rex"
+          maxLength={40}
+          selectionColor={palette.primary}
+          returnKeyType="done"
+        />
+
+        <Text style={styles.label}>Porte</Text>
+        <ChipSelector
+          options={SIZE_OPTIONS}
+          value={petData.size}
+          onChange={(value) => setPetField('size', value)}
+        />
+
+        <Text style={styles.label}>Sexo</Text>
+        <ChipSelector
+          options={SEX_OPTIONS}
+          value={petData.sex}
+          onChange={(value) => setPetField('sex', value)}
+        />
+
+        <Text style={styles.label}>Cor</Text>
+        <FormTextInput
+          testID="input-pet-color"
+          style={styles.input}
+          value={petData.color}
+          onChangeText={(text) => setPetField('color', text)}
+          placeholder="Ex.: caramelo com manchas brancas"
+          maxLength={60}
+          selectionColor={palette.primary}
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => breedRef.current?.focus()}
+        />
+
+        <Text style={styles.label}>Raça (opcional)</Text>
+        <FormTextInput
+          ref={breedRef}
+          testID="input-pet-breed"
+          style={styles.input}
+          value={petData.breed}
+          onChangeText={(text) => setPetField('breed', text)}
+          placeholder="Ex.: vira-lata, poodle, siamês"
+          maxLength={40}
+          selectionColor={palette.primary}
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => descriptionRef.current?.focus()}
+        />
+
+        <Text style={styles.label}>Mais detalhes (opcional)</Text>
+        <FormTextInput
+          ref={descriptionRef}
           testID="input-description"
           style={[styles.input, styles.textArea]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Nome, espécie, cor, porte, coleira, comportamento..."
+          value={petData.description}
+          onChangeText={(text) => setPetField('description', text)}
+          placeholder="Coleira, comportamento, onde foi visto pela última vez..."
           multiline
           textAlignVertical="top"
           maxLength={500}
           selectionColor={palette.primary}
         />
 
-        <Text style={styles.label}>Endereço (opcional)</Text>
+        <Text style={styles.sectionTitle}>Onde desapareceu</Text>
+        <Text style={styles.label}>
+          Endereço{isEditing ? '' : ' (opcional)'}
+        </Text>
         <FormTextInput
           testID="input-address"
           style={styles.input}
@@ -140,7 +225,9 @@ export default function ReportLostPetScreen({ onBack, onSaved }) {
           onSubmitEditing={() => Keyboard.dismiss()}
         />
         <Text style={styles.hint}>
-          Sem endereço, usamos a localização da foto ou a sua localização atual.
+          {isEditing
+            ? 'Mudar o endereço atualiza o ponto no mapa.'
+            : 'Sem endereço, usamos a localização da foto ou a sua localização atual.'}
         </Text>
 
         <SafeTouchable
@@ -152,7 +239,9 @@ export default function ReportLostPetScreen({ onBack, onSaved }) {
           {isSaving ? (
             <ActivityIndicator color={palette.white} />
           ) : (
-            <Text style={styles.submitText}>Registrar desaparecimento</Text>
+            <Text style={styles.submitText}>
+              {isEditing ? 'Salvar alterações' : 'Registrar desaparecimento'}
+            </Text>
           )}
         </SafeTouchable>
       </FormScrollView>
@@ -163,6 +252,7 @@ export default function ReportLostPetScreen({ onBack, onSaved }) {
 ReportLostPetScreen.propTypes = {
   onBack: PropTypes.func.isRequired,
   onSaved: PropTypes.func.isRequired,
+  initialPost: PropTypes.object,
 };
 
 const styles = StyleSheet.create({
@@ -180,6 +270,12 @@ const styles = StyleSheet.create({
   backButton: { padding: 4 },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: palette.text },
   content: { padding: 16, paddingBottom: 40 },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: palette.text,
+    marginTop: 28,
+  },
   label: {
     fontSize: 14,
     fontWeight: 'bold',

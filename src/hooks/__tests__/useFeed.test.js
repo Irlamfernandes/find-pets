@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useFeed } from '../useFeed';
 import { postService } from '../../services/postService';
+import { postPhotoStorage } from '../../services/photoStorage';
 import { onboardingService } from '../../services/onboarding';
 import { sessionService } from '../../services/session';
 import { Alert } from 'react-native';
@@ -12,6 +13,10 @@ jest.mock('../../services/postService', () => ({
     deletePost: jest.fn(),
     updatePostStatus: jest.fn(),
   },
+}));
+
+jest.mock('../../services/photoStorage', () => ({
+  postPhotoStorage: { removeAll: jest.fn() },
 }));
 
 jest.mock('../../services/onboarding', () => ({
@@ -77,7 +82,14 @@ describe('useFeed Hook - 100% Coverage', () => {
   });
 
   it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
-    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
+    const mockPosts = [
+      {
+        id: '1',
+        type: 'Perdido',
+        author: 'user1@test.com',
+        images: ['file:///docs/post-photo-1.jpg'],
+      },
+    ];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
     postService.deletePost.mockResolvedValueOnce([]);
 
@@ -98,6 +110,10 @@ describe('useFeed Hook - 100% Coverage', () => {
     });
 
     expect(result.current.posts).toEqual([]);
+    // As fotos do registro excluído são apagadas do aparelho
+    expect(postPhotoStorage.removeAll).toHaveBeenCalledWith([
+      'file:///docs/post-photo-1.jpg',
+    ]);
   });
 
   it('não deve abrir confirmação para excluir post de outro usuário', async () => {

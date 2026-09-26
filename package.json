@@ -37,7 +37,8 @@
       "!**/commitlint.config.js",
       "!**/index.js",
       "!**/App.js",
-      "!**/jest.setup.js"
+      "!**/jest.setup.js",
+      "!**/jest.globalSetup.js"
     ],
     "coverageThreshold": {
       "global": {
@@ -50,7 +51,8 @@
     "setupFiles": [
       "./jest.setup.js"
     ],
-    "testTimeout": 15000
+    "testTimeout": 15000,
+    "globalSetup": "./jest.globalSetup.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -64,6 +66,7 @@
     "expo-local-authentication": "~57.0.3",
     "expo-location": "~57.0.20",
     "expo-secure-store": "~57.0.4",
+    "expo-sharing": "~57.0.22",
     "expo-status-bar": "~57.0.1",
     "jest-expo": "~57.0.0",
     "prop-types": "^15.8.1",
@@ -71,6 +74,7 @@
     "react-native": "0.86.3",
     "react-native-get-random-values": "~1.11.0",
     "react-native-safe-area-context": "~5.7.0",
+    "react-native-view-shot": "5.1.0",
     "react-native-webview": "13.16.1"
   },
   "devDependencies": {

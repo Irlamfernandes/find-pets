@@ -18,6 +18,7 @@ import {
   toTimeInput,
   parseDateTimeInput,
 } from '../utils/dateTimeMask';
+import { getTimeZoneInfo } from '../utils/timeZone';
 import { FormScrollView, FormTextInput } from './FormScrollView';
 import { dismissKeyboardAnd } from '../utils/keyboard';
 
@@ -82,6 +83,7 @@ export function FoundPetModal({ visible, onCancel, onConfirm }) {
         receiverName: form.receiverName.trim(),
         receiverRelation: form.receiverRelation,
         foundAt: foundAt.toISOString(),
+        foundZone: getTimeZoneInfo(foundAt),
         foundLocation: form.foundLocation.trim(),
         notes: form.notes.trim(),
       });

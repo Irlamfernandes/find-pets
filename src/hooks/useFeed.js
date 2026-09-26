@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { postService } from '../services/postService';
+import { postPhotoStorage } from '../services/photoStorage';
+import { getPostImages } from '../utils/postImages';
 import { onboardingService } from '../services/onboarding';
 import { sessionService } from '../services/session';
 import { useAppAlert } from '../components/AppAlert';
@@ -106,6 +108,8 @@ export function useFeed() {
         try {
           const updatedPosts = await postService.deletePost(postId);
           setPosts(updatedPosts);
+          // Libera o espaço das fotos do registro excluído
+          postPhotoStorage.removeAll(getPostImages(post));
         } catch {
           showAlert({
             type: 'danger',

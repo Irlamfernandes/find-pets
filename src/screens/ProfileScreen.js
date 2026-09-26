@@ -14,7 +14,7 @@ import { UserAvatar } from '../components/UserAvatar';
 import { OptionsSheet } from '../components/OptionsSheet';
 import { PhotoViewerModal } from '../components/PhotoViewerModal';
 import { photoService } from '../services/photoService';
-import { profilePhotoStorage } from '../services/profilePhotoStorage';
+import { profilePhotoStorage } from '../services/photoStorage';
 import { FormScrollView, FormTextInput } from '../components/FormScrollView';
 import { useKeyboardVisible } from '../hooks/useKeyboardVisible';
 import { useBackHandler } from '../hooks/useBackHandler';

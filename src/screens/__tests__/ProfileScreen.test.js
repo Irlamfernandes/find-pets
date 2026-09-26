@@ -160,7 +160,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     fireEvent.changeText(getByPlaceholderText('Seu nome'), '   ');
     fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '');
-    fireEvent.press(getByText('Salvar Alterações'));
+    await act(async () => {
+      fireEvent.press(getByText('Salvar Alterações'));
+    });
 
     expect(Alert.alert).toHaveBeenCalledWith(
       'Confira seus dados',
@@ -181,7 +183,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
     fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999');
-    fireEvent.press(getByText('Salvar Alterações'));
+    await act(async () => {
+      fireEvent.press(getByText('Salvar Alterações'));
+    });
 
     expect(Alert.alert).toHaveBeenCalledWith(
       'WhatsApp inválido',

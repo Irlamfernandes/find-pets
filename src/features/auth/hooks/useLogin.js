@@ -1,6 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { biometricService } from '../services/biometrics';
-import { sessionService } from '../services/session';
+import { accountService } from '../services/accountService';
+import {
+  rule,
+  validate,
+  isFilled,
+  isValidEmail,
+} from '../../../shared/utils/validation';
+
+const credentialRules = [
+  rule(
+    ({ usuario, senha }) => isFilled(usuario) && isFilled(senha),
+    'Preencha usuário e senha.'
+  ),
+  rule(
+    ({ usuario }) => isValidEmail(usuario.trim()),
+    'Insira um formato de e-mail válido.'
+  ),
+];
 
 export function useLogin(onSuccess) {
   const [usuario, setUsuario] = useState('');
@@ -14,7 +31,7 @@ export function useLogin(onSuccess) {
     const isAvailable = await biometricService.checkAvailability();
     setHasHardwareBiometric(isAvailable);
     try {
-      const owner = await sessionService.getBiometricOwner();
+      const owner = await accountService.getBiometricOwner();
       setBiometricOwner(owner?.usuario || null);
     } catch {
       setBiometricOwner(null);
@@ -25,87 +42,44 @@ export function useLogin(onSuccess) {
     checkBiometricSupport();
   }, [checkBiometricSupport]);
 
-  const isValidEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-    return emailRegex.test(email);
-  };
-
-  // 1. CADASTRO: Salva usuário, senha e biometria (se o usuário aceitar)
-  const handleRegister = async () => {
+  // Valida o formulário e executa a ação com o e-mail já sem espaços.
+  // A ação devolve uma mensagem de erro ou nada, quando dá certo.
+  const submitWith = (action, fallbackError) => async () => {
     setErrorMessage('');
-    if (!usuario.trim() || !senha.trim()) {
-      setErrorMessage('Preencha usuário e senha.');
-      return;
-    }
-
-    // Validar formato do e-mail
-    if (!isValidEmail(usuario.trim())) {
-      setErrorMessage('Insira um formato de e-mail válido.');
+    const invalid = validate({ usuario, senha }, credentialRules);
+    if (invalid) {
+      setErrorMessage(invalid);
       return;
     }
 
     try {
-      const email = usuario.trim();
-
-      // Impede recadastrar um e-mail existente (isso trocaria a senha da conta)
-      if (await sessionService.getCredentials(email)) {
-        setErrorMessage('Este e-mail já está cadastrado. Faça login.');
-        return;
-      }
-
-      // A biometria é oferecida no fim do cadastro ou ativada no Perfil
-      await sessionService.saveCredentials(email, senha, false);
-
-      setUsuario('');
-      setSenha('');
-      // Entra direto na conta nova, sem voltar para o login
-      onSuccess?.({ type: 'register', usuario: email });
+      const failure = await action(usuario.trim());
+      if (failure) setErrorMessage(failure);
     } catch (error) {
-      setErrorMessage(error.message || 'Erro ao realizar o cadastro.');
+      setErrorMessage(error.message || fallbackError);
     }
   };
 
-  // 2. LOGIN MANUAL: Valida usuário e senha estritos
-  const handleManualLogin = async () => {
-    setErrorMessage('');
-    if (!usuario.trim() || !senha.trim()) {
-      setErrorMessage('Preencha usuário e senha.');
-      return;
+  // Cria a conta e entra direto nela, sem voltar para o login. A biometria
+  // é oferecida no fim do cadastro ou ativada no Perfil.
+  const handleRegister = submitWith(async (email) => {
+    await accountService.createAccount(email, senha);
+    setUsuario('');
+    setSenha('');
+    onSuccess?.({ type: 'register', usuario: email });
+  }, 'Erro ao realizar o cadastro.');
+
+  const handleManualLogin = submitWith(async (email) => {
+    if (!(await accountService.checkPassword(email, senha))) {
+      return 'Usuário não existe ou senha errada.';
     }
+    onSuccess?.({ type: 'credentials', usuario: email });
+  }, 'Erro ao realizar o login.');
 
-    // Validar formato do e-mail também no login
-    if (!isValidEmail(usuario.trim())) {
-      setErrorMessage('Insira um formato de e-mail válido.');
-      return;
-    }
-
-    try {
-      const savedCreds = await sessionService.getCredentials(usuario.trim());
-
-      const isPasswordValid = savedCreds
-        ? await sessionService.verifyPassword(senha, savedCreds.passwordHash)
-        : false;
-
-      if (
-        !savedCreds ||
-        savedCreds.usuario !== usuario.trim() ||
-        !isPasswordValid
-      ) {
-        setErrorMessage('Usuário não existe ou senha errada.');
-        return;
-      }
-
-      onSuccess?.({ type: 'credentials', usuario: savedCreds.usuario });
-    } catch (error) {
-      setErrorMessage(error.message || 'Erro ao realizar o login.');
-    }
-  };
-
-  // 3. LOGIN POR BIOMETRIA
+  // Entra sempre na conta dona da biometria, nunca em outra
   const triggerBiometricAuth = async () => {
     setErrorMessage('');
-    const owner = await sessionService.getBiometricOwner();
-
+    const owner = await accountService.getBiometricOwner();
     if (!owner) {
       setErrorMessage('Nenhuma conta com biometria neste aparelho.');
       return;
@@ -114,7 +88,6 @@ export function useLogin(onSuccess) {
     const result = await biometricService.authenticate(
       'Autentique-se com sua biometria'
     );
-    // Entra sempre na conta dona da biometria, nunca em outra
     if (result.success) {
       onSuccess?.({ type: 'biometric', usuario: owner.usuario });
     } else if (result.error && result.error !== 'user_cancel') {

@@ -6,7 +6,9 @@ import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { PetInfoGrid } from '../../posts/components/PetInfoGrid';
 import { getPetFields, getPetTitle } from '../../posts/utils/petDescription';
 import { getPostImages } from '../../posts/utils/postImages';
-import { formatDateTime } from '../../../shared/utils/timeZone';
+import { getOccurredAtLabel } from '../../posts/domain/post';
+import { ContactButtons } from '../../posts/components/ContactButtons';
+import { InfoRow } from '../../../shared/components/InfoRow';
 import { palette } from '../../../shared/theme/colors';
 
 // Resumo do pet mostrado sobre o mapa ao tocar no ponto dele
@@ -18,9 +20,6 @@ export function MapPetSummary({
   onOpenRoute,
 }) {
   const [photo] = getPostImages(post);
-  const occurredAt = post.occurredAt
-    ? formatDateTime(post.occurredAt, post.occurredZone)
-    : post.date;
 
   return (
     <View testID="map-pet-summary" style={styles.card}>
@@ -36,21 +35,18 @@ export function MapPetSummary({
           <Text style={styles.title} numberOfLines={1}>
             {getPetTitle(post) || 'Pet perdido'}
           </Text>
-          <View style={styles.infoRow}>
-            <Ionicons name="time-outline" size={14} color={palette.textMuted} />
-            <Text style={styles.infoText}>{occurredAt}</Text>
-          </View>
+          <InfoRow
+            icon="time-outline"
+            text={getOccurredAtLabel(post)}
+            size="compact"
+          />
           {post.location ? (
-            <View style={styles.infoRow}>
-              <Ionicons
-                name="location-outline"
-                size={14}
-                color={palette.textMuted}
-              />
-              <Text style={styles.infoText} numberOfLines={2}>
-                {post.location}
-              </Text>
-            </View>
+            <InfoRow
+              icon="location-outline"
+              text={post.location}
+              size="compact"
+              numberOfLines={2}
+            />
           ) : null}
         </View>
 
@@ -66,22 +62,11 @@ export function MapPetSummary({
       {/* O nome já está no título */}
       <PetInfoGrid fields={getPetFields(post, { includeName: false })} />
 
-      <View style={styles.actions}>
-        <SafeTouchable
-          style={[styles.actionButton, styles.whatsappButton]}
-          onPress={() => onOpenWhatsApp(post.contactPhone)}
-        >
-          <Ionicons name="logo-whatsapp" size={18} color={palette.white} />
-          <Text style={styles.actionText}>WhatsApp</Text>
-        </SafeTouchable>
-        <SafeTouchable
-          style={[styles.actionButton, styles.routeButton]}
-          onPress={onOpenRoute}
-        >
-          <Ionicons name="navigate-outline" size={18} color={palette.white} />
-          <Text style={styles.actionText}>Como chegar</Text>
-        </SafeTouchable>
-      </View>
+      <ContactButtons
+        post={post}
+        onOpenWhatsApp={onOpenWhatsApp}
+        onOpenRoute={onOpenRoute}
+      />
     </View>
   );
 }
@@ -107,7 +92,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  header: { flexDirection: 'row', gap: 10 },
+  header: { flexDirection: 'row', gap: 10, marginBottom: 2 },
   photo: {
     width: 72,
     height: 72,
@@ -116,20 +101,5 @@ const styles = StyleSheet.create({
   },
   headerText: { flex: 1 },
   title: { fontSize: 18, fontWeight: 'bold', color: palette.text },
-  infoRow: { flexDirection: 'row', gap: 4, marginTop: 3 },
-  infoText: { flex: 1, fontSize: 12, color: palette.textMuted },
   closeButton: { padding: 2 },
-  actions: { flexDirection: 'row', gap: 8 },
-  actionButton: {
-    flex: 1,
-    minHeight: 42,
-    borderRadius: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  whatsappButton: { backgroundColor: palette.success },
-  routeButton: { backgroundColor: palette.primary },
-  actionText: { color: palette.white, fontWeight: 'bold', fontSize: 13 },
 });

@@ -1,19 +1,13 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useUnlock } from '../useUnlock';
 import { biometricService } from '../../services/biometrics';
-import { sessionService } from '../../services/session';
+import { accountService } from '../../services/accountService';
 
 jest.mock('../../services/biometrics', () => ({
   biometricService: { checkAvailability: jest.fn(), authenticate: jest.fn() },
 }));
 
-jest.mock('../../services/session', () => ({
-  sessionService: {
-    getBiometricOwner: jest.fn(),
-    getCredentials: jest.fn(),
-    verifyPassword: jest.fn(),
-  },
-}));
+jest.mock('../../services/accountService');
 
 describe('useUnlock', () => {
   const onUnlocked = jest.fn();
@@ -21,7 +15,7 @@ describe('useUnlock', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     biometricService.checkAvailability.mockResolvedValue(true);
-    sessionService.getBiometricOwner.mockResolvedValue({
+    accountService.getBiometricOwner.mockResolvedValue({
       usuario: 'dono@test.com',
       hasBiometrics: true,
     });
@@ -79,11 +73,11 @@ describe('useUnlock', () => {
     const noHardware = await renderUnlock();
     expect(noHardware.result.current.canUseBiometrics).toBe(false);
 
-    sessionService.getBiometricOwner.mockResolvedValueOnce(null);
+    accountService.getBiometricOwner.mockResolvedValueOnce(null);
     const noOwner = await renderUnlock();
     expect(noOwner.result.current.canUseBiometrics).toBe(false);
 
-    sessionService.getBiometricOwner.mockRejectedValueOnce(new Error('x'));
+    accountService.getBiometricOwner.mockRejectedValueOnce(new Error('x'));
     const failing = await renderUnlock();
     expect(failing.result.current.canUseBiometrics).toBe(false);
 
@@ -92,7 +86,7 @@ describe('useUnlock', () => {
 
   it('não deve pedir biometria se a tela fechar antes de verificar', async () => {
     let finish;
-    sessionService.getBiometricOwner.mockReturnValueOnce(
+    accountService.getBiometricOwner.mockReturnValueOnce(
       new Promise((resolve) => {
         finish = resolve;
       })
@@ -117,14 +111,13 @@ describe('useUnlock', () => {
     expect(result.current.errorMessage).toBe('Digite sua senha.');
 
     act(() => result.current.setPassword('errada'));
-    sessionService.getCredentials.mockResolvedValueOnce({ passwordHash: 'h' });
-    sessionService.verifyPassword.mockResolvedValueOnce(false);
+    accountService.checkPassword.mockResolvedValueOnce(false);
     await act(async () => {
       await result.current.unlockWithPassword();
     });
     expect(result.current.errorMessage).toBe('Senha incorreta.');
 
-    sessionService.getCredentials.mockRejectedValueOnce(new Error('x'));
+    accountService.checkPassword.mockRejectedValueOnce(new Error('x'));
     await act(async () => {
       await result.current.unlockWithPassword();
     });
@@ -133,17 +126,13 @@ describe('useUnlock', () => {
     );
 
     act(() => result.current.setPassword('certa'));
-    sessionService.getCredentials.mockResolvedValueOnce(null);
-    sessionService.verifyPassword.mockResolvedValueOnce(true);
+    accountService.checkPassword.mockResolvedValueOnce(true);
     await act(async () => {
       await result.current.unlockWithPassword();
     });
-    expect(sessionService.getCredentials).toHaveBeenCalledWith(
-      'outra@test.com'
-    );
-    expect(sessionService.verifyPassword).toHaveBeenLastCalledWith(
-      'certa',
-      undefined
+    expect(accountService.checkPassword).toHaveBeenLastCalledWith(
+      'outra@test.com',
+      'certa'
     );
     expect(onUnlocked).toHaveBeenCalledTimes(1);
   });

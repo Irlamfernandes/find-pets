@@ -1,23 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../../../shared/constants/storageKeys';
+import { createJsonStore } from '../../../shared/services/storage';
 
 // Guarda, por usuário, se o aviso de orientação do feed já foi dispensado
-async function readSeenUsers() {
-  const data = await AsyncStorage.getItem(STORAGE_KEYS.FEED_GUIDE_SEEN);
-  return data ? JSON.parse(data) : {};
-}
+const seenUsersStore = createJsonStore(STORAGE_KEYS.FEED_GUIDE_SEEN, {
+  fallback: {},
+});
 
 export const guideService = {
   async hasSeenFeedGuide(usuario) {
-    const seenUsers = await readSeenUsers();
+    const seenUsers = await seenUsersStore.read();
     return seenUsers[usuario] === true;
   },
 
   async markFeedGuideSeen(usuario) {
-    const seenUsers = await readSeenUsers();
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.FEED_GUIDE_SEEN,
-      JSON.stringify({ ...seenUsers, [usuario]: true })
-    );
+    await seenUsersStore.update((seenUsers) => ({
+      ...seenUsers,
+      [usuario]: true,
+    }));
   },
 };

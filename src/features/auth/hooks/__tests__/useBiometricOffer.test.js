@@ -2,20 +2,13 @@ import { renderHook, act } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import { useBiometricOffer } from '../useBiometricOffer';
 import { biometricService } from '../../services/biometrics';
-import { sessionService } from '../../services/session';
+import { accountService } from '../../services/accountService';
 
 jest.mock('../../services/biometrics', () => ({
   biometricService: { checkAvailability: jest.fn(), authenticate: jest.fn() },
 }));
 
-jest.mock('../../services/session', () => ({
-  sessionService: {
-    getBiometricOwner: jest.fn(),
-    setBiometrics: jest.fn(),
-    getCredentials: jest.fn(),
-    verifyPassword: jest.fn(),
-  },
-}));
+jest.mock('../../services/accountService');
 
 jest.spyOn(Alert, 'alert');
 
@@ -23,10 +16,9 @@ describe('useBiometricOffer', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     biometricService.checkAvailability.mockResolvedValue(true);
-    sessionService.getBiometricOwner.mockResolvedValue(null);
-    sessionService.setBiometrics.mockResolvedValue();
-    sessionService.getCredentials.mockResolvedValue({ passwordHash: 'h' });
-    sessionService.verifyPassword.mockResolvedValue(true);
+    accountService.getBiometricOwner.mockResolvedValue(null);
+    accountService.setBiometrics.mockResolvedValue();
+    accountService.checkPassword.mockResolvedValue(true);
   });
 
   // Exibe o convite e escolhe uma das opções
@@ -76,9 +68,11 @@ describe('useBiometricOffer', () => {
     expect(biometricService.authenticate).not.toHaveBeenCalled();
 
     expect(await confirm(hook, 'senha123')).toBe(true);
-    expect(sessionService.getCredentials).toHaveBeenCalledWith('ana@test.com');
-    expect(sessionService.verifyPassword).toHaveBeenCalledWith('senha123', 'h');
-    expect(sessionService.setBiometrics).toHaveBeenCalledWith(
+    expect(accountService.checkPassword).toHaveBeenCalledWith(
+      'ana@test.com',
+      'senha123'
+    );
+    expect(accountService.setBiometrics).toHaveBeenCalledWith(
       'ana@test.com',
       true
     );
@@ -97,24 +91,20 @@ describe('useBiometricOffer', () => {
       'Digite sua senha.'
     );
 
-    sessionService.verifyPassword.mockResolvedValueOnce(false);
+    accountService.checkPassword.mockResolvedValueOnce(false);
     expect(await confirm(hook, 'errada')).toBe(false);
     expect(hook.result.current.passwordPromptProps.errorMessage).toBe(
       'Senha incorreta. Tente novamente.'
     );
 
-    sessionService.getCredentials.mockRejectedValueOnce(new Error('x'));
+    accountService.checkPassword.mockRejectedValueOnce(new Error('x'));
     expect(await confirm(hook, 'x')).toBe(false);
     expect(hook.result.current.passwordPromptProps.errorMessage).toBe(
       'Não foi possível verificar a senha agora.'
     );
 
-    sessionService.getCredentials.mockResolvedValueOnce(null);
-    sessionService.verifyPassword.mockResolvedValueOnce(false);
-    expect(await confirm(hook, 'x')).toBe(false);
-
     expect(biometricService.authenticate).not.toHaveBeenCalled();
-    expect(sessionService.setBiometrics).not.toHaveBeenCalled();
+    expect(accountService.setBiometrics).not.toHaveBeenCalled();
 
     act(() => hook.result.current.passwordPromptProps.onCancel());
     expect(hook.result.current.passwordPromptProps).toEqual(
@@ -142,7 +132,7 @@ describe('useBiometricOffer', () => {
     );
 
     biometricService.authenticate.mockResolvedValueOnce({ success: true });
-    sessionService.setBiometrics.mockRejectedValueOnce(new Error('x'));
+    accountService.setBiometrics.mockRejectedValueOnce(new Error('x'));
     hook = await offerAndChoose('Ativar agora');
     await confirm(hook, 'senha123');
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -160,7 +150,7 @@ describe('useBiometricOffer', () => {
     await confirm(hook, 'senha123');
 
     expect(Alert.alert).toHaveBeenCalledTimes(1);
-    expect(sessionService.setBiometrics).not.toHaveBeenCalled();
+    expect(accountService.setBiometrics).not.toHaveBeenCalled();
   });
 
   it('não deve oferecer sem biometria no celular, se outra conta já usa ou com erro', async () => {
@@ -170,12 +160,12 @@ describe('useBiometricOffer', () => {
     biometricService.checkAvailability.mockResolvedValueOnce(false);
     await expect(offer()).resolves.toBe(false);
 
-    sessionService.getBiometricOwner.mockResolvedValueOnce({
+    accountService.getBiometricOwner.mockResolvedValueOnce({
       usuario: 'outra@test.com',
     });
     await expect(offer()).resolves.toBe(false);
 
-    sessionService.getBiometricOwner.mockRejectedValueOnce(new Error('x'));
+    accountService.getBiometricOwner.mockRejectedValueOnce(new Error('x'));
     await expect(offer()).resolves.toBe(false);
 
     expect(Alert.alert).not.toHaveBeenCalled();

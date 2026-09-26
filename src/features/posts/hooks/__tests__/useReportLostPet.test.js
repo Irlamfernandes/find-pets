@@ -5,8 +5,8 @@ import { postService } from '../../services/postService';
 import { photoService } from '../../../../shared/services/photoService';
 import { postPhotoStorage } from '../../../../shared/services/photoStorage';
 import { locationService } from '../../../../shared/services/locationService';
-import { onboardingService } from '../../../profile/services/onboarding';
-import { sessionService } from '../../../auth/services/session';
+import { profileService } from '../../../profile/services/profileService';
+import { sessionService } from '../../../auth/services/sessionService';
 
 jest.mock('../../services/postService', () => ({
   postService: { savePost: jest.fn(), updatePost: jest.fn() },
@@ -28,12 +28,12 @@ jest.mock('../../../../shared/services/locationService', () => ({
   },
 }));
 
-jest.mock('../../../profile/services/onboarding', () => ({
-  onboardingService: { getUserProfile: jest.fn() },
+jest.mock('../../../profile/services/profileService', () => ({
+  profileService: { getProfile: jest.fn() },
 }));
 
-jest.mock('../../../auth/services/session', () => ({
-  sessionService: { getSession: jest.fn() },
+jest.mock('../../../auth/services/sessionService', () => ({
+  sessionService: { getCurrentUser: jest.fn() },
 }));
 
 jest.spyOn(Alert, 'alert');
@@ -76,10 +76,10 @@ describe('useReportLostPet', () => {
     postPhotoStorage.persistAll.mockImplementation(async (uris) =>
       uris.map((uri) => (uri.startsWith('stored:') ? uri : `stored:${uri}`))
     );
-    onboardingService.getUserProfile.mockResolvedValue({
+    profileService.getProfile.mockResolvedValue({
       whatsapp: '5511999999999',
     });
-    sessionService.getSession.mockResolvedValue({ usuario: 'user@test.com' });
+    sessionService.getCurrentUser.mockResolvedValue('user@test.com');
     locationService.getCoordsFromAddress.mockResolvedValue(null);
     locationService.getAddressFromCoords.mockResolvedValue('Rua da Foto, 1');
     locationService.getCurrentLocation.mockResolvedValue({
@@ -343,8 +343,8 @@ describe('useReportLostPet', () => {
       latitude: 1,
       longitude: 2,
     });
-    onboardingService.getUserProfile.mockResolvedValueOnce(null);
-    sessionService.getSession.mockResolvedValueOnce(null);
+    profileService.getProfile.mockResolvedValueOnce(null);
+    sessionService.getCurrentUser.mockResolvedValueOnce(null);
     const { result } = await setupWithPhotos([photo('a.jpg')]);
     act(() => result.current.setAddress('  Rua Digitada, 5  '));
 

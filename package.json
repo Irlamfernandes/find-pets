@@ -38,7 +38,8 @@
       "!**/index.js",
       "!**/App.js",
       "!**/jest.setup.js",
-      "!**/jest.globalSetup.js"
+      "!**/jest.globalSetup.js",
+      "!**/src/testing/**"
     ],
     "coverageThreshold": {
       "global": {

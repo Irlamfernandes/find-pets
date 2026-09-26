@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
@@ -8,6 +8,7 @@ import {
   useBiometricSettings,
   BIOMETRIC_STATUS,
 } from '../hooks/useBiometricSettings';
+import { usePasswordPrompt } from '../hooks/usePasswordPrompt';
 import { maskEmail } from '../../../shared/utils/maskEmail';
 import { palette } from '../../../shared/theme/colors';
 
@@ -32,85 +33,77 @@ const PROMPT_TEXT = {
   },
 };
 
+// Botão exibido em cada situação (as demais só mostram o texto)
+const STATUS_ACTION = {
+  [BIOMETRIC_STATUS.AVAILABLE]: {
+    action: 'activate',
+    label: 'Ativar biometria',
+    testID: 'button-activate-biometrics',
+  },
+  [BIOMETRIC_STATUS.ACTIVE]: {
+    action: 'deactivate',
+    label: 'Desativar biometria',
+    testID: 'button-deactivate-biometrics',
+    danger: true,
+  },
+};
+
+const ACTIVATION_ALERTS = {
+  activated: {
+    type: 'success',
+    title: 'Biometria ativada',
+    message: 'Da próxima vez, você poderá entrar com a biometria.',
+  },
+  failed: {
+    type: 'warning',
+    title: 'Biometria não confirmada',
+    message: 'Não foi possível confirmar a biometria. Tente novamente.',
+  },
+};
+
+const DEACTIVATED_ALERT = {
+  type: 'success',
+  title: 'Biometria desativada',
+  message:
+    'Esta conta passará a entrar só com a senha. Outra conta deste celular poderá ativar a biometria.',
+};
+
+function getStatusText(status, owner) {
+  if (status !== BIOMETRIC_STATUS.TAKEN) return STATUS_TEXT[status];
+  return `A biometria deste celular já está em uso pela conta ${maskEmail(
+    owner
+  )}. Só uma conta por celular pode usar a biometria.`;
+}
+
 export function BiometricSettingsCard() {
   const showAlert = useAppAlert();
-  const { status, owner, verifyPassword, activate, deactivate } =
-    useBiometricSettings();
-  // Ação que aguarda a senha: 'activate', 'deactivate' ou null
-  const [pendingAction, setPendingAction] = useState(null);
-  // Mantém o texto do pedido de senha enquanto ele fecha
-  const [promptAction, setPromptAction] = useState('activate');
-  const [passwordError, setPasswordError] = useState('');
+  const { status, owner, activate, deactivate } = useBiometricSettings();
 
-  const statusText =
-    status === BIOMETRIC_STATUS.TAKEN
-      ? `A biometria deste celular já está em uso pela conta ${maskEmail(
-          owner
-        )}. Só uma conta por celular pode usar a biometria.`
-      : STATUS_TEXT[status];
-
-  const openPasswordPrompt = (action) => {
-    setPromptAction(action);
-    setPendingAction(action);
+  // Cada ação devolve o aviso a exibir (ou nada, se a pessoa cancelou)
+  const actions = {
+    activate: async () => ACTIVATION_ALERTS[await activate()],
+    deactivate: async () => {
+      await deactivate();
+      return DEACTIVATED_ALERT;
+    },
   };
 
-  const closePasswordPrompt = () => {
-    setPasswordError('');
-    setPendingAction(null);
-  };
-
-  const runActivate = async () => {
-    const result = await activate();
-    if (result === 'activated') {
-      showAlert({
-        type: 'success',
-        title: 'Biometria ativada',
-        message: 'Da próxima vez, você poderá entrar com a biometria.',
-      });
-    } else if (result === 'failed') {
-      showAlert({
-        type: 'warning',
-        title: 'Biometria não confirmada',
-        message: 'Não foi possível confirmar a biometria. Tente novamente.',
-      });
-    }
-  };
-
-  const runDeactivate = async () => {
-    await deactivate();
-    showAlert({
-      type: 'success',
-      title: 'Biometria desativada',
-      message:
-        'Esta conta passará a entrar só com a senha. Outra conta deste celular poderá ativar a biometria.',
-    });
-  };
-
-  const handleConfirmPassword = async (password) => {
-    if (!password.trim()) {
-      setPasswordError('Digite sua senha atual.');
-      return false;
-    }
-
-    try {
-      if (!(await verifyPassword(password))) {
-        setPasswordError('Senha incorreta. Tente novamente.');
-        return false;
+  const prompt = usePasswordPrompt({
+    onConfirmed: async (action) => {
+      try {
+        const alert = await actions[action]();
+        if (alert) showAlert(alert);
+      } catch (error) {
+        showAlert({
+          type: 'danger',
+          title: 'Não foi possível concluir',
+          message: error.message,
+        });
       }
-      const action = pendingAction;
-      closePasswordPrompt();
-      await (action === 'activate' ? runActivate() : runDeactivate());
-      return true;
-    } catch (error) {
-      closePasswordPrompt();
-      showAlert({
-        type: 'danger',
-        title: 'Não foi possível concluir',
-        message: error.message,
-      });
-      return true;
-    }
-  };
+    },
+  });
+
+  const statusAction = STATUS_ACTION[status];
 
   return (
     <View testID="biometric-settings" style={styles.card}>
@@ -118,36 +111,28 @@ export function BiometricSettingsCard() {
         <Ionicons name="finger-print" size={22} color={palette.primary} />
         <Text style={styles.title}>Biometria</Text>
       </View>
-      <Text style={styles.statusText}>{statusText}</Text>
+      <Text style={styles.statusText}>{getStatusText(status, owner)}</Text>
 
-      {status === BIOMETRIC_STATUS.AVAILABLE ? (
+      {statusAction ? (
         <SafeTouchable
-          testID="button-activate-biometrics"
-          style={styles.button}
-          onPress={() => openPasswordPrompt('activate')}
+          testID={statusAction.testID}
+          style={[styles.button, statusAction.danger && styles.dangerButton]}
+          onPress={() => prompt.open(statusAction.action)}
         >
-          <Text style={styles.buttonText}>Ativar biometria</Text>
-        </SafeTouchable>
-      ) : null}
-
-      {status === BIOMETRIC_STATUS.ACTIVE ? (
-        <SafeTouchable
-          testID="button-deactivate-biometrics"
-          style={[styles.button, styles.deactivateButton]}
-          onPress={() => openPasswordPrompt('deactivate')}
-        >
-          <Text style={[styles.buttonText, styles.deactivateText]}>
-            Desativar biometria
+          <Text
+            style={[
+              styles.buttonText,
+              statusAction.danger && styles.dangerText,
+            ]}
+          >
+            {statusAction.label}
           </Text>
         </SafeTouchable>
       ) : null}
 
       <PasswordPromptModal
-        visible={pendingAction !== null}
-        {...PROMPT_TEXT[promptAction]}
-        errorMessage={passwordError}
-        onCancel={closePasswordPrompt}
-        onConfirm={handleConfirmPassword}
+        {...PROMPT_TEXT[prompt.payload || 'activate']}
+        {...prompt.promptProps}
       />
     </View>
   );
@@ -178,10 +163,10 @@ const styles = StyleSheet.create({
     backgroundColor: palette.primary,
   },
   buttonText: { color: palette.white, fontWeight: 'bold', fontSize: 15 },
-  deactivateButton: {
+  dangerButton: {
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.error,
   },
-  deactivateText: { color: palette.error },
+  dangerText: { color: palette.error },
 });

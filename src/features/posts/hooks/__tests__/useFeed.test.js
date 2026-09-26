@@ -2,8 +2,8 @@ import { renderHook, act } from '@testing-library/react-native';
 import { useFeed } from '../useFeed';
 import { postService } from '../../services/postService';
 import { postPhotoStorage } from '../../../../shared/services/photoStorage';
-import { onboardingService } from '../../../profile/services/onboarding';
-import { sessionService } from '../../../auth/services/session';
+import { profileService } from '../../../profile/services/profileService';
+import { sessionService } from '../../../auth/services/sessionService';
 import { Alert } from 'react-native';
 
 jest.mock('../../services/postService', () => ({
@@ -11,7 +11,7 @@ jest.mock('../../services/postService', () => ({
     getPosts: jest.fn(),
     savePost: jest.fn(),
     deletePost: jest.fn(),
-    updatePostStatus: jest.fn(),
+    updatePost: jest.fn(),
   },
 }));
 
@@ -19,16 +19,12 @@ jest.mock('../../../../shared/services/photoStorage', () => ({
   postPhotoStorage: { removeAll: jest.fn() },
 }));
 
-jest.mock('../../../profile/services/onboarding', () => ({
-  onboardingService: {
-    getUserProfile: jest.fn(),
-  },
+jest.mock('../../../profile/services/profileService', () => ({
+  profileService: { getProfile: jest.fn() },
 }));
 
-jest.mock('../../../auth/services/session', () => ({
-  sessionService: {
-    getSession: jest.fn().mockResolvedValue({ usuario: 'user1@test.com' }),
-  },
+jest.mock('../../../auth/services/sessionService', () => ({
+  sessionService: { getCurrentUser: jest.fn() },
 }));
 
 jest.spyOn(Alert, 'alert');
@@ -36,11 +32,11 @@ jest.spyOn(Alert, 'alert');
 describe('useFeed Hook - 100% Coverage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    onboardingService.getUserProfile.mockResolvedValue({
+    profileService.getProfile.mockResolvedValue({
       name: 'Irlam',
       whatsapp: '11999999999',
     });
-    sessionService.getSession.mockResolvedValue({ usuario: 'user1@test.com' });
+    sessionService.getCurrentUser.mockResolvedValue('user1@test.com');
   });
 
   it('deve carregar os posts e o perfil do usuário com sucesso', async () => {
@@ -57,10 +53,10 @@ describe('useFeed Hook - 100% Coverage', () => {
 
   it('deve definir posts como array vazio e userName vazio se falhar ao carregar', async () => {
     postService.getPosts.mockRejectedValueOnce(new Error('Erro posts'));
-    onboardingService.getUserProfile.mockRejectedValueOnce(
-      new Error('Erro perfil')
+    profileService.getProfile.mockRejectedValueOnce(new Error('Erro perfil'));
+    sessionService.getCurrentUser.mockRejectedValueOnce(
+      new Error('Erro sessão')
     );
-    sessionService.getSession.mockRejectedValueOnce(new Error('Erro sessão'));
 
     const { result } = renderHook(() => useFeed());
 
@@ -72,7 +68,7 @@ describe('useFeed Hook - 100% Coverage', () => {
 
   it('deve lidar com perfil sem nome ou nulo graciosamente', async () => {
     postService.getPosts.mockResolvedValueOnce([]);
-    onboardingService.getUserProfile.mockResolvedValueOnce(null);
+    profileService.getProfile.mockResolvedValueOnce(null);
 
     const { result } = renderHook(() => useFeed());
 
@@ -198,7 +194,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     };
     const updatedPosts = [{ ...mockPosts[0], status: 'Encontrado', foundInfo }];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
-    postService.updatePostStatus.mockResolvedValueOnce(updatedPosts);
+    postService.updatePost.mockResolvedValueOnce(updatedPosts);
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
@@ -211,11 +207,10 @@ describe('useFeed Hook - 100% Coverage', () => {
       await result.current.confirmFound(foundInfo);
     });
 
-    expect(postService.updatePostStatus).toHaveBeenCalledWith(
-      '1',
-      'Encontrado',
-      { foundInfo }
-    );
+    expect(postService.updatePost).toHaveBeenCalledWith('1', {
+      status: 'Encontrado',
+      foundInfo,
+    });
     expect(result.current.posts).toEqual(updatedPosts);
     expect(result.current.isFoundFormOpen).toBe(false);
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -236,7 +231,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     act(() => result.current.cancelFound());
 
     expect(result.current.isFoundFormOpen).toBe(false);
-    expect(postService.updatePostStatus).not.toHaveBeenCalled();
+    expect(postService.updatePost).not.toHaveBeenCalled();
   });
 
   it('não deve abrir o formulário para post de outro usuário, já encontrado ou inexistente', async () => {
@@ -266,7 +261,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     postService.getPosts.mockResolvedValueOnce([
       { id: '1', type: 'Perdido', author: 'user1@test.com' },
     ]);
-    sessionService.getSession.mockResolvedValueOnce(null);
+    sessionService.getCurrentUser.mockResolvedValueOnce(null);
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
@@ -279,9 +274,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     postService.getPosts.mockResolvedValueOnce([
       { id: '1', type: 'Perdido', author: 'user1@test.com' },
     ]);
-    postService.updatePostStatus.mockRejectedValueOnce(
-      new Error('Erro storage')
-    );
+    postService.updatePost.mockRejectedValueOnce(new Error('Erro storage'));
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
@@ -299,7 +292,7 @@ describe('useFeed Hook - 100% Coverage', () => {
 
   it('deve definir o usuário atual como null quando não houver sessão', async () => {
     postService.getPosts.mockResolvedValueOnce([]);
-    sessionService.getSession.mockResolvedValueOnce(null);
+    sessionService.getCurrentUser.mockResolvedValueOnce(null);
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
@@ -309,7 +302,7 @@ describe('useFeed Hook - 100% Coverage', () => {
 
   it('deve carregar a foto do perfil e limpar quando não houver', async () => {
     postService.getPosts.mockResolvedValue([]);
-    onboardingService.getUserProfile.mockResolvedValueOnce({
+    profileService.getProfile.mockResolvedValueOnce({
       name: 'Irlam',
       photoUri: 'file:///docs/profile-photo-1.jpg',
     });
@@ -318,7 +311,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     await act(async () => {});
     expect(result.current.userPhoto).toBe('file:///docs/profile-photo-1.jpg');
 
-    onboardingService.getUserProfile.mockRejectedValueOnce(new Error('x'));
+    profileService.getProfile.mockRejectedValueOnce(new Error('x'));
     const second = renderHook(() => useFeed());
     await act(async () => {});
     expect(second.result.current.userPhoto).toBeNull();

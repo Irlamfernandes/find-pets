@@ -1,14 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useSession } from '../useSession';
-import { sessionService } from '../../services/session';
+import { sessionService } from '../../services/sessionService';
+import { runStorageMigrations } from '../../../../app/storageMigrations';
 
-jest.mock('../../services/session', () => ({
-  sessionService: {
-    getSession: jest.fn(),
-    saveSession: jest.fn(),
-    clearSession: jest.fn(),
-  },
-}));
+jest.mock('../../services/sessionService');
+jest.mock('../../../../app/storageMigrations');
 
 describe('useSession Hook', () => {
   beforeEach(() => {
@@ -28,6 +24,7 @@ describe('useSession Hook', () => {
     });
 
     expect(result.current.session).toEqual(mockSession);
+    expect(runStorageMigrations).toHaveBeenCalledTimes(1);
   });
 
   it('deve lidar com ausência de sessão na inicialização', async () => {
@@ -90,6 +87,19 @@ describe('useSession Hook', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
+    expect(result.current.session).toBeNull();
+  });
+
+  it('não deve abrir sessão se a migração dos dados falhar', async () => {
+    runStorageMigrations.mockRejectedValueOnce(new Error('falhou'));
+
+    const { result } = renderHook(() => useSession());
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(sessionService.getSession).not.toHaveBeenCalled();
     expect(result.current.session).toBeNull();
   });
 });

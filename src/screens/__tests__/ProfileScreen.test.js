@@ -95,21 +95,23 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
   });
 
-  it('deve chamar onLogout ao clicar em Sair', () => {
+  it('deve chamar onLogout ao clicar em Sair', async () => {
     const mockOnLogout = jest.fn();
     const { getByText } = render(
       <ProfileScreen onBack={mockOnBack} onLogout={mockOnLogout} />
     );
+    await act(async () => {});
 
     fireEvent.press(getByText('Sair'));
     expect(mockOnLogout).toHaveBeenCalledTimes(1);
   });
 
-  it('deve abrir o registro de desaparecimento pela aba', () => {
+  it('deve abrir o registro de desaparecimento pela aba', async () => {
     const mockOnOpenReport = jest.fn();
     const { getByText } = render(
       <ProfileScreen onBack={mockOnBack} onOpenReport={mockOnOpenReport} />
     );
+    await act(async () => {});
 
     fireEvent.press(getByText('Registrar desaparecimento'));
 
@@ -626,9 +628,10 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     useKeyboardVisible.mockReturnValue(false);
   });
 
-  it('deve executar a seta de voltar ao usar o voltar do Android', () => {
+  it('deve executar a seta de voltar ao usar o voltar do Android', async () => {
     jest.spyOn(BackHandler, 'addEventListener');
     render(<ProfileScreen onBack={mockOnBack} />);
+    await act(async () => {});
 
     expect(pressHardwareBack()).toBe(true);
     expect(mockOnBack).toHaveBeenCalledTimes(1);

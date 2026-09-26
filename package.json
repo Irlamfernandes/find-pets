@@ -36,7 +36,8 @@
       "!**/eslint.config.js",
       "!**/commitlint.config.js",
       "!**/index.js",
-      "!**/App.js"
+      "!**/App.js",
+      "!**/jest.setup.js"
     ],
     "coverageThreshold": {
       "global": {
@@ -45,7 +46,11 @@
         "lines": 100,
         "statements": 100
       }
-    }
+    },
+    "setupFiles": [
+      "./jest.setup.js"
+    ],
+    "testTimeout": 15000
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",

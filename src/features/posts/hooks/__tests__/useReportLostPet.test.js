@@ -93,6 +93,16 @@ describe('useReportLostPet', () => {
     jest.useRealTimers();
   });
 
+  it('deve salvar uma única vez mesmo com chamadas simultâneas', async () => {
+    const { result } = await setupWithPhotos([photo('file:///a.jpg')]);
+
+    await act(async () => {
+      await Promise.all([result.current.submit(), result.current.submit()]);
+    });
+
+    expect(postService.savePost).toHaveBeenCalledTimes(1);
+  });
+
   it('deve começar vazio para um registro novo', () => {
     const { result } = renderHook(() => useReportLostPet());
 
@@ -423,14 +433,16 @@ describe('useReportLostPet', () => {
     });
     expect(result.current.isSaving).toBe(true);
 
-    await act(async () => {
-      await result.current.submit();
+    // A segunda chamada recebe o mesmo salvamento em andamento
+    let secondSubmit;
+    act(() => {
+      secondSubmit = result.current.submit();
     });
     expect(postService.savePost).toHaveBeenCalledTimes(1);
 
     await act(async () => {
       rejectSave(new Error('falha'));
-      await firstSubmit;
+      await Promise.all([firstSubmit, secondSubmit]);
     });
 
     expect(Alert.alert).toHaveBeenCalledWith(

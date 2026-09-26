@@ -819,7 +819,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       expect(focusSpy).toHaveBeenCalledTimes(1);
       focusSpy.mockRestore();
 
-      fireEvent.changeText(getByPlaceholderText(CONFIRM), ' senha123 ');
+      fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha123');
       await act(async () => {
         fireEvent(getByPlaceholderText(CONFIRM), 'submitEditing');
       });

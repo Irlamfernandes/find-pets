@@ -4,8 +4,15 @@ import {
   withErrorContext,
 } from '../../../shared/services/storage';
 
+// Registros sem id (ou que nem são objetos) não podem ser exibidos
+const isValidPost = (post) =>
+  post !== null && typeof post === 'object' && Boolean(post.id);
+
 // Registros de pets, do mais novo para o mais antigo
-const postsStore = createJsonStore(STORAGE_KEYS.POSTS, { fallback: [] });
+const postsStore = createJsonStore(STORAGE_KEYS.POSTS, {
+  fallback: [],
+  normalize: (posts) => posts.filter(isValidPost),
+});
 
 function requireId(postId) {
   if (!postId) {

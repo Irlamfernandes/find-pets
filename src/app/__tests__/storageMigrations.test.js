@@ -72,6 +72,14 @@ describe('runStorageMigrations', () => {
     expect(secureData.has(STORAGE_KEYS.CREDENTIALS)).toBe(false);
   });
 
+  it('não deve travar com dados corrompidos', async () => {
+    asyncData.set(STORAGE_KEYS.PROFILE, '{quebrado');
+    secureData.set(STORAGE_KEYS.CREDENTIALS, 'também quebrado');
+
+    await expect(runStorageMigrations()).resolves.toBeUndefined();
+    expect(load(asyncData, STORAGE_KEYS.SCHEMA_VERSION)).toBe(1);
+  });
+
   it('deve rodar apenas as migrações pendentes, em ordem', async () => {
     const calls = [];
     const migrations = [

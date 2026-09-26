@@ -1,4 +1,10 @@
-import { rule, validate, isFilled, isValidEmail } from '../validation';
+import {
+  rule,
+  validate,
+  isFilled,
+  isValidEmail,
+  normalizeEmail,
+} from '../validation';
 
 describe('validation', () => {
   const rules = [
@@ -35,5 +41,10 @@ describe('validation', () => {
     expect(isValidEmail('ana@x')).toBe(false);
     expect(isValidEmail('ana x@x.com')).toBe(false);
     expect(isValidEmail(null)).toBe(false);
+  });
+
+  it('normalizeEmail deve ignorar maiúsculas e espaços nas pontas', () => {
+    expect(normalizeEmail(' Ana@X.COM ')).toBe('ana@x.com');
+    expect(normalizeEmail(undefined)).toBe('');
   });
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Alert, Button, Modal } from 'react-native';
 import PropTypes from 'prop-types';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { AppAlertProvider, nativeAlert, useAppAlert } from '../AppAlert';
 
 jest.spyOn(Alert, 'alert');
@@ -139,3 +139,57 @@ AlertTrigger.propTypes = {
 ConfirmTrigger.propTypes = {
   onConfirmed: PropTypes.func.isRequired,
 };
+
+// Guarda a função de aviso para o teste chamá-la diretamente
+function CaptureAlert({ onReady }) {
+  onReady(useAppAlert());
+  return null;
+}
+
+CaptureAlert.propTypes = {
+  onReady: PropTypes.func.isRequired,
+};
+
+describe('AppAlertProvider com vários avisos', () => {
+  it('deve mostrar avisos seguidos um de cada vez, sem perder nenhum', async () => {
+    let showAlert;
+    const onConfirm = jest.fn();
+    const { getByText, queryByText } = render(
+      <AppAlertProvider>
+        <CaptureAlert
+          onReady={(fn) => {
+            showAlert = fn;
+          }}
+        />
+      </AppAlertProvider>
+    );
+
+    let first;
+    let second;
+    act(() => {
+      first = showAlert({
+        title: 'Confirmar Exclusão',
+        message: 'a',
+        confirmText: 'Excluir',
+        onConfirm,
+      });
+      second = showAlert({ title: 'Segundo aviso', message: 'b' });
+    });
+
+    expect(getByText('Confirmar Exclusão')).toBeTruthy();
+    expect(queryByText('Segundo aviso')).toBeNull();
+
+    await act(async () => {
+      fireEvent.press(getByText('Excluir'));
+    });
+    await expect(first).resolves.toBe(true);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(getByText('Segundo aviso')).toBeTruthy();
+
+    await act(async () => {
+      fireEvent.press(getByText('Entendi'));
+    });
+    await expect(second).resolves.toBe(true);
+    expect(queryByText('Segundo aviso')).toBeNull();
+  });
+});

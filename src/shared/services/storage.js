@@ -15,16 +15,43 @@ export const secureStorageAdapter = {
   removeItem: (key) => SecureStore.deleteItemAsync(key),
 };
 
+const isPlainObject = (value) =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+// O valor lido precisa ter o mesmo "formato" do valor padrão (lista, objeto
+// ou número); sem padrão (null), qualquer valor é aceito
+function matchesShape(value, fallback) {
+  if (fallback === null) return true;
+  if (Array.isArray(fallback)) return Array.isArray(value);
+  if (isPlainObject(fallback)) return isPlainObject(value);
+  return typeof value === typeof fallback;
+}
+
+function parseJson(raw) {
+  try {
+    return { ok: true, value: JSON.parse(raw) };
+  } catch {
+    return { ok: false };
+  }
+}
+
 // Repositório de um valor JSON guardado em uma chave. `fallback` é o valor
 // devolvido quando nada foi gravado ainda (uma cópia nova a cada leitura).
+// Dados corrompidos ou em outro formato também viram o valor padrão, para o
+// app continuar funcionando (e a próxima gravação os substitui).
+// `normalize` limpa o valor lido (ex.: descartar itens inválidos da lista).
 export function createJsonStore(
   key,
-  { adapter = asyncStorageAdapter, fallback = null } = {}
+  { adapter = asyncStorageAdapter, fallback = null, normalize = (v) => v } = {}
 ) {
-  const emptyValue = JSON.stringify(fallback);
+  const emptyValue = () => JSON.parse(JSON.stringify(fallback));
 
-  const read = async () =>
-    JSON.parse((await adapter.getItem(key)) ?? emptyValue);
+  const read = async () => {
+    const raw = await adapter.getItem(key);
+    const parsed = raw === null ? { ok: false } : parseJson(raw);
+    const isUsable = parsed.ok && matchesShape(parsed.value, fallback);
+    return normalize(isUsable ? parsed.value : emptyValue());
+  };
   const write = (value) => adapter.setItem(key, JSON.stringify(value));
 
   return {

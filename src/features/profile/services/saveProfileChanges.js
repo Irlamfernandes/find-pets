@@ -2,7 +2,7 @@ import { profileService } from './profileService';
 import { accountService } from '../../auth/services/accountService';
 import { sessionService } from '../../auth/services/sessionService';
 import { profilePhotoStorage } from '../../../shared/services/photoStorage';
-import { toProfileData } from '../profileForm';
+import { toProfileData, wantsNewPassword } from '../profileForm';
 
 // Salva as alterações do perfil: copia a foto nova para a pasta permanente,
 // grava o perfil, apaga a foto antiga e troca a senha, se informada.
@@ -17,10 +17,9 @@ export async function saveProfileChanges(values, previousPhotoUri) {
     profilePhotoStorage.remove(previousPhotoUri);
   }
 
-  const newPassword = values.newPassword.trim();
-  if (newPassword) {
+  if (wantsNewPassword(values)) {
     const usuario = await sessionService.getCurrentUser();
-    await accountService.changePassword(usuario, newPassword);
+    await accountService.changePassword(usuario, values.newPassword);
   }
   return photoUri;
 }

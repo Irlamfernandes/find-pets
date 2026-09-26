@@ -61,7 +61,52 @@ describe('photoMetadata', () => {
       expect(getPhotoDate({ DateTimeOriginal: '25/09/2026' })).toBeNull();
       expect(
         getPhotoDate({ DateTimeOriginal: '9999:99:99 99:99:99' })
-      ).toBeInstanceOf(Date);
+      ).toBeNull();
+    });
+  });
+
+  describe('dados impossíveis ou suspeitos', () => {
+    it('deve ignorar datas que não existem', () => {
+      for (const raw of [
+        '0000:00:00 00:00:00',
+        '2026:02:30 10:00:00',
+        '2026:13:01 10:00:00',
+        '2026:09:25 25:00:00',
+      ]) {
+        expect(getPhotoDate({ DateTimeOriginal: raw })).toBeNull();
+      }
+    });
+
+    it('deve ignorar datas de câmeras com o relógio errado', () => {
+      expect(
+        getPhotoDate({ DateTimeOriginal: '1970:01:01 00:00:00' })
+      ).toBeNull();
+      expect(
+        getPhotoDate({ DateTimeOriginal: '2099:01:01 10:00:00' })
+      ).toBeNull();
+      expect(getPhotoDate({ DateTimeOriginal: '1990:01:01 00:00:00' })).toEqual(
+        new Date(1990, 0, 1)
+      );
+    });
+
+    it('deve aceitar 29 de fevereiro só em ano bissexto', () => {
+      expect(getPhotoDate({ DateTimeOriginal: '2024:02:29 10:00:00' })).toEqual(
+        new Date(2024, 1, 29, 10)
+      );
+      expect(
+        getPhotoDate({ DateTimeOriginal: '2025:02:29 10:00:00' })
+      ).toBeNull();
+    });
+
+    it('deve ignorar coordenadas fora do planeta', () => {
+      expect(getPhotoCoords({ GPSLatitude: 200, GPSLongitude: 10 })).toBeNull();
+      expect(
+        getPhotoCoords({ GPSLatitude: 10, GPSLongitude: -181 })
+      ).toBeNull();
+      expect(getPhotoCoords({ GPSLatitude: -90, GPSLongitude: 180 })).toEqual({
+        latitude: -90,
+        longitude: 180,
+      });
     });
   });
 

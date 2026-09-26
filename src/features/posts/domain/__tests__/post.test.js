@@ -17,6 +17,7 @@ describe('post', () => {
   it('deve ler o status, inclusive de registros antigos', () => {
     expect(getPostStatus(lost)).toBe('Perdido');
     expect(getPostStatus({ type: 'Encontrado' })).toBe('Encontrado');
+    expect(getPostStatus({ status: null })).toBe('Perdido');
     expect(isFound(found)).toBe(true);
     expect(isFound({ type: 'Encontrado' })).toBe(true);
     expect(isFound(lost)).toBe(false);
@@ -46,6 +47,10 @@ describe('post', () => {
       })
     ).toBe('25/09/2026 às 14:30 (BRT, UTC-3)');
     expect(getOccurredAtLabel({ date: '10/06/2026' })).toBe('10/06/2026');
+    expect(getOccurredAtLabel({})).toBe('Data não informada');
+    expect(getOccurredAtLabel({ occurredAt: 'lixo' })).toBe(
+      'Data não informada'
+    );
   });
 
   it('deve registrar o reencontro', () => {

@@ -4,20 +4,23 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import LoginScreen from './src/screens/LoginScreen';
-import OnboardingScreen from './src/screens/OnboardingScreen';
-import FeedScreen from './src/screens/FeedScreen';
-import ProfileScreen from './src/screens/ProfileScreen';
-import ReportLostPetScreen from './src/screens/ReportLostPetScreen';
-import UnlockScreen from './src/screens/UnlockScreen';
-import { palette } from './src/theme/colors';
+import LoginScreen from './src/features/auth/screens/LoginScreen';
+import OnboardingScreen from './src/features/profile/screens/OnboardingScreen';
+import FeedScreen from './src/features/posts/screens/FeedScreen';
+import ProfileScreen from './src/features/profile/screens/ProfileScreen';
+import ReportLostPetScreen from './src/features/posts/screens/ReportLostPetScreen';
+import UnlockScreen from './src/features/auth/screens/UnlockScreen';
+import { palette } from './src/shared/theme/colors';
 
-import { useSession } from './src/hooks/useSession';
-import { sessionService } from './src/services/session';
-import { onboardingService } from './src/services/onboarding';
-import { AppAlertProvider, useAppAlert } from './src/components/AppAlert';
-import { useBiometricOffer } from './src/hooks/useBiometricOffer';
-import PasswordPromptModal from './src/components/PasswordPromptModal';
+import { useSession } from './src/features/auth/hooks/useSession';
+import { sessionService } from './src/features/auth/services/session';
+import { onboardingService } from './src/features/profile/services/onboarding';
+import {
+  AppAlertProvider,
+  useAppAlert,
+} from './src/shared/components/AppAlert';
+import { useBiometricOffer } from './src/features/auth/hooks/useBiometricOffer';
+import PasswordPromptModal from './src/shared/components/PasswordPromptModal';
 
 function AppContent() {
   const { isLoading, session, saveUserSession, logout } = useSession();

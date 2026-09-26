@@ -5,18 +5,27 @@ import {
   secureStorageAdapter,
   withErrorContext,
 } from '../../../shared/services/storage';
+import { normalizeEmail } from '../../../shared/utils/validation';
 
 const BCRYPT_ROUNDS = 10;
+
+const isValidAccount = (account) =>
+  typeof account?.usuario === 'string' &&
+  typeof account.passwordHash === 'string';
 
 // Contas deste aparelho: [{ usuario, passwordHash, hasBiometrics }].
 // Ficam no armazenamento criptografado do sistema.
 const accountsStore = createJsonStore(STORAGE_KEYS.CREDENTIALS, {
   adapter: secureStorageAdapter,
   fallback: [],
+  normalize: (accounts) => accounts.filter(isValidAccount),
 });
 
+const sameUser = (account, usuario) =>
+  normalizeEmail(account.usuario) === normalizeEmail(usuario);
+
 const findAccount = (accounts, usuario) =>
-  accounts.find((account) => account.usuario === usuario) || null;
+  accounts.find((account) => sameUser(account, usuario)) || null;
 
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
@@ -30,7 +39,7 @@ function updateAccount(usuario, changes) {
       throw new Error('Conta não encontrada.');
     }
     return accounts.map((account) =>
-      account.usuario === usuario ? { ...account, ...changes } : account
+      sameUser(account, usuario) ? { ...account, ...changes } : account
     );
   });
 }
@@ -61,7 +70,11 @@ export const accountService = {
         const passwordHash = await hashPassword(password);
         await accountsStore.update((accounts) => [
           ...accounts,
-          { usuario, passwordHash, hasBiometrics: false },
+          {
+            usuario: normalizeEmail(usuario),
+            passwordHash,
+            hasBiometrics: false,
+          },
         ]);
       }
     );
@@ -74,11 +87,19 @@ export const accountService = {
     );
   },
 
+  // Devolve o e-mail da conta, como foi cadastrado, quando a senha confere;
+  // senão, null. A senha é comparada exatamente como foi digitada.
+  async authenticate(usuario, password) {
+    if (!usuario || !password) return null;
+    const account = await this.getAccount(usuario);
+    const isValid =
+      account && (await bcrypt.compare(password, account.passwordHash));
+    return isValid ? account.usuario : null;
+  },
+
   // true quando a senha confere com a da conta
   async checkPassword(usuario, password) {
-    if (!usuario || !password) return false;
-    const account = await this.getAccount(usuario);
-    return account ? bcrypt.compare(password, account.passwordHash) : false;
+    return (await this.authenticate(usuario, password)) !== null;
   },
 
   // A biometria do aparelho fica vinculada a uma única conta: o sistema não
@@ -94,7 +115,7 @@ export const accountService = {
   setBiometrics(usuario, enabled) {
     return withErrorContext('Erro ao atualizar a biometria', async () => {
       const owner = await this.getBiometricOwner();
-      if (enabled && owner && owner.usuario !== usuario) {
+      if (enabled && owner && !sameUser(owner, usuario)) {
         throw new Error('A biometria deste aparelho já está em uso.');
       }
       await updateAccount(usuario, { hasBiometrics: enabled });

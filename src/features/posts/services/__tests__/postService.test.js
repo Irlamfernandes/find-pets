@@ -46,6 +46,21 @@ describe('postService', () => {
     await expect(postService.deletePost('1')).resolves.toEqual([post('2')]);
   });
 
+  it('deve ignorar dados corrompidos e registros inválidos', async () => {
+    const data = AsyncStorage.__backend.data;
+    data.set('FindPets_posts', '{"nao":"é lista"}');
+    await expect(postService.getPosts()).resolves.toEqual([]);
+
+    data.set('FindPets_posts', '{quebrado');
+    await expect(postService.savePost(post('1'))).resolves.toEqual([post('1')]);
+
+    data.set(
+      'FindPets_posts',
+      JSON.stringify([null, 'texto', { semId: true }, post('2')])
+    );
+    await expect(postService.getPosts()).resolves.toEqual([post('2')]);
+  });
+
   it('deve validar os dados recebidos', () => {
     expect(() => postService.savePost({})).toThrow('Dados do post inválidos.');
     expect(() => postService.savePost(null)).toThrow(

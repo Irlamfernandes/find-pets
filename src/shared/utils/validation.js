@@ -12,3 +12,6 @@ export const isFilled = (value) => Boolean(value?.trim());
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const isValidEmail = (email) => EMAIL_PATTERN.test(email || '');
+
+// E-mails são comparados sem diferenciar maiúsculas nem espaços nas pontas
+export const normalizeEmail = (email) => (email || '').trim().toLowerCase();

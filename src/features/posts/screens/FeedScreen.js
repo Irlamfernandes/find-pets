@@ -102,6 +102,7 @@ export default function FeedScreen({
 
       <FoundPetModal
         visible={feed.isFoundFormOpen}
+        lostAt={feed.foundPost?.occurredAt}
         onCancel={feed.cancelFound}
         onConfirm={feed.confirmFound}
       />

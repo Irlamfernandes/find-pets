@@ -94,6 +94,43 @@ describe('storage', () => {
     });
   });
 
+  describe('dados corrompidos', () => {
+    const storeWith = (stored, fallback) =>
+      createJsonStore('chave', {
+        adapter: {
+          getItem: jest.fn().mockResolvedValue(stored),
+          setItem: jest.fn(),
+          removeItem: jest.fn(),
+        },
+        fallback,
+      });
+
+    it('deve usar o valor padrão quando o JSON estiver quebrado', async () => {
+      await expect(storeWith('{quebrado', []).read()).resolves.toEqual([]);
+      await expect(storeWith('{quebrado', null).read()).resolves.toBeNull();
+    });
+
+    it('deve usar o valor padrão quando o formato for outro', async () => {
+      await expect(storeWith('{"a":1}', []).read()).resolves.toEqual([]);
+      await expect(storeWith('[1]', {}).read()).resolves.toEqual({});
+      await expect(storeWith('null', {}).read()).resolves.toEqual({});
+      await expect(storeWith('"texto"', 0).read()).resolves.toBe(0);
+    });
+
+    it('deve aceitar qualquer formato quando não houver padrão', async () => {
+      await expect(storeWith('[1]', null).read()).resolves.toEqual([1]);
+    });
+
+    it('deve limpar o valor lido com normalize', async () => {
+      const store = createJsonStore('chave', {
+        adapter: { getItem: jest.fn().mockResolvedValue('[1,null,2]') },
+        fallback: [],
+        normalize: (list) => list.filter(Boolean),
+      });
+      await expect(store.read()).resolves.toEqual([1, 2]);
+    });
+  });
+
   describe('withErrorContext', () => {
     it('deve devolver o resultado da ação', async () => {
       await expect(withErrorContext('Contexto', async () => 42)).resolves.toBe(

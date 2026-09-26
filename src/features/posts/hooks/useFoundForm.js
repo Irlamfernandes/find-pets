@@ -6,8 +6,9 @@ import {
 } from '../domain/foundForm';
 import { validate } from '../../../shared/utils/validation';
 
-// Estado do formulário de reencontro; `confirm` valida e envia os dados
-export function useFoundForm(onConfirm) {
+// Estado do formulário de reencontro; `confirm` valida e envia os dados.
+// `lostAt` (data do desaparecimento) impede um reencontro anterior a ela.
+export function useFoundForm(onConfirm, lostAt) {
   const [form, setForm] = useState(createFoundForm);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -22,7 +23,7 @@ export function useFoundForm(onConfirm) {
   };
 
   const confirm = async () => {
-    const invalid = validate(form, foundFormRules);
+    const invalid = validate({ ...form, lostAt }, foundFormRules);
     setErrorMessage(invalid || '');
     if (invalid) return;
 

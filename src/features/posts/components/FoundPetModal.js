@@ -114,9 +114,9 @@ FoundModalActions.propTypes = {
   onConfirm: PropTypes.func.isRequired,
 };
 
-export function FoundPetModal({ visible, onCancel, onConfirm }) {
+export function FoundPetModal({ visible, lostAt, onCancel, onConfirm }) {
   const { form, updateField, errorMessage, isSaving, reset, confirm } =
-    useFoundForm(onConfirm);
+    useFoundForm(onConfirm, lostAt);
   const dateRef = useRef(null);
   const timeRef = useRef(null);
   const locationRef = useRef(null);
@@ -200,6 +200,8 @@ export function FoundPetModal({ visible, onCancel, onConfirm }) {
 }
 
 FoundPetModal.propTypes = {
+  // Data do desaparecimento (ISO), quando conhecida
+  lostAt: PropTypes.string,
   visible: PropTypes.bool.isRequired,
   onCancel: PropTypes.func.isRequired,
   onConfirm: PropTypes.func.isRequired,

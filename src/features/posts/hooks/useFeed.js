@@ -108,6 +108,8 @@ export function useFeed() {
     currentUser: viewer.usuario,
     deletePost,
     isFoundFormOpen: foundPostId !== null,
+    // Registro que está sendo marcado como encontrado
+    foundPost: posts.find((post) => post.id === foundPostId) || null,
     markPostAsFound,
     cancelFound: () => setFoundPostId(null),
     confirmFound,

@@ -113,12 +113,15 @@ AlertDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
+// Avisos pedidos enquanto outro está aberto entram numa fila e aparecem um
+// de cada vez, sem que nenhum (nem a ação dele) se perca
 export function AppAlertProvider({ children }) {
-  const [alert, setAlert] = useState(null);
+  const [queue, setQueue] = useState([]);
+  const alert = queue[0] || null;
 
   const showAlert = useCallback((options) => {
     return new Promise((resolve) => {
-      setAlert({ ...options, resolve });
+      setQueue((current) => [...current, { ...options, resolve }]);
     });
   }, []);
 
@@ -126,7 +129,7 @@ export function AppAlertProvider({ children }) {
     if (!alert) return;
     if (confirmed) alert.onConfirm?.();
     alert.resolve(confirmed);
-    setAlert(null);
+    setQueue((current) => current.slice(1));
   };
 
   return (

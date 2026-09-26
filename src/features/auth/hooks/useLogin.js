@@ -6,6 +6,7 @@ import {
   validate,
   isFilled,
   isValidEmail,
+  normalizeEmail,
 } from '../../../shared/utils/validation';
 
 const credentialRules = [
@@ -66,14 +67,15 @@ export function useLogin(onSuccess) {
     await accountService.createAccount(email, senha);
     setUsuario('');
     setSenha('');
-    onSuccess?.({ type: 'register', usuario: email });
+    onSuccess?.({ type: 'register', usuario: normalizeEmail(email) });
   }, 'Erro ao realizar o cadastro.');
 
+  // Entra com o e-mail como foi cadastrado, mesmo que digitado com outras
+  // maiúsculas, para a sessão sempre apontar para a mesma conta
   const handleManualLogin = submitWith(async (email) => {
-    if (!(await accountService.checkPassword(email, senha))) {
-      return 'Usuário não existe ou senha errada.';
-    }
-    onSuccess?.({ type: 'credentials', usuario: email });
+    const usuarioConta = await accountService.authenticate(email, senha);
+    if (!usuarioConta) return 'Usuário não existe ou senha errada.';
+    onSuccess?.({ type: 'credentials', usuario: usuarioConta });
   }, 'Erro ao realizar o login.');
 
   // Entra sempre na conta dona da biometria, nunca em outra

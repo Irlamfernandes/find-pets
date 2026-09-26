@@ -197,6 +197,33 @@ describe('PetCard', () => {
     expect(getByText('Em: 26/09/2026 às 13:00 (CET, UTC+1)')).toBeTruthy();
   });
 
+  it('não deve mostrar "undefined" num reencontro incompleto', () => {
+    const { getByTestId, getByText, queryByText } = render(
+      <PetCard
+        item={{
+          ...baseItem,
+          status: 'Encontrado',
+          foundInfo: { receiverName: 'Ana', foundAt: 'lixo' },
+        }}
+        {...handlers}
+      />
+    );
+
+    expect(getByTestId('found-info')).toBeTruthy();
+    expect(getByText('Com: Ana')).toBeTruthy();
+    expect(getByText('Em: data não informada')).toBeTruthy();
+    expect(queryByText(/undefined/)).toBeNull();
+  });
+
+  it('deve mostrar "Perdido" e avisar a data em registros sem esses dados', () => {
+    const { getByText } = render(
+      <PetCard item={{ id: '9', images: ['a.jpg'] }} {...handlers} />
+    );
+
+    expect(getByText('Perdido')).toBeTruthy();
+    expect(getByText('Desapareceu em: Data não informada')).toBeTruthy();
+  });
+
   it('deve omitir local e observações do reencontro quando vazios', () => {
     const { getByTestId, queryByText } = render(
       <PetCard

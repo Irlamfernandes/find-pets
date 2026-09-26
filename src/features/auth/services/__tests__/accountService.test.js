@@ -119,6 +119,70 @@ describe('accountService', () => {
     });
   });
 
+  describe('e-mails com maiúsculas e senhas com espaços', () => {
+    it('deve tratar o e-mail sem diferenciar maiúsculas', async () => {
+      await accountService.createAccount(' Ana@X.com ', 'abc');
+
+      expect(storedAccounts()[0].usuario).toBe('ana@x.com');
+      await expect(
+        accountService.authenticate('ANA@x.COM', 'abc')
+      ).resolves.toBe('ana@x.com');
+      await expect(
+        accountService.createAccount('ana@x.com', 'outra')
+      ).rejects.toThrow('Este e-mail já está cadastrado. Faça login.');
+    });
+
+    it('deve reconhecer contas antigas gravadas com maiúsculas', async () => {
+      SecureStore.__backend.data.set(
+        STORAGE_KEYS.CREDENTIALS,
+        JSON.stringify([
+          {
+            usuario: 'Ana@X.com',
+            passwordHash: 'hash:abc',
+            hasBiometrics: false,
+          },
+        ])
+      );
+
+      await expect(
+        accountService.authenticate('ana@x.com', 'abc')
+      ).resolves.toBe('Ana@X.com');
+      await accountService.setBiometrics('ana@x.com', true);
+      await expect(accountService.getBiometricOwner()).resolves.toEqual(
+        expect.objectContaining({ usuario: 'Ana@X.com' })
+      );
+      await expect(
+        accountService.setBiometrics('ANA@x.com', true)
+      ).resolves.toBeUndefined();
+    });
+
+    it('deve comparar a senha exatamente como foi digitada', async () => {
+      await accountService.createAccount('ana@x.com', ' abc ');
+
+      await expect(
+        accountService.checkPassword('ana@x.com', ' abc ')
+      ).resolves.toBe(true);
+      await expect(
+        accountService.checkPassword('ana@x.com', 'abc')
+      ).resolves.toBe(false);
+    });
+
+    it('deve ignorar contas corrompidas', async () => {
+      SecureStore.__backend.data.set(
+        STORAGE_KEYS.CREDENTIALS,
+        JSON.stringify([null, { usuario: 'sem-senha@x.com' }])
+      );
+
+      await expect(accountService.getAccount('sem-senha@x.com')).resolves.toBe(
+        null
+      );
+      await accountService.createAccount('sem-senha@x.com', 'nova');
+      await expect(
+        accountService.checkPassword('sem-senha@x.com', 'nova')
+      ).resolves.toBe(true);
+    });
+  });
+
   describe('changePassword', () => {
     it('deve trocar a senha mantendo a biometria', async () => {
       await accountService.createAccount('ana@x.com', 'antiga');

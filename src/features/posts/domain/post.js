@@ -4,8 +4,9 @@ import { formatDateTime } from '../../../shared/utils/timeZone';
 
 export const POST_STATUS = { LOST: 'Perdido', FOUND: 'Encontrado' };
 
-// Registros antigos guardavam o status em `type`
-export const getPostStatus = (post) => post.status || post.type;
+// Registros antigos guardavam o status em `type`; sem nenhum, está perdido
+export const getPostStatus = (post) =>
+  post.status || post.type || POST_STATUS.LOST;
 
 export const isFound = (post) => getPostStatus(post) === POST_STATUS.FOUND;
 
@@ -20,11 +21,11 @@ export const canManage = (post, usuario) =>
 export const hasCoordinates = (post) =>
   Number.isFinite(post.latitude) && Number.isFinite(post.longitude);
 
-// Texto da data do desaparecimento, no fuso em que aconteceu
-export function getOccurredAtLabel(post) {
-  return post.occurredAt
-    ? formatDateTime(post.occurredAt, post.occurredZone)
-    : post.date;
+// Texto da data do desaparecimento, no fuso em que aconteceu. Registros
+// antigos só têm `date`; sem nenhuma data válida, usa `missing`.
+export function getOccurredAtLabel(post, missing = 'Data não informada') {
+  const formatted = formatDateTime(post.occurredAt, post.occurredZone);
+  return formatted || post.date || missing;
 }
 
 // Alterações que registram o reencontro

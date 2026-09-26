@@ -3,6 +3,7 @@ import { usePetPhotos, MAX_PHOTOS } from './usePetPhotos';
 import { publishLostPost, updateLostPost } from '../services/lostPostPublisher';
 import { rule, validate } from '../../../shared/utils/validation';
 import { useAppAlert } from '../../../shared/components/AppAlert';
+import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 
 export { MAX_PHOTOS };
 
@@ -71,8 +72,9 @@ export function useReportLostPet(onSaved, initialPost = null) {
     setPetData((current) => ({ ...current, [field]: value }));
   };
 
-  const submit = async () => {
-    if (isSaving) return;
+  // Chamadas repetidas enquanto salva recebem o mesmo salvamento, em vez
+  // de criar registros duplicados
+  const submit = useSingleFlight(async () => {
     const invalid = validate(
       { photos: petPhotos.photos, petData },
       reportRules
@@ -100,7 +102,7 @@ export function useReportLostPet(onSaved, initialPost = null) {
     } finally {
       setIsSaving(false);
     }
-  };
+  });
 
   return {
     isEditing,

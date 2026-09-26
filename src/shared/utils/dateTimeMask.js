@@ -25,21 +25,15 @@ export function toTimeInput(date) {
   return `${hours}:${minutes}`;
 }
 
-// Retorna a data correspondente ou null se for inválida (ex.: 31/02, 25:00)
+// Retorna a data correspondente ou null se for inválida (ex.: 31/02, 25:00).
+// O Date "corrige" valores fora do intervalo (31/02 vira 03/03), então a data
+// só é válida se, formatada de volta, for igual ao que foi digitado.
 export function parseDateTimeInput(dateText, timeText) {
-  const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dateText || '');
-  const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeText || '');
-  if (!dateMatch || !timeMatch) return null;
+  const text = `${dateText} ${timeText}`;
+  const match = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(text);
+  if (!match) return null;
 
-  const [, day, month, year] = dateMatch.map(Number);
-  const [, hours, minutes] = timeMatch.map(Number);
+  const [, day, month, year, hours, minutes] = match.map(Number);
   const date = new Date(year, month - 1, day, hours, minutes);
-
-  const isSameDate =
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day &&
-    date.getHours() === hours &&
-    date.getMinutes() === minutes;
-  return isSameDate ? date : null;
+  return `${toDateInput(date)} ${toTimeInput(date)}` === text ? date : null;
 }

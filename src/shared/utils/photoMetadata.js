@@ -13,25 +13,27 @@ function applyRef(value, ref, negativeRef) {
   return ref === negativeRef ? -Math.abs(value) : value;
 }
 
+// Android usa a tag na raiz (GPSLatitude); iOS, dentro de "{GPS}" (Latitude)
+const readGpsTag = (exif, tag) => exif[`GPS${tag}`] ?? exif['{GPS}']?.[tag];
+
+const readCoordinate = (exif, tag, negativeRef) =>
+  applyRef(
+    toNumber(readGpsTag(exif, tag)),
+    readGpsTag(exif, `${tag}Ref`),
+    negativeRef
+  );
+
+// Algumas câmeras gravam 0,0 quando não há sinal de GPS
+const isValidCoords = (latitude, longitude) =>
+  latitude !== null &&
+  longitude !== null &&
+  (latitude !== 0 || longitude !== 0);
+
 export function getPhotoCoords(exif) {
   if (!exif) return null;
-
-  const gps = exif['{GPS}'] || {};
-  const latitude = applyRef(
-    toNumber(exif.GPSLatitude ?? gps.Latitude),
-    exif.GPSLatitudeRef ?? gps.LatitudeRef,
-    'S'
-  );
-  const longitude = applyRef(
-    toNumber(exif.GPSLongitude ?? gps.Longitude),
-    exif.GPSLongitudeRef ?? gps.LongitudeRef,
-    'W'
-  );
-
-  if (latitude === null || longitude === null) return null;
-  // Algumas câmeras gravam 0,0 quando não há sinal de GPS
-  if (latitude === 0 && longitude === 0) return null;
-  return { latitude, longitude };
+  const latitude = readCoordinate(exif, 'Latitude', 'S');
+  const longitude = readCoordinate(exif, 'Longitude', 'W');
+  return isValidCoords(latitude, longitude) ? { latitude, longitude } : null;
 }
 
 function readExif(exif, tag) {
@@ -76,21 +78,36 @@ export function getPhotoTimeZone(exif, date) {
   return { offsetMinutes: offset, abbreviation: null };
 }
 
-// Usa a primeira foto que tiver GPS (dos metadados ou registrado pelo app ao
-// fotografar) e a data mais antiga entre as fotos, com o fuso dela
-export function getPhotosMetadata(photos) {
-  let coords = null;
-  let occurredAt = null;
-  let occurredZone = null;
-
+// Primeiro local encontrado: GPS da foto ou local registrado pelo app ao
+// fotografar
+function findPhotoCoords(photos) {
   for (const photo of photos) {
-    coords = coords || getPhotoCoords(photo.exif) || photo.coords || null;
-    const date = getPhotoDate(photo.exif);
-    if (date && (!occurredAt || date < occurredAt)) {
-      occurredAt = date;
-      occurredZone = getPhotoTimeZone(photo.exif, date);
-    }
+    const coords = getPhotoCoords(photo.exif) || photo.coords;
+    if (coords) return coords;
   }
+  return null;
+}
 
-  return { coords, occurredAt, occurredZone };
+// Foto mais antiga entre as que têm data: { photo, date } ou null
+function findEarliestPhoto(photos) {
+  return photos
+    .map((photo) => ({ photo, date: getPhotoDate(photo.exif) }))
+    .filter((item) => item.date)
+    .reduce(
+      (earliest, item) =>
+        !earliest || item.date < earliest.date ? item : earliest,
+      null
+    );
+}
+
+// Local da primeira foto que tiver GPS e data (com o fuso) da mais antiga
+export function getPhotosMetadata(photos) {
+  const earliest = findEarliestPhoto(photos);
+  return {
+    coords: findPhotoCoords(photos),
+    occurredAt: earliest ? earliest.date : null,
+    occurredZone: earliest
+      ? getPhotoTimeZone(earliest.photo.exif, earliest.date)
+      : null,
+  };
 }

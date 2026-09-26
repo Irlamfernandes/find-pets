@@ -33,6 +33,40 @@ O **FindPets** é um aplicativo mobile desenvolvido para auxiliar na localizaç�
 
 ---
 
+## 🧱 Arquitetura
+
+O código fica em `src/`, organizado por funcionalidade:
+
+```
+src/
+  app/        fluxo do app: navegação (máquina de estados) e migração dos dados
+  features/
+    auth/     conta, sessão, biometria, login e desbloqueio
+    profile/  cadastro e edição do perfil
+    posts/    registros de pets: feed, registro, reencontro e compartilhamento
+    map/      mapas (Leaflet + OpenStreetMap dentro do app)
+  shared/     componentes, hooks, serviços, utilitários e tema comuns
+  testing/    utilitários dos testes (armazenamento em memória)
+```
+
+Dentro de cada funcionalidade:
+
+- **`domain/`**: regras puras, sem tela nem armazenamento (ex.: `post.js`, `foundForm.js`).
+- **`services/`**: dados e casos de uso. Todo acesso ao armazenamento passa pelo `createJsonStore` de `shared/services/storage.js`.
+- **`hooks/`**: estado e lógica das telas.
+- **`components/`** e **`screens/`**: só apresentação.
+
+Os testes ficam em `__tests__/`, ao lado do código que testam.
+
+Regras que o ESLint (e o CI) exigem no código do app:
+
+- complexidade ciclomática de no máximo 6;
+- funções de até 80 linhas e arquivos de até 300;
+- no máximo 3 níveis de aninhamento;
+- regras de hooks do React.
+
+---
+
 ## ⚙️ Como Executar o Projeto
 
 1. **Clone o repositório:**

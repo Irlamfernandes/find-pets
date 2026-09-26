@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   Modal,
   View,
@@ -10,220 +10,177 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
+import { ChipSelector } from '../../../shared/components/ChipSelector';
+import { LabeledInput } from '../../../shared/components/LabeledInput';
+import { FormScrollView } from '../../../shared/components/FormScrollView';
 import { palette } from '../../../shared/theme/colors';
+import { formStyles } from '../../../shared/theme/formStyles';
 import {
   formatDateInput,
   formatTimeInput,
-  toDateInput,
-  toTimeInput,
-  parseDateTimeInput,
 } from '../../../shared/utils/dateTimeMask';
-import { getTimeZoneInfo } from '../../../shared/utils/timeZone';
-import {
-  FormScrollView,
-  FormTextInput,
-} from '../../../shared/components/FormScrollView';
 import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
+import { FOUND_RELATIONS } from '../domain/foundForm';
+import { useFoundForm } from '../hooks/useFoundForm';
 
-export const FOUND_RELATIONS = [
-  'Dono(a) / tutor',
-  'Familiar',
-  'Vizinho / conhecido',
-  'Abrigo / ONG',
-  'Outro',
-];
+export { FOUND_RELATIONS };
 
-function createInitialForm() {
-  const now = new Date();
-  return {
-    receiverName: '',
-    receiverRelation: FOUND_RELATIONS[0],
-    date: toDateInput(now),
-    time: toTimeInput(now),
-    foundLocation: '',
-    notes: '',
-  };
+function FoundModalHeader() {
+  return (
+    <View style={styles.header}>
+      <View style={styles.headerIcon}>
+        <Ionicons name="heart" size={22} color={palette.success} />
+      </View>
+      <View style={styles.headerText}>
+        <Text style={styles.title}>Pet encontrado!</Text>
+        <Text style={styles.subtitle}>Registre como foi o reencontro.</Text>
+      </View>
+    </View>
+  );
 }
 
+function FoundDateTimeFields({ form, dateRef, timeRef, onChange, onSubmit }) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowItem}>
+        <LabeledInput
+          label="Data"
+          ref={dateRef}
+          testID="input-found-date"
+          value={form.date}
+          onChangeText={(text) => onChange('date', formatDateInput(text))}
+          placeholder="dd/mm/aaaa"
+          keyboardType="number-pad"
+          maxLength={10}
+          onSubmit={() => timeRef.current?.focus()}
+        />
+      </View>
+      <View style={styles.rowItem}>
+        <LabeledInput
+          label="Hora"
+          ref={timeRef}
+          testID="input-found-time"
+          value={form.time}
+          onChangeText={(text) => onChange('time', formatTimeInput(text))}
+          placeholder="HH:MM"
+          keyboardType="number-pad"
+          maxLength={5}
+          onSubmit={onSubmit}
+        />
+      </View>
+    </View>
+  );
+}
+
+FoundDateTimeFields.propTypes = {
+  form: PropTypes.shape({
+    date: PropTypes.string.isRequired,
+    time: PropTypes.string.isRequired,
+  }).isRequired,
+  dateRef: PropTypes.object.isRequired,
+  timeRef: PropTypes.object.isRequired,
+  onChange: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+};
+
+function FoundModalActions({ isSaving, onCancel, onConfirm }) {
+  return (
+    <View style={styles.actions}>
+      <SafeTouchable
+        style={[styles.button, styles.cancelButton]}
+        onPress={dismissKeyboardAnd(onCancel)}
+      >
+        <Text style={styles.cancelText}>Cancelar</Text>
+      </SafeTouchable>
+      <SafeTouchable
+        testID="button-confirm-found"
+        style={[styles.button, styles.confirmButton]}
+        disabled={isSaving}
+        onPress={dismissKeyboardAnd(onConfirm)}
+      >
+        {isSaving ? (
+          <ActivityIndicator color={palette.white} />
+        ) : (
+          <Text style={styles.confirmText}>Confirmar reencontro</Text>
+        )}
+      </SafeTouchable>
+    </View>
+  );
+}
+
+FoundModalActions.propTypes = {
+  isSaving: PropTypes.bool.isRequired,
+  onCancel: PropTypes.func.isRequired,
+  onConfirm: PropTypes.func.isRequired,
+};
+
 export function FoundPetModal({ visible, onCancel, onConfirm }) {
-  const [form, setForm] = useState(createInitialForm);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  const { form, updateField, errorMessage, isSaving, reset, confirm } =
+    useFoundForm(onConfirm);
   const dateRef = useRef(null);
   const timeRef = useRef(null);
   const locationRef = useRef(null);
   const notesRef = useRef(null);
-
-  const updateField = (field, value) => {
-    setForm((current) => ({ ...current, [field]: value }));
-  };
-
-  const handleShow = () => {
-    setForm(createInitialForm());
-    setErrorMessage('');
-  };
-
-  const handleConfirm = async () => {
-    if (!form.receiverName.trim()) {
-      setErrorMessage('Informe o nome de quem pegou o animal.');
-      return;
-    }
-
-    const foundAt = parseDateTimeInput(form.date, form.time);
-    if (!foundAt) {
-      setErrorMessage('Informe uma data (dd/mm/aaaa) e hora (HH:MM) válidas.');
-      return;
-    }
-    if (foundAt > new Date()) {
-      setErrorMessage('A data do reencontro não pode estar no futuro.');
-      return;
-    }
-
-    setErrorMessage('');
-    setIsSaving(true);
-    try {
-      await onConfirm({
-        receiverName: form.receiverName.trim(),
-        receiverRelation: form.receiverRelation,
-        foundAt: foundAt.toISOString(),
-        foundZone: getTimeZoneInfo(foundAt),
-        foundLocation: form.foundLocation.trim(),
-        notes: form.notes.trim(),
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="slide"
-      onShow={handleShow}
+      onShow={reset}
       onRequestClose={onCancel}
     >
       <KeyboardAvoidingView style={styles.overlay} behavior="padding">
         <View style={styles.sheet}>
-          <View style={styles.header}>
-            <View style={styles.headerIcon}>
-              <Ionicons name="heart" size={22} color={palette.success} />
-            </View>
-            <View style={styles.headerText}>
-              <Text style={styles.title}>Pet encontrado!</Text>
-              <Text style={styles.subtitle}>
-                Registre como foi o reencontro.
-              </Text>
-            </View>
-          </View>
+          <FoundModalHeader />
 
           <FormScrollView>
-            <Text style={styles.label}>Nome de quem pegou o animal</Text>
-            <FormTextInput
+            <LabeledInput
+              label="Nome de quem pegou o animal"
               testID="input-receiver-name"
-              style={styles.input}
               value={form.receiverName}
               onChangeText={(text) => updateField('receiverName', text)}
               placeholder="Ex.: Maria Silva"
-              selectionColor={palette.primary}
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => dateRef.current?.focus()}
+              onSubmit={() => dateRef.current?.focus()}
             />
 
-            <Text style={styles.label}>Quem é essa pessoa?</Text>
-            <View style={styles.chips}>
-              {FOUND_RELATIONS.map((relation) => {
-                const selected = form.receiverRelation === relation;
-                return (
-                  <SafeTouchable
-                    key={relation}
-                    accessibilityState={{ selected }}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={dismissKeyboardAnd(() =>
-                      updateField('receiverRelation', relation)
-                    )}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        selected && styles.chipTextSelected,
-                      ]}
-                    >
-                      {relation}
-                    </Text>
-                  </SafeTouchable>
-                );
-              })}
-            </View>
+            <Text style={formStyles.label}>Quem é essa pessoa?</Text>
+            <ChipSelector
+              options={FOUND_RELATIONS}
+              value={form.receiverRelation}
+              onChange={(relation) => updateField('receiverRelation', relation)}
+              required
+            />
 
-            <View style={styles.row}>
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>Data</Text>
-                <FormTextInput
-                  ref={dateRef}
-                  testID="input-found-date"
-                  style={styles.input}
-                  value={form.date}
-                  onChangeText={(text) =>
-                    updateField('date', formatDateInput(text))
-                  }
-                  placeholder="dd/mm/aaaa"
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  selectionColor={palette.primary}
-                  returnKeyType="next"
-                  submitBehavior="submit"
-                  onSubmitEditing={() => timeRef.current?.focus()}
-                />
-              </View>
-              <View style={styles.rowItem}>
-                <Text style={styles.label}>Hora</Text>
-                <FormTextInput
-                  ref={timeRef}
-                  testID="input-found-time"
-                  style={styles.input}
-                  value={form.time}
-                  onChangeText={(text) =>
-                    updateField('time', formatTimeInput(text))
-                  }
-                  placeholder="HH:MM"
-                  keyboardType="number-pad"
-                  maxLength={5}
-                  selectionColor={palette.primary}
-                  returnKeyType="next"
-                  submitBehavior="submit"
-                  onSubmitEditing={() => locationRef.current?.focus()}
-                />
-              </View>
-            </View>
+            <FoundDateTimeFields
+              form={form}
+              dateRef={dateRef}
+              timeRef={timeRef}
+              onChange={updateField}
+              onSubmit={() => locationRef.current?.focus()}
+            />
 
-            <Text style={styles.label}>Onde foi encontrado (opcional)</Text>
-            <FormTextInput
+            <LabeledInput
+              label="Onde foi encontrado (opcional)"
               ref={locationRef}
               testID="input-found-location"
-              style={styles.input}
               value={form.foundLocation}
               onChangeText={(text) => updateField('foundLocation', text)}
               placeholder="Rua, bairro ou ponto de referência"
-              selectionColor={palette.primary}
-              returnKeyType="next"
-              submitBehavior="submit"
-              onSubmitEditing={() => notesRef.current?.focus()}
+              onSubmit={() => notesRef.current?.focus()}
             />
 
-            <Text style={styles.label}>Observações (opcional)</Text>
-            <FormTextInput
+            <LabeledInput
+              label="Observações (opcional)"
               ref={notesRef}
               testID="input-found-notes"
-              style={[styles.input, styles.textArea]}
+              style={styles.textArea}
               value={form.notes}
               onChangeText={(text) => updateField('notes', text)}
               placeholder="Como ele estava, quem ajudou, recompensa..."
               multiline
               textAlignVertical="top"
               maxLength={300}
-              selectionColor={palette.primary}
             />
 
             {errorMessage ? (
@@ -231,26 +188,11 @@ export function FoundPetModal({ visible, onCancel, onConfirm }) {
             ) : null}
           </FormScrollView>
 
-          <View style={styles.actions}>
-            <SafeTouchable
-              style={[styles.button, styles.cancelButton]}
-              onPress={dismissKeyboardAnd(onCancel)}
-            >
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </SafeTouchable>
-            <SafeTouchable
-              testID="button-confirm-found"
-              style={[styles.button, styles.confirmButton]}
-              disabled={isSaving}
-              onPress={dismissKeyboardAnd(handleConfirm)}
-            >
-              {isSaving ? (
-                <ActivityIndicator color={palette.white} />
-              ) : (
-                <Text style={styles.confirmText}>Confirmar reencontro</Text>
-              )}
-            </SafeTouchable>
-          </View>
+          <FoundModalActions
+            isSaving={isSaving}
+            onCancel={onCancel}
+            onConfirm={confirm}
+          />
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -289,38 +231,7 @@ const styles = StyleSheet.create({
   headerText: { flex: 1 },
   title: { fontSize: 18, fontWeight: 'bold', color: palette.text },
   subtitle: { fontSize: 13, color: palette.textMuted, marginTop: 2 },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: palette.text,
-    marginTop: 14,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: palette.background,
-    borderWidth: 1,
-    borderColor: palette.cardBorder,
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    color: palette.text,
-  },
   textArea: { minHeight: 80 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: palette.cardBorder,
-    backgroundColor: palette.background,
-  },
-  chipSelected: {
-    borderColor: palette.success,
-    backgroundColor: '#D1FAE5',
-  },
-  chipText: { fontSize: 13, color: palette.text },
-  chipTextSelected: { fontWeight: 'bold' },
   row: { flexDirection: 'row', gap: 10 },
   rowItem: { flex: 1 },
   errorText: { color: palette.error, fontSize: 13, marginTop: 12 },

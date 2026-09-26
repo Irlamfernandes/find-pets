@@ -1,15 +1,11 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import PasswordPromptModal from '../../../shared/components/PasswordPromptModal';
 import { BottomTabBar } from '../../../shared/components/BottomTabBar';
-import {
-  FormScrollView,
-  FormTextInput,
-} from '../../../shared/components/FormScrollView';
+import { FormScrollView } from '../../../shared/components/FormScrollView';
 import { useKeyboardVisible } from '../../../shared/hooks/useKeyboardVisible';
 import { useBackHandler } from '../../../shared/hooks/useBackHandler';
 import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
@@ -20,6 +16,7 @@ import { BiometricSettingsCard } from '../../auth/components/BiometricSettingsCa
 import { usePasswordPrompt } from '../../auth/hooks/usePasswordPrompt';
 import { useProfileEditor } from '../hooks/useProfileEditor';
 import { ProfileHeader } from '../components/ProfileHeader';
+import { ProfileDataFields } from '../components/ProfileDataFields';
 import { ProfilePhotoSection } from '../components/ProfilePhotoSection';
 import { PasswordChangeFields } from '../components/PasswordChangeFields';
 
@@ -36,7 +33,6 @@ export default function ProfileScreen({ onBack, onOpenReport, onLogout }) {
 
   // Botão e tecla "concluir" compartilham a mesma trava
   const saveChanges = useSingleFlight(dismissKeyboardAnd(editor.save));
-  const fieldStyle = [formStyles.input, !isEditing && formStyles.inputLocked];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,51 +45,13 @@ export default function ProfileScreen({ onBack, onOpenReport, onLogout }) {
           onChange={(uri) => editor.setField('photoUri', uri)}
         />
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Meus dados</Text>
-          {isEditing ? null : (
-            <SafeTouchable
-              testID="button-edit-profile"
-              accessibilityLabel="Editar perfil"
-              style={styles.editButton}
-              onPress={dismissKeyboardAnd(() => unlockPrompt.open())}
-            >
-              <Ionicons
-                name="create-outline"
-                size={20}
-                color={palette.primary}
-              />
-            </SafeTouchable>
-          )}
-        </View>
-
-        <Text style={formStyles.label}>Nome</Text>
-        <FormTextInput
-          style={fieldStyle}
-          value={values.name}
-          onChangeText={(text) => editor.setField('name', text)}
-          placeholder="Seu nome"
-          editable={isEditing}
-          selectionColor={palette.primary}
-          returnKeyType="next"
-          submitBehavior="submit"
-          onSubmitEditing={() => whatsappRef.current?.focus()}
-        />
-
-        <Text style={formStyles.label}>WhatsApp</Text>
-        <FormTextInput
-          ref={whatsappRef}
-          style={fieldStyle}
-          value={values.whatsapp}
-          onChangeText={(text) => editor.setField('whatsapp', text)}
-          placeholder="Seu WhatsApp"
-          editable={isEditing}
-          keyboardType="phone-pad"
-          maxLength={19}
-          selectionColor={palette.primary}
-          returnKeyType="next"
-          submitBehavior="submit"
-          onSubmitEditing={() => newPasswordRef.current?.focus()}
+        <ProfileDataFields
+          values={values}
+          isEditing={isEditing}
+          whatsappRef={whatsappRef}
+          onChange={editor.setField}
+          onRequestEdit={() => unlockPrompt.open()}
+          onWhatsappSubmit={() => newPasswordRef.current?.focus()}
         />
 
         {isEditing ? (
@@ -160,16 +118,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
   flex: { flex: 1 },
   form: { padding: 16, paddingBottom: 120 },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: palette.text },
-  editButton: {
-    padding: 8,
-    borderRadius: 10,
-    backgroundColor: palette.primarySoft,
-  },
   lockedHint: { marginTop: 16, fontSize: 13, color: palette.textMuted },
 });

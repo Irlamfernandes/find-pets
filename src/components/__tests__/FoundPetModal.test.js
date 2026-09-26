@@ -65,6 +65,7 @@ describe('FoundPetModal', () => {
       receiverName: 'Ana Souza',
       receiverRelation: 'Abrigo / ONG',
       foundAt: new Date(2026, 8, 24, 9, 30).toISOString(),
+      foundZone: { offsetMinutes: -180, abbreviation: 'BRT' },
       foundLocation: 'Praça',
       notes: 'Tudo bem',
     });

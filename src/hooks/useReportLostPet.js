@@ -1,22 +1,50 @@
 import { useState } from 'react';
 import { postService } from '../services/postService';
 import { photoService } from '../services/photoService';
+import { postPhotoStorage } from '../services/photoStorage';
 import { locationService } from '../services/locationService';
 import { onboardingService } from '../services/onboarding';
 import { sessionService } from '../services/session';
 import { getPhotosMetadata } from '../utils/photoMetadata';
+import { getTimeZoneInfo } from '../utils/timeZone';
+import { getPostImages } from '../utils/postImages';
 import { useAppAlert } from '../components/AppAlert';
 
 export const MAX_PHOTOS = 5;
 
-export function useReportLostPet(onSaved) {
+// Campos descritivos do pet, na ordem em que aparecem no formulário
+const PET_FIELDS = [
+  'petName',
+  'species',
+  'size',
+  'sex',
+  'color',
+  'breed',
+  'description',
+];
+
+function initialPetData(post) {
+  return Object.fromEntries(
+    PET_FIELDS.map((field) => [field, post?.[field] || ''])
+  );
+}
+
+// Cria um registro novo ou, com `initialPost`, edita um existente
+export function useReportLostPet(onSaved, initialPost = null) {
   const showAlert = useAppAlert();
-  const [photos, setPhotos] = useState([]);
-  const [description, setDescription] = useState('');
-  const [address, setAddress] = useState('');
+  const isEditing = Boolean(initialPost);
+  const [photos, setPhotos] = useState(() =>
+    isEditing ? getPostImages(initialPost).map((uri) => ({ uri })) : []
+  );
+  const [petData, setPetData] = useState(() => initialPetData(initialPost));
+  const [address, setAddress] = useState(initialPost?.location || '');
   const [isSaving, setIsSaving] = useState(false);
 
   const remainingPhotos = MAX_PHOTOS - photos.length;
+
+  const setPetField = (field, value) => {
+    setPetData((current) => ({ ...current, [field]: value }));
+  };
 
   const addPhotos = async (pickPhotos, deniedMessage) => {
     if (remainingPhotos <= 0) {
@@ -54,9 +82,28 @@ export function useReportLostPet(onSaved) {
       'Permita o acesso às fotos para anexar imagens do seu pet.'
     );
 
+  // A câmera aberta pelo app nem sempre grava GPS na foto (no iPhone nunca
+  // grava). Por isso o local é registrado no momento da foto, e não depois.
+  const takePhotoWithLocation = async () => {
+    const result = await photoService.takePhoto();
+    if (result.denied || result.photos.length === 0) return result;
+
+    // Sem permissão ou sinal, o serviço devolve latitude/longitude nulas
+    const { latitude, longitude } = await locationService.getCurrentLocation();
+    if (latitude === null) return result;
+
+    return {
+      ...result,
+      photos: result.photos.map((item) => ({
+        ...item,
+        coords: { latitude, longitude },
+      })),
+    };
+  };
+
   const takePhoto = () =>
     addPhotos(
-      () => photoService.takePhoto(),
+      takePhotoWithLocation,
       'Permita o acesso à câmera para fotografar o seu pet.'
     );
 
@@ -64,7 +111,8 @@ export function useReportLostPet(onSaved) {
     setPhotos((current) => current.filter((photo) => photo.uri !== uri));
   };
 
-  // Prioridade: GPS da foto > endereço digitado > localização atual do aparelho
+  // Prioridade: GPS da foto (ou local registrado ao fotografar) > endereço
+  // digitado > localização atual do aparelho
   const resolveLocation = async (photoCoords, typedAddress) => {
     let coords = photoCoords;
     if (!coords)
@@ -93,61 +141,120 @@ export function useReportLostPet(onSaved) {
     };
   };
 
-  const submit = async () => {
-    if (isSaving) return;
+  // Na edição, a localização só é recalculada se o endereço mudar
+  const resolveEditedLocation = async (typedAddress) => {
+    const unchanged = {
+      latitude: initialPost.latitude ?? null,
+      longitude: initialPost.longitude ?? null,
+      location: initialPost.location,
+    };
+    if (!typedAddress || typedAddress === initialPost.location) {
+      return unchanged;
+    }
 
+    const coords = await locationService.getCoordsFromAddress(typedAddress);
+    return {
+      latitude: coords ? coords.latitude : unchanged.latitude,
+      longitude: coords ? coords.longitude : unchanged.longitude,
+      location: typedAddress,
+    };
+  };
+
+  const trimmedPetData = () =>
+    Object.fromEntries(
+      PET_FIELDS.map((field) => [field, petData[field].trim()])
+    );
+
+  const validate = () => {
     if (photos.length === 0) {
       showAlert({
         type: 'warning',
         title: 'Adicione uma foto',
         message: 'Inclua pelo menos uma foto do pet para ajudar a encontrá-lo.',
       });
-      return;
+      return false;
     }
 
-    if (!description.trim()) {
+    if (!petData.species) {
       showAlert({
         type: 'warning',
-        title: 'Descreva o pet',
-        message:
-          'Conte como ele é e onde foi visto pela última vez (cor, porte, nome...).',
+        title: 'Escolha a espécie',
+        message: 'Informe se o pet é cachorro, gato ou outro animal.',
       });
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const createPost = async (images) => {
+    const { coords, occurredAt, occurredZone } = getPhotosMetadata(photos);
+    const eventDate = occurredAt || new Date();
+    const locationData = await resolveLocation(coords, address.trim());
+    const userProfile = await onboardingService.getUserProfile();
+    const session = await sessionService.getSession();
+
+    await postService.savePost({
+      id: Date.now().toString(),
+      author: session?.usuario || null,
+      images,
+      imageUri: images[0],
+      ...trimmedPetData(),
+      ...locationData,
+      occurredAt: eventDate.toISOString(),
+      // Fuso de onde aconteceu, para exibir a hora certa em qualquer país
+      occurredZone: occurredZone || getTimeZoneInfo(eventDate),
+      date: eventDate.toLocaleDateString('pt-BR'),
+      type: 'Perdido',
+      status: 'Perdido',
+      contactPhone: userProfile?.whatsapp || null,
+    });
+
+    showAlert({
+      type: 'success',
+      title: 'Desaparecimento registrado',
+      message: 'O registro já aparece na lista de pets perdidos.',
+    });
+  };
+
+  const updatePost = async (images) => {
+    const locationData = await resolveEditedLocation(address.trim());
+    await postService.updatePost(initialPost.id, {
+      images,
+      imageUri: images[0],
+      ...trimmedPetData(),
+      ...locationData,
+    });
+
+    // Apaga do aparelho as fotos que saíram do registro
+    const previousImages = getPostImages(initialPost);
+    postPhotoStorage.removeAll(
+      previousImages.filter((uri) => !images.includes(uri))
+    );
+
+    showAlert({
+      type: 'success',
+      title: 'Registro atualizado',
+      message: 'As alterações já aparecem na lista de pets perdidos.',
+    });
+  };
+
+  const submit = async () => {
+    if (isSaving || !validate()) return;
 
     setIsSaving(true);
     try {
-      const { coords, occurredAt } = getPhotosMetadata(photos);
-      const eventDate = occurredAt || new Date();
-      const locationData = await resolveLocation(coords, address.trim());
-      const userProfile = await onboardingService.getUserProfile();
-      const session = await sessionService.getSession();
-      const images = photos.map((photo) => photo.uri);
-
-      await postService.savePost({
-        id: Date.now().toString(),
-        author: session?.usuario || null,
-        images,
-        imageUri: images[0],
-        description: description.trim(),
-        ...locationData,
-        occurredAt: eventDate.toISOString(),
-        date: eventDate.toLocaleDateString('pt-BR'),
-        type: 'Perdido',
-        status: 'Perdido',
-        contactPhone: userProfile?.whatsapp || null,
-      });
-
-      showAlert({
-        type: 'success',
-        title: 'Desaparecimento registrado',
-        message: 'O registro já aparece na lista de pets perdidos.',
-      });
+      // Copia as fotos novas para a pasta permanente do app
+      const images = await postPhotoStorage.persistAll(
+        photos.map((photo) => photo.uri)
+      );
+      await (isEditing ? updatePost(images) : createPost(images));
       onSaved?.();
     } catch {
       showAlert({
         type: 'danger',
-        title: 'Não foi possível registrar',
+        title: isEditing
+          ? 'Não foi possível salvar'
+          : 'Não foi possível registrar',
         message: 'Tente salvar o registro novamente.',
       });
     } finally {
@@ -156,9 +263,10 @@ export function useReportLostPet(onSaved) {
   };
 
   return {
+    isEditing,
     photos,
-    description,
-    setDescription,
+    petData,
+    setPetField,
     address,
     setAddress,
     isSaving,

@@ -5,11 +5,40 @@ import FeedScreen from '../FeedScreen';
 import { FeedGuideCard } from '../../components/FeedGuideCard';
 import { useFeed } from '../../hooks/useFeed';
 import { useFeedGuide } from '../../hooks/useFeedGuide';
+import { shareService } from '../../services/shareService';
 import { externalLinkService } from '../../services/externalLinkService';
 
 jest.mock('../../hooks/useFeed', () => ({
   useFeed: jest.fn(),
 }));
+
+jest.mock('../../services/shareService', () => ({
+  shareService: { sharePoster: jest.fn() },
+}));
+
+/* eslint-disable react/prop-types */
+jest.mock('../../components/LostPetsMap', () => ({
+  LostPetsMap: ({ posts, onSelect, onClear }) => {
+    const {
+      TouchableOpacity: RNTouchable,
+      Text: RNText,
+    } = require('react-native');
+    return (
+      <>
+        <RNText>{`pontos:${posts.map((post) => post.id).join(',')}`}</RNText>
+        {posts.map((post) => (
+          <RNTouchable
+            key={post.id}
+            testID={`ponto-${post.id}`}
+            onPress={() => onSelect(post.id)}
+          />
+        ))}
+        <RNTouchable testID="mapa-fundo" onPress={onClear} />
+      </>
+    );
+  },
+}));
+/* eslint-enable react/prop-types */
 
 jest.mock('../../hooks/useFeedGuide', () => ({
   useFeedGuide: jest.fn(),
@@ -31,6 +60,8 @@ jest.mock('../components/PetCard', () => ({
     onOpenMap,
     onOpenWhatsApp,
     onOpenRoute,
+    onShare,
+    onEdit,
     onDelete,
     onMarkFound,
   }) => {
@@ -51,6 +82,10 @@ jest.mock('../components/PetCard', () => ({
           onPress={() => onOpenWhatsApp('5511999999999')}
         />
         <RNTouchable testID={`route-${item.id}`} onPress={onOpenRoute} />
+        <RNTouchable testID={`share-${item.id}`} onPress={onShare} />
+        {onEdit ? (
+          <RNTouchable testID={`edit-${item.id}`} onPress={onEdit} />
+        ) : null}
         {onMarkFound ? (
           <RNTouchable testID={`mark-found-${item.id}`} onPress={onMarkFound} />
         ) : null}
@@ -343,5 +378,144 @@ describe('FeedScreen', () => {
     expect(queryByTestId('feed-guide')).toBeNull();
     fireEvent.press(getByLabelText('Como funciona o app'));
     expect(mockGuide.showGuide).toHaveBeenCalledTimes(1);
+  });
+
+  it('deve abrir o cartaz do registro e compartilhar a imagem', async () => {
+    const post = { id: '1', type: 'Perdido', imageUri: 'a.jpg' };
+    useFeed.mockReturnValue({ ...mockUseFeedReturn, posts: [post] });
+
+    const { getByTestId, getByText, queryByText } = render(
+      <FeedScreen onOpenReport={mockOnOpenReport} />
+    );
+
+    fireEvent.press(getByTestId('share-1'));
+    expect(getByText('Compartilhar cartaz')).toBeTruthy();
+
+    fireEvent(getByTestId('share-poster-image'), 'loadEnd');
+    await act(async () => {
+      fireEvent.press(getByText('Compartilhar'));
+    });
+    expect(shareService.sharePoster).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(getByText('Cancelar'));
+    expect(queryByText('Compartilhar cartaz')).toBeNull();
+  });
+
+  it('deve permitir editar só os registros ativos do próprio usuário', () => {
+    const mockOnEditPost = jest.fn();
+    const own = { id: '1', type: 'Perdido', author: 'eu@test.com' };
+    useFeed.mockReturnValue({
+      ...mockUseFeedReturn,
+      currentUser: 'eu@test.com',
+      posts: [
+        own,
+        { id: '2', type: 'Perdido', author: 'outro@test.com' },
+        {
+          id: '3',
+          type: 'Perdido',
+          status: 'Encontrado',
+          author: 'eu@test.com',
+        },
+      ],
+    });
+
+    const { getByTestId, queryByTestId, rerender } = render(
+      <FeedScreen onOpenReport={mockOnOpenReport} onEditPost={mockOnEditPost} />
+    );
+
+    fireEvent.press(getByTestId('edit-1'));
+    expect(mockOnEditPost).toHaveBeenCalledWith(own);
+    expect(queryByTestId('edit-2')).toBeNull();
+    expect(queryByTestId('edit-3')).toBeNull();
+
+    // Sem a ação de edição, o botão não aparece
+    rerender(<FeedScreen onOpenReport={mockOnOpenReport} />);
+    expect(queryByTestId('edit-1')).toBeNull();
+  });
+
+  describe('mapa com todos os pets perdidos', () => {
+    const lostPost = {
+      id: '1',
+      type: 'Perdido',
+      imageUri: 'a.jpg',
+      petName: 'Rex',
+      latitude: -23.5,
+      longitude: -46.6,
+      contactPhone: '5511999999999',
+    };
+
+    beforeEach(() => {
+      useFeed.mockReturnValue({
+        ...mockUseFeedReturn,
+        posts: [
+          lostPost,
+          { id: '2', type: 'Perdido', imageUri: 'b.jpg' },
+          {
+            id: '3',
+            type: 'Perdido',
+            status: 'Encontrado',
+            imageUri: 'c.jpg',
+            latitude: 1,
+            longitude: 2,
+          },
+        ],
+      });
+    });
+
+    it('deve alternar entre lista e mapa só com pets perdidos localizados', () => {
+      const { getByText, queryByTestId, getByTestId } = render(
+        <FeedScreen onOpenReport={mockOnOpenReport} />
+      );
+
+      expect(getByTestId('pet-card-1')).toBeTruthy();
+      fireEvent.press(getByText('Mapa'));
+
+      expect(getByText('pontos:1')).toBeTruthy();
+      expect(queryByTestId('pet-card-1')).toBeNull();
+
+      fireEvent.press(getByText('Lista'));
+      expect(getByTestId('pet-card-1')).toBeTruthy();
+    });
+
+    it('deve mostrar o resumo ao tocar num ponto e fechá-lo', () => {
+      const { getByText, getByTestId, queryByTestId, getByLabelText } = render(
+        <FeedScreen onOpenReport={mockOnOpenReport} />
+      );
+      fireEvent.press(getByText('Mapa'));
+
+      fireEvent.press(getByTestId('ponto-1'));
+      expect(getByTestId('map-pet-summary')).toBeTruthy();
+      expect(getByText('Rex')).toBeTruthy();
+
+      fireEvent.press(getByText('WhatsApp'));
+      fireEvent.press(getByText('Como chegar'));
+      expect(externalLinkService.openWhatsApp).toHaveBeenCalledWith(
+        '5511999999999'
+      );
+      expect(externalLinkService.openRoute).toHaveBeenCalledWith(-23.5, -46.6);
+
+      fireEvent.press(getByLabelText('Ver foto em tela cheia'));
+      expect(getByText('fotos:a.jpg|inicio:0')).toBeTruthy();
+
+      fireEvent.press(getByLabelText('Fechar resumo'));
+      expect(queryByTestId('map-pet-summary')).toBeNull();
+
+      fireEvent.press(getByTestId('ponto-1'));
+      fireEvent.press(getByTestId('mapa-fundo'));
+      expect(queryByTestId('map-pet-summary')).toBeNull();
+    });
+
+    it('deve fechar o resumo ao voltar para a lista', () => {
+      const { getByText, getByTestId, queryByTestId } = render(
+        <FeedScreen onOpenReport={mockOnOpenReport} />
+      );
+      fireEvent.press(getByText('Mapa'));
+      fireEvent.press(getByTestId('ponto-1'));
+
+      fireEvent.press(getByText('Lista'));
+      fireEvent.press(getByText('Mapa'));
+
+      expect(queryByTestId('map-pet-summary')).toBeNull();
+    });
   });
 });

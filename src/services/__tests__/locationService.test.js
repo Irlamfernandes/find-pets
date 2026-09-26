@@ -6,6 +6,7 @@ jest.mock('expo-location', () => ({
   getCurrentPositionAsync: jest.fn(),
   reverseGeocodeAsync: jest.fn(),
   geocodeAsync: jest.fn(),
+  Accuracy: { High: 4 },
 }));
 
 describe('locationService', () => {
@@ -18,6 +19,9 @@ describe('locationService', () => {
     });
 
     const result = await locationService.getCurrentLocation();
+    expect(Location.getCurrentPositionAsync).toHaveBeenCalledWith({
+      accuracy: Location.Accuracy.High,
+    });
     expect(result).toEqual({
       latitude: -22.5,
       longitude: -44.1,

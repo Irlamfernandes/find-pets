@@ -1,10 +1,23 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { Modal } from 'react-native';
 import { PhotoViewerModal } from '../PhotoViewerModal';
 
 describe('PhotoViewerModal', () => {
   const images = ['a.jpg', 'b.jpg', 'c.jpg'];
+
+  // A FlatList agenda atualizações internas com timers; com timers simulados
+  // elas rodam dentro do act(...) ao fim de cada teste
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
+  });
 
   it('deve exibir as fotos em tela cheia a partir da foto escolhida', () => {
     const { getAllByTestId, getByText, UNSAFE_getByType } = render(

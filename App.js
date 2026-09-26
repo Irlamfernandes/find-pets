@@ -24,6 +24,8 @@ function AppContent() {
   const showAlert = useAppAlert();
   const { offerBiometrics, passwordPromptProps } = useBiometricOffer();
   const [currentStep, setCurrentStep] = useState('loading');
+  // Registro aberto para edição (null = novo registro)
+  const [editingPost, setEditingPost] = useState(null);
 
   // A tela inicial é decidida só ao abrir o app; depois disso, login e
   // onboarding controlam a navegação (senão o desbloqueio reapareceria)
@@ -99,6 +101,11 @@ function AppContent() {
     }
   };
 
+  const openReport = (post) => {
+    setEditingPost(post);
+    setCurrentStep('report');
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -145,12 +152,14 @@ function AppContent() {
       {currentStep === 'home' && (
         <FeedScreen
           onOpenProfile={() => setCurrentStep('profile')}
-          onOpenReport={() => setCurrentStep('report')}
+          onOpenReport={() => openReport(null)}
+          onEditPost={openReport}
         />
       )}
 
       {currentStep === 'report' && (
         <ReportLostPetScreen
+          initialPost={editingPost}
           onBack={() => setCurrentStep('home')}
           onSaved={() => setCurrentStep('home')}
         />
@@ -159,7 +168,7 @@ function AppContent() {
       {currentStep === 'profile' && (
         <ProfileScreen
           onBack={() => setCurrentStep('home')}
-          onOpenReport={() => setCurrentStep('report')}
+          onOpenReport={() => openReport(null)}
           onLogout={handleLogout}
         />
       )}

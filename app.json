@@ -31,7 +31,8 @@
         {
           "locationWhenInUsePermission": "O FindPets usa sua localização para marcar onde o pet desapareceu."
         }
-      ]
+      ],
+      "expo-sharing"
     ]
   }
 }

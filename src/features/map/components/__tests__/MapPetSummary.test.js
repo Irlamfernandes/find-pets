@@ -11,6 +11,8 @@ describe('MapPetSummary', () => {
     size: 'Médio',
     occurredAt: new Date(2026, 8, 25, 14, 30).toISOString(),
     location: 'Av. Paulista, 1000',
+    latitude: -23.56,
+    longitude: -46.65,
     contactPhone: '5511999999999',
   };
 

@@ -4,29 +4,23 @@ import {
   BIOMETRIC_STATUS,
 } from '../useBiometricSettings';
 import { biometricService } from '../../services/biometrics';
-import { sessionService } from '../../services/session';
+import { accountService } from '../../services/accountService';
+import { sessionService } from '../../services/sessionService';
 
 jest.mock('../../services/biometrics', () => ({
   biometricService: { checkAvailability: jest.fn(), authenticate: jest.fn() },
 }));
 
-jest.mock('../../services/session', () => ({
-  sessionService: {
-    getSession: jest.fn(),
-    getBiometricOwner: jest.fn(),
-    getCredentials: jest.fn(),
-    verifyPassword: jest.fn(),
-    setBiometrics: jest.fn(),
-  },
-}));
+jest.mock('../../services/accountService');
+jest.mock('../../services/sessionService');
 
 describe('useBiometricSettings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    sessionService.getSession.mockResolvedValue({ usuario: 'eu@test.com' });
+    sessionService.getCurrentUser.mockResolvedValue('eu@test.com');
     biometricService.checkAvailability.mockResolvedValue(true);
-    sessionService.getBiometricOwner.mockResolvedValue(null);
-    sessionService.setBiometrics.mockResolvedValue();
+    accountService.getBiometricOwner.mockResolvedValue(null);
+    accountService.setBiometrics.mockResolvedValue();
   });
 
   const renderSettings = async () => {
@@ -40,14 +34,14 @@ describe('useBiometricSettings', () => {
       BIOMETRIC_STATUS.AVAILABLE
     );
 
-    sessionService.getBiometricOwner.mockResolvedValueOnce({
+    accountService.getBiometricOwner.mockResolvedValueOnce({
       usuario: 'eu@test.com',
     });
     expect((await renderSettings()).result.current.status).toBe(
       BIOMETRIC_STATUS.ACTIVE
     );
 
-    sessionService.getBiometricOwner.mockResolvedValueOnce({
+    accountService.getBiometricOwner.mockResolvedValueOnce({
       usuario: 'outra@test.com',
     });
     const taken = await renderSettings();
@@ -59,30 +53,16 @@ describe('useBiometricSettings', () => {
       BIOMETRIC_STATUS.UNAVAILABLE
     );
 
-    sessionService.getSession.mockResolvedValueOnce(null);
+    sessionService.getCurrentUser.mockResolvedValueOnce(null);
     biometricService.checkAvailability.mockResolvedValueOnce(false);
     expect((await renderSettings()).result.current.status).toBe(
       BIOMETRIC_STATUS.UNAVAILABLE
     );
 
-    sessionService.getSession.mockRejectedValueOnce(new Error('x'));
+    sessionService.getCurrentUser.mockRejectedValueOnce(new Error('x'));
     expect((await renderSettings()).result.current.status).toBe(
       BIOMETRIC_STATUS.UNAVAILABLE
     );
-  });
-
-  it('deve verificar a senha da conta logada', async () => {
-    const { result } = await renderSettings();
-    sessionService.getCredentials.mockResolvedValueOnce({ passwordHash: 'h' });
-    sessionService.verifyPassword.mockResolvedValueOnce(true);
-
-    await expect(result.current.verifyPassword('123')).resolves.toBe(true);
-    expect(sessionService.getCredentials).toHaveBeenCalledWith('eu@test.com');
-    expect(sessionService.verifyPassword).toHaveBeenCalledWith('123', 'h');
-
-    sessionService.getCredentials.mockResolvedValueOnce(null);
-    sessionService.verifyPassword.mockResolvedValueOnce(false);
-    await expect(result.current.verifyPassword('123')).resolves.toBe(false);
   });
 
   it('deve ativar após confirmar a biometria e informar cancelamento ou falha', async () => {
@@ -99,16 +79,16 @@ describe('useBiometricSettings', () => {
       error: 'lockout',
     });
     await expect(result.current.activate()).resolves.toBe('failed');
-    expect(sessionService.setBiometrics).not.toHaveBeenCalled();
+    expect(accountService.setBiometrics).not.toHaveBeenCalled();
 
     biometricService.authenticate.mockResolvedValueOnce({ success: true });
-    sessionService.getBiometricOwner.mockResolvedValueOnce({
+    accountService.getBiometricOwner.mockResolvedValueOnce({
       usuario: 'eu@test.com',
     });
     await act(async () => {
       await expect(result.current.activate()).resolves.toBe('activated');
     });
-    expect(sessionService.setBiometrics).toHaveBeenCalledWith(
+    expect(accountService.setBiometrics).toHaveBeenCalledWith(
       'eu@test.com',
       true
     );
@@ -116,7 +96,7 @@ describe('useBiometricSettings', () => {
   });
 
   it('deve desativar a biometria da conta', async () => {
-    sessionService.getBiometricOwner.mockResolvedValueOnce({
+    accountService.getBiometricOwner.mockResolvedValueOnce({
       usuario: 'eu@test.com',
     });
     const { result } = await renderSettings();
@@ -125,7 +105,7 @@ describe('useBiometricSettings', () => {
       await result.current.deactivate();
     });
 
-    expect(sessionService.setBiometrics).toHaveBeenCalledWith(
+    expect(accountService.setBiometrics).toHaveBeenCalledWith(
       'eu@test.com',
       false
     );

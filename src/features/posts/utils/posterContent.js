@@ -1,11 +1,11 @@
-import { formatDateTime } from '../../../shared/utils/timeZone';
+import { isFound as isFoundPost, getOccurredAtLabel } from '../domain/post';
 import { formatPhone, withCountryCode } from '../../../shared/utils/phoneMask';
 import { getPostImages } from './postImages';
 import { getPetFields, getPetTitle } from './petDescription';
 
 // Informações exibidas no cartaz de compartilhamento
 export function getPosterContent(post) {
-  const isFound = (post.status || post.type) === 'Encontrado';
+  const isFound = isFoundPost(post);
 
   return {
     isFound,
@@ -14,9 +14,7 @@ export function getPosterContent(post) {
     title: getPetTitle(post) || 'Pet',
     // O nome já aparece como título do cartaz
     fields: getPetFields(post, { includeName: false }),
-    occurredAt: post.occurredAt
-      ? formatDateTime(post.occurredAt, post.occurredZone)
-      : post.date,
+    occurredAt: getOccurredAtLabel(post),
     location: post.location || '',
     description: post.description || '',
     // Depois do reencontro, o contato não precisa mais circular

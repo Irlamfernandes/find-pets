@@ -6,6 +6,8 @@ import {
   useBiometricSettings,
   BIOMETRIC_STATUS,
 } from '../../hooks/useBiometricSettings';
+import { accountService } from '../../services/accountService';
+import { sessionService } from '../../services/sessionService';
 
 jest.mock('../../hooks/useBiometricSettings', () => ({
   BIOMETRIC_STATUS: {
@@ -18,13 +20,15 @@ jest.mock('../../hooks/useBiometricSettings', () => ({
   useBiometricSettings: jest.fn(),
 }));
 
+jest.mock('../../services/accountService');
+jest.mock('../../services/sessionService');
+
 jest.spyOn(Alert, 'alert');
 
 describe('BiometricSettingsCard', () => {
   const settings = {
     status: BIOMETRIC_STATUS.AVAILABLE,
     owner: null,
-    verifyPassword: jest.fn(),
     activate: jest.fn(),
     deactivate: jest.fn(),
   };
@@ -32,6 +36,7 @@ describe('BiometricSettingsCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useBiometricSettings.mockReturnValue(settings);
+    sessionService.getCurrentUser.mockResolvedValue('eu@test.com');
   });
 
   const confirmPassword = async (utils, password = 'senha123') => {
@@ -85,7 +90,7 @@ describe('BiometricSettingsCard', () => {
   });
 
   it('deve pedir a senha com o aviso e ativar a biometria', async () => {
-    settings.verifyPassword.mockResolvedValueOnce(true);
+    accountService.checkPassword.mockResolvedValueOnce(true);
     settings.activate.mockResolvedValueOnce('activated');
     const utils = render(<BiometricSettingsCard />);
 
@@ -100,7 +105,10 @@ describe('BiometricSettingsCard', () => {
       fireEvent.press(utils.getByText('Confirmar'));
     });
 
-    expect(settings.verifyPassword).toHaveBeenCalledWith('abc');
+    expect(accountService.checkPassword).toHaveBeenCalledWith(
+      'eu@test.com',
+      'abc'
+    );
     expect(settings.activate).toHaveBeenCalledTimes(1);
     expect(Alert.alert).toHaveBeenCalledWith(
       'Biometria ativada',
@@ -112,9 +120,9 @@ describe('BiometricSettingsCard', () => {
     const utils = render(<BiometricSettingsCard />);
 
     await confirmPassword(utils, '   ');
-    expect(utils.getByText('Digite sua senha atual.')).toBeTruthy();
+    expect(utils.getByText('Digite sua senha.')).toBeTruthy();
 
-    settings.verifyPassword.mockResolvedValueOnce(false);
+    accountService.checkPassword.mockResolvedValueOnce(false);
     fireEvent.changeText(utils.getByTestId('input-current-password'), 'x');
     await act(async () => {
       fireEvent.press(utils.getByText('Confirmar'));
@@ -127,7 +135,7 @@ describe('BiometricSettingsCard', () => {
   });
 
   it('deve avisar quando a biometria não for confirmada ou for cancelada', async () => {
-    settings.verifyPassword.mockResolvedValue(true);
+    accountService.checkPassword.mockResolvedValue(true);
     settings.activate.mockResolvedValueOnce('failed');
     const utils = render(<BiometricSettingsCard />);
 
@@ -144,7 +152,7 @@ describe('BiometricSettingsCard', () => {
   });
 
   it('deve avisar quando não for possível ativar', async () => {
-    settings.verifyPassword.mockResolvedValueOnce(true);
+    accountService.checkPassword.mockResolvedValueOnce(true);
     settings.activate.mockRejectedValueOnce(
       new Error('A biometria deste aparelho já está em uso.')
     );
@@ -163,7 +171,7 @@ describe('BiometricSettingsCard', () => {
       ...settings,
       status: BIOMETRIC_STATUS.ACTIVE,
     });
-    settings.verifyPassword.mockResolvedValue(true);
+    accountService.checkPassword.mockResolvedValue(true);
     const utils = render(<BiometricSettingsCard />);
     expect(utils.getByText('Ativada nesta conta.')).toBeTruthy();
 
@@ -184,14 +192,17 @@ describe('BiometricSettingsCard', () => {
     };
 
     // Senha errada: não desativa
-    settings.verifyPassword.mockResolvedValueOnce(false);
+    accountService.checkPassword.mockResolvedValueOnce(false);
     await deactivateWithPassword('errada');
     expect(settings.deactivate).not.toHaveBeenCalled();
     fireEvent.press(utils.getByText('Cancelar'));
 
     settings.deactivate.mockResolvedValueOnce();
     await deactivateWithPassword('senha123');
-    expect(settings.verifyPassword).toHaveBeenLastCalledWith('senha123');
+    expect(accountService.checkPassword).toHaveBeenLastCalledWith(
+      'eu@test.com',
+      'senha123'
+    );
     expect(settings.deactivate).toHaveBeenCalledTimes(1);
     expect(Alert.alert).toHaveBeenCalledWith(
       'Biometria desativada',

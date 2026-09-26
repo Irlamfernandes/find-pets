@@ -3,13 +3,10 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import PropTypes from 'prop-types';
 import { useOnboarding } from '../useOnboarding';
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { onboardingService } from '../../services/onboarding';
+import { profileService } from '../../services/profileService';
 
-// Mock do serviço
-jest.mock('../../services/onboarding', () => ({
-  onboardingService: {
-    saveUserProfile: jest.fn().mockResolvedValue({ success: true }),
-  },
+jest.mock('../../services/profileService', () => ({
+  profileService: { saveProfile: jest.fn().mockResolvedValue() },
 }));
 
 function TestComponent({ onComplete }) {
@@ -70,7 +67,7 @@ describe('useOnboarding Hook (via Componente)', () => {
     expect(getByTestId('error').props.children).toBe(
       'Insira um número de WhatsApp válido com código do país e DDD.'
     );
-    expect(onboardingService.saveUserProfile).not.toHaveBeenCalled();
+    expect(profileService.saveProfile).not.toHaveBeenCalled();
   });
 
   it('deve salvar com sucesso quando os dados forem válidos', async () => {
@@ -104,7 +101,7 @@ describe('useOnboarding Hook (via Componente)', () => {
   });
 
   it('deve capturar erro se o serviço de onboarding falhar com mensagem', async () => {
-    onboardingService.saveUserProfile.mockRejectedValueOnce(
+    profileService.saveProfile.mockRejectedValueOnce(
       new Error('Erro de conexão ao salvar')
     );
 
@@ -124,7 +121,7 @@ describe('useOnboarding Hook (via Componente)', () => {
   });
 
   it('deve capturar erro genérico se o serviço falhar sem mensagem', async () => {
-    onboardingService.saveUserProfile.mockRejectedValueOnce({});
+    profileService.saveProfile.mockRejectedValueOnce({});
 
     const { getByTestId } = render(<TestComponent />);
 

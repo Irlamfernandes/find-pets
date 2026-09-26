@@ -1,102 +1,95 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { postService } from '../services/postService';
 import { postPhotoStorage } from '../../../shared/services/photoStorage';
 import { getPostImages } from '../utils/postImages';
-import { onboardingService } from '../../profile/services/onboarding';
-import { sessionService } from '../../auth/services/session';
+import { isFound, isOwnedBy, markAsFound } from '../domain/post';
+import { profileService } from '../../profile/services/profileService';
+import { sessionService } from '../../auth/services/sessionService';
 import { useAppAlert } from '../../../shared/components/AppAlert';
+
+const ALERTS = {
+  foundSaved: {
+    type: 'success',
+    title: 'Que notícia boa!',
+    message: 'O reencontro foi registrado e o card continuará no feed.',
+  },
+  foundFailed: {
+    type: 'danger',
+    title: 'Não foi possível salvar',
+    message: 'Tente novamente em alguns instantes.',
+  },
+  deleteFailed: {
+    type: 'danger',
+    title: 'Não foi possível excluir',
+    message: 'Tente novamente em alguns instantes.',
+  },
+};
+
+const EMPTY_VIEWER = { usuario: null, name: '', photoUri: null };
+
+// Falhas na leitura não impedem o feed de abrir
+const orDefault = (promise, fallback) => promise.catch(() => fallback);
+
+// Quem está usando o app: conta conectada, nome e foto do perfil
+async function loadViewer() {
+  const [usuario, profile] = await Promise.all([
+    orDefault(sessionService.getCurrentUser(), null),
+    orDefault(profileService.getProfile(), null),
+  ]);
+  return {
+    usuario,
+    name: profile?.name || '',
+    photoUri: profile?.photoUri || null,
+  };
+}
 
 export function useFeed() {
   const showAlert = useAppAlert();
   const [posts, setPosts] = useState([]);
-  const [userName, setUserName] = useState('');
-  const [userPhoto, setUserPhoto] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [viewer, setViewer] = useState(EMPTY_VIEWER);
   const [foundPostId, setFoundPostId] = useState(null);
 
-  const loadPosts = useCallback(async () => {
-    try {
-      const loadedPosts = await postService.getPosts();
-      setPosts(loadedPosts);
-    } catch {
-      setPosts([]);
-    }
-  }, []);
-
-  const loadUserProfile = useCallback(async () => {
-    try {
-      const profile = await onboardingService.getUserProfile();
-      if (profile?.name) {
-        setUserName(profile.name);
-      }
-      setUserPhoto(profile?.photoUri || null);
-    } catch {
-      setUserName('');
-      setUserPhoto(null);
-    }
-  }, []);
-
-  const loadCurrentUser = useCallback(async () => {
-    try {
-      const session = await sessionService.getSession();
-      setCurrentUser(session?.usuario || null);
-    } catch {
-      setCurrentUser(null);
-    }
-  }, []);
-
   useEffect(() => {
-    loadPosts();
-    loadUserProfile();
-    loadCurrentUser();
-  }, [loadPosts, loadUserProfile, loadCurrentUser]);
+    orDefault(postService.getPosts(), []).then(setPosts);
+    loadViewer().then(setViewer);
+  }, []);
 
-  // Abre o formulário do reencontro para o dono do registro
+  // Só o autor pode alterar o próprio registro
+  const findOwnPost = (postId) =>
+    posts.find((post) => post.id === postId && isOwnedBy(post, viewer.usuario));
+
+  // Abre o formulário do reencontro
   const markPostAsFound = (postId) => {
-    const post = posts.find((item) => item.id === postId);
-    if (
-      !post ||
-      !currentUser ||
-      post.author !== currentUser ||
-      (post.status || post.type) === 'Encontrado'
-    ) {
-      return;
-    }
-
-    setFoundPostId(postId);
-  };
-
-  const cancelFound = () => {
-    setFoundPostId(null);
+    const post = findOwnPost(postId);
+    if (post && !isFound(post)) setFoundPostId(postId);
   };
 
   const confirmFound = async (foundInfo) => {
     try {
-      const updatedPosts = await postService.updatePostStatus(
-        foundPostId,
-        'Encontrado',
-        { foundInfo }
+      setPosts(
+        await postService.updatePost(foundPostId, markAsFound(foundInfo))
       );
-      setPosts(updatedPosts);
       setFoundPostId(null);
-      showAlert({
-        type: 'success',
-        title: 'Que notícia boa!',
-        message: 'O reencontro foi registrado e o card continuará no feed.',
-      });
+      showAlert(ALERTS.foundSaved);
     } catch {
-      showAlert({
-        type: 'danger',
-        title: 'Não foi possível salvar',
-        message: 'Tente novamente em alguns instantes.',
-      });
+      showAlert(ALERTS.foundFailed);
     }
   };
 
-  // Função para excluir um post pelo ID com confirmação
-  const deletePost = async (postId) => {
-    const post = posts.find((item) => item.id === postId);
-    if (!post || !currentUser || post.author !== currentUser) return;
+  const removePost = async (post) => {
+    try {
+      setPosts(await postService.deletePost(post.id));
+      // Libera o espaço das fotos do registro excluído
+      postPhotoStorage.removeAll(getPostImages(post));
+    } catch {
+      showAlert(ALERTS.deleteFailed);
+    }
+  };
+
+  // Pede confirmação antes de excluir
+  const deletePost = (postId) => {
+    const post = findOwnPost(postId);
+    if (!post) return;
 
     showAlert({
       type: 'danger',
@@ -104,32 +97,19 @@ export function useFeed() {
       message: 'Essa publicação será removida definitivamente do feed.',
       confirmText: 'Excluir',
       cancelText: 'Cancelar',
-      onConfirm: async () => {
-        try {
-          const updatedPosts = await postService.deletePost(postId);
-          setPosts(updatedPosts);
-          // Libera o espaço das fotos do registro excluído
-          postPhotoStorage.removeAll(getPostImages(post));
-        } catch {
-          showAlert({
-            type: 'danger',
-            title: 'Não foi possível excluir',
-            message: 'Tente novamente em alguns instantes.',
-          });
-        }
-      },
+      onConfirm: () => removePost(post),
     });
   };
 
   return {
     posts,
-    userName,
-    userPhoto,
-    currentUser,
+    userName: viewer.name,
+    userPhoto: viewer.photoUri,
+    currentUser: viewer.usuario,
     deletePost,
     isFoundFormOpen: foundPostId !== null,
     markPostAsFound,
-    cancelFound,
+    cancelFound: () => setFoundPostId(null),
     confirmFound,
   };
 }

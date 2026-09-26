@@ -1,10 +1,23 @@
 import { useState } from 'react';
-import { onboardingService } from '../services/onboarding';
+import { profileService } from '../services/profileService';
+import { toProfileData } from '../profileForm';
 import {
   formatPhone,
   onlyDigits,
   PHONE_MIN_DIGITS,
 } from '../../../shared/utils/phoneMask';
+import { rule, validate, isFilled } from '../../../shared/utils/validation';
+
+const onboardingRules = [
+  rule(
+    ({ name, whatsapp }) => isFilled(name) && isFilled(whatsapp),
+    'Preencha todos os campos.'
+  ),
+  rule(
+    ({ whatsapp }) => onlyDigits(whatsapp).length >= PHONE_MIN_DIGITS,
+    'Insira um número de WhatsApp válido com código do país e DDD.'
+  ),
+];
 
 export function useOnboarding(onComplete) {
   const [name, setName] = useState('');
@@ -14,23 +27,14 @@ export function useOnboarding(onComplete) {
   const setWhatsapp = (value) => setWhatsappState(formatPhone(value));
 
   const handleSaveProfile = async () => {
-    setErrorMessage('');
-    if (!name.trim() || !whatsapp.trim()) {
-      setErrorMessage('Preencha todos os campos.');
-      return;
-    }
-
-    const cleanedPhone = onlyDigits(whatsapp);
-    if (cleanedPhone.length < PHONE_MIN_DIGITS) {
-      setErrorMessage(
-        'Insira um número de WhatsApp válido com código do país e DDD.'
-      );
-      return;
-    }
+    const invalid = validate({ name, whatsapp }, onboardingRules);
+    setErrorMessage(invalid || '');
+    if (invalid) return;
 
     try {
-      await onboardingService.saveUserProfile({ name, whatsapp: cleanedPhone });
-      onComplete?.({ name, whatsapp: cleanedPhone });
+      const profile = toProfileData({ name, whatsapp });
+      await profileService.saveProfile(profile);
+      onComplete?.(profile);
     } catch (error) {
       setErrorMessage(error.message || 'Erro ao salvar perfil.');
     }

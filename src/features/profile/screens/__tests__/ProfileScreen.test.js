@@ -7,29 +7,18 @@ import {
   act,
 } from '@testing-library/react-native';
 import ProfileScreen from '../ProfileScreen';
-import { onboardingService } from '../../services/onboarding';
-import { sessionService } from '../../../auth/services/session';
+import { profileService } from '../../services/profileService';
+import { accountService } from '../../../auth/services/accountService';
+import { sessionService } from '../../../auth/services/sessionService';
 import { photoService } from '../../../../shared/services/photoService';
 import { profilePhotoStorage } from '../../../../shared/services/photoStorage';
 import { Alert, TextInput, BackHandler } from 'react-native';
 import { useKeyboardVisible } from '../../../../shared/hooks/useKeyboardVisible';
 
 // Mock dos serviços
-jest.mock('../../services/onboarding', () => ({
-  onboardingService: {
-    getUserProfile: jest.fn(),
-    saveUserProfile: jest.fn(),
-  },
-}));
-
-jest.mock('../../../auth/services/session', () => ({
-  sessionService: {
-    getCredentials: jest.fn(),
-    saveCredentials: jest.fn(),
-    getSession: jest.fn(),
-    verifyPassword: jest.fn(),
-  },
-}));
+jest.mock('../../services/profileService');
+jest.mock('../../../auth/services/accountService');
+jest.mock('../../../auth/services/sessionService');
 
 jest.mock('../../../../shared/services/photoService', () => ({
   photoService: { pickProfilePhoto: jest.fn() },
@@ -74,16 +63,12 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    onboardingService.getUserProfile.mockResolvedValue({
+    profileService.getProfile.mockResolvedValue({
       name: 'Irlam',
       whatsapp: '11999999999',
     });
-    sessionService.getSession.mockResolvedValue({ usuario: 'irlam@test.com' });
-    sessionService.getCredentials.mockResolvedValue({
-      usuario: 'irlam@test.com',
-      passwordHash: 'hash',
-    });
-    sessionService.verifyPassword.mockResolvedValue(true);
+    sessionService.getCurrentUser.mockResolvedValue('irlam@test.com');
+    accountService.checkPassword.mockResolvedValue(true);
   });
 
   it('deve carregar e exibir os dados do usuário ao iniciar com sucesso', async () => {
@@ -120,9 +105,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve lidar com erro ao carregar os dados do perfil', async () => {
-    onboardingService.getUserProfile.mockRejectedValueOnce(
-      new Error('Erro perfil')
-    );
+    profileService.getProfile.mockRejectedValueOnce(new Error('Erro perfil'));
 
     render(<ProfileScreen onBack={mockOnBack} />);
 
@@ -135,7 +118,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve lidar com perfil vazio/nulo ao carregar', async () => {
-    onboardingService.getUserProfile.mockResolvedValueOnce(null);
+    profileService.getProfile.mockResolvedValueOnce(null);
 
     const { getByPlaceholderText } = render(
       <ProfileScreen onBack={mockOnBack} />
@@ -194,7 +177,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve salvar o perfil com sucesso sem alterar a senha', async () => {
-    onboardingService.saveUserProfile.mockResolvedValueOnce();
+    profileService.saveProfile.mockResolvedValueOnce();
 
     const { getByPlaceholderText, getByText } = render(
       <ProfileScreen onBack={mockOnBack} />
@@ -214,7 +197,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
-      expect(onboardingService.saveUserProfile).toHaveBeenCalledWith({
+      expect(profileService.saveProfile).toHaveBeenCalledWith({
         name: 'Irlam Silva',
         whatsapp: '5511988887777',
       });
@@ -227,14 +210,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve salvar o perfil e atualizar a senha quando informada e houver credenciais', async () => {
-    onboardingService.saveUserProfile.mockResolvedValueOnce();
-    sessionService.getCredentials
-      .mockResolvedValueOnce({ passwordHash: 'hash' })
-      .mockResolvedValueOnce({
-        usuario: 'irlam@test.com',
-        hasBiometrics: true,
-      });
-    sessionService.saveCredentials.mockResolvedValueOnce();
+    profileService.saveProfile.mockResolvedValueOnce();
+    accountService.changePassword.mockResolvedValueOnce();
 
     const { getByPlaceholderText, getByText } = render(
       <ProfileScreen onBack={mockOnBack} />
@@ -259,10 +236,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
-      expect(sessionService.saveCredentials).toHaveBeenCalledWith(
+      expect(accountService.changePassword).toHaveBeenCalledWith(
         'irlam@test.com',
-        'newpass123',
-        true
+        'newpass123'
       );
       expect(Alert.alert).toHaveBeenCalledWith(
         'Perfil atualizado',
@@ -272,45 +248,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
   });
 
-  it('deve salvar o perfil informando nova senha, mas sem credenciais pré-existentes', async () => {
-    onboardingService.saveUserProfile.mockResolvedValueOnce();
-    sessionService.getCredentials
-      .mockResolvedValueOnce({ passwordHash: 'hash' })
-      .mockResolvedValueOnce(null);
-
-    const { getByPlaceholderText, getByText } = render(
-      <ProfileScreen onBack={mockOnBack} />
-    );
-
-    await waitFor(() => {
-      expect(getByPlaceholderText('Seu nome')).toBeTruthy();
-    });
-
-    await unlockEditing();
-
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999999999');
-    fireEvent.changeText(
-      getByPlaceholderText('Digite uma nova senha se desejar alterar'),
-      'newpass123'
-    );
-    fireEvent.changeText(
-      getByPlaceholderText('Digite a nova senha novamente'),
-      'newpass123'
-    );
-    fireEvent.press(getByText('Salvar Alterações'));
-
-    await waitFor(() => {
-      expect(sessionService.saveCredentials).not.toHaveBeenCalled();
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Perfil atualizado',
-        'Suas informações foram salvas com sucesso.'
-      );
-    });
-  });
-
   it('deve lidar com erro ao salvar as alterações', async () => {
-    onboardingService.saveUserProfile.mockRejectedValueOnce(
+    profileService.saveProfile.mockRejectedValueOnce(
       new Error('Falha ao salvar')
     );
 
@@ -337,7 +276,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve lidar com perfil contendo propriedades vazias ou nulas individualmente', async () => {
-    onboardingService.getUserProfile.mockResolvedValueOnce({
+    profileService.getProfile.mockResolvedValueOnce({
       name: null,
       whatsapp: undefined,
     });
@@ -352,47 +291,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
   });
 
-  it('não deve salvar nova senha se as credenciais recuperadas não possuírem a propriedade usuario', async () => {
-    onboardingService.saveUserProfile.mockResolvedValueOnce();
-    sessionService.getCredentials
-      .mockResolvedValueOnce({ passwordHash: 'hash' })
-      .mockResolvedValueOnce({
-        hasBiometrics: true,
-      });
-
-    const { getByPlaceholderText, getByText } = render(
-      <ProfileScreen onBack={mockOnBack} />
-    );
-
-    await waitFor(() => {
-      expect(getByPlaceholderText('Seu nome')).toBeTruthy();
-    });
-
-    await unlockEditing();
-
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999999999');
-    fireEvent.changeText(
-      getByPlaceholderText('Digite uma nova senha se desejar alterar'),
-      'newpass123'
-    );
-    fireEvent.changeText(
-      getByPlaceholderText('Digite a nova senha novamente'),
-      'newpass123'
-    );
-    fireEvent.press(getByText('Salvar Alterações'));
-
-    await waitFor(() => {
-      expect(sessionService.saveCredentials).not.toHaveBeenCalled();
-      expect(Alert.alert).toHaveBeenCalledWith(
-        'Perfil atualizado',
-        'Suas informações foram salvas com sucesso.'
-      );
-    });
-  });
-
   it('deve salvar as alterações com sucesso mesmo quando a prop onBack não é fornecida', async () => {
-    onboardingService.saveUserProfile.mockResolvedValueOnce();
+    profileService.saveProfile.mockResolvedValueOnce();
 
     const { getByPlaceholderText, getByText } = render(<ProfileScreen />);
 
@@ -415,7 +315,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve salvar ao confirmar no teclado da nova senha', async () => {
-    onboardingService.saveUserProfile.mockResolvedValueOnce();
+    profileService.saveProfile.mockResolvedValueOnce();
 
     const { getByPlaceholderText } = render(<ProfileScreen />);
 
@@ -433,7 +333,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     );
 
     await waitFor(() => {
-      expect(onboardingService.saveUserProfile).toHaveBeenCalledWith({
+      expect(profileService.saveProfile).toHaveBeenCalledWith({
         name: 'Irlam',
         whatsapp: '5511999999999',
       });
@@ -467,12 +367,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await unlockEditing('minhaSenha');
 
-    expect(sessionService.getCredentials).toHaveBeenCalledWith(
-      'irlam@test.com'
-    );
-    expect(sessionService.verifyPassword).toHaveBeenCalledWith(
-      'minhaSenha',
-      'hash'
+    expect(accountService.checkPassword).toHaveBeenCalledWith(
+      'irlam@test.com',
+      'minhaSenha'
     );
     expect(getByPlaceholderText('Seu nome').props.editable).toBe(true);
     expect(getByPlaceholderText('Seu WhatsApp').props.editable).toBe(true);
@@ -480,7 +377,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve manter os campos travados se a senha atual estiver incorreta', async () => {
-    sessionService.verifyPassword.mockResolvedValueOnce(false);
+    accountService.checkPassword.mockResolvedValueOnce(false);
     const { getByPlaceholderText, getByTestId, getByText, queryByText } =
       render(<ProfileScreen onBack={mockOnBack} />);
 
@@ -508,13 +405,13 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     fireEvent(getByTestId('input-current-password'), 'submitEditing');
 
     await waitFor(() => {
-      expect(getByText('Digite sua senha atual.')).toBeTruthy();
+      expect(getByText('Digite sua senha.')).toBeTruthy();
     });
-    expect(sessionService.verifyPassword).not.toHaveBeenCalled();
+    expect(accountService.checkPassword).not.toHaveBeenCalled();
   });
 
   it('deve exibir erro se não for possível verificar a senha', async () => {
-    sessionService.getSession.mockRejectedValueOnce(new Error('falha'));
+    sessionService.getCurrentUser.mockRejectedValueOnce(new Error('falha'));
     const { getByTestId, getByText } = render(
       <ProfileScreen onBack={mockOnBack} />
     );
@@ -570,7 +467,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       '+55 (11) 99999-9999'
     );
     expect(getByPlaceholderText('Seu nome').props.editable).toBe(false);
-    expect(onboardingService.saveUserProfile).not.toHaveBeenCalled();
+    expect(profileService.saveProfile).not.toHaveBeenCalled();
   });
 
   it('deve alternar a visibilidade da nova senha', async () => {
@@ -644,8 +541,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   describe('foto do perfil', () => {
     const renderLoaded = async (profile) => {
-      if (profile)
-        onboardingService.getUserProfile.mockResolvedValueOnce(profile);
+      if (profile) profileService.getProfile.mockResolvedValueOnce(profile);
       const utils = render(<ProfileScreen onBack={mockOnBack} />);
       await waitFor(() => {
         expect(utils.getByPlaceholderText('Seu nome').props.value).toBe(
@@ -686,7 +582,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
 
     it('deve trocar a foto pela câmera ao editar e salvar na pasta permanente', async () => {
-      onboardingService.saveUserProfile.mockResolvedValueOnce();
+      profileService.saveProfile.mockResolvedValueOnce();
       photoService.pickProfilePhoto.mockResolvedValueOnce({
         uri: 'cache:nova.jpg',
         denied: false,
@@ -713,7 +609,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       expect(profilePhotoStorage.persist).toHaveBeenCalledWith(
         'cache:nova.jpg'
       );
-      expect(onboardingService.saveUserProfile).toHaveBeenCalledWith({
+      expect(profileService.saveProfile).toHaveBeenCalledWith({
         name: 'Irlam',
         whatsapp: '5511999999999',
         photoUri: 'stored:cache:nova.jpg',
@@ -724,7 +620,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
 
     it('deve remover a foto e salvar o perfil sem ela', async () => {
-      onboardingService.saveUserProfile.mockResolvedValueOnce();
+      profileService.saveProfile.mockResolvedValueOnce();
       const { getByTestId, getByText } = await renderLoaded({
         name: 'Irlam',
         whatsapp: '5511999999999',
@@ -740,7 +636,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         fireEvent.press(getByText('Salvar Alterações'));
       });
 
-      expect(onboardingService.saveUserProfile).toHaveBeenCalledWith({
+      expect(profileService.saveProfile).toHaveBeenCalledWith({
         name: 'Irlam',
         whatsapp: '5511999999999',
       });
@@ -750,7 +646,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
 
     it('deve manter a foto salva sem apagar o arquivo quando não mudar', async () => {
-      onboardingService.saveUserProfile.mockResolvedValueOnce();
+      profileService.saveProfile.mockResolvedValueOnce();
       const { getByText } = await renderLoaded({
         name: 'Irlam',
         whatsapp: '5511999999999',
@@ -762,7 +658,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         fireEvent.press(getByText('Salvar Alterações'));
       });
 
-      expect(onboardingService.saveUserProfile).toHaveBeenCalledWith(
+      expect(profileService.saveProfile).toHaveBeenCalledWith(
         expect.objectContaining({ photoUri: 'stored:antiga.jpg' })
       );
       expect(profilePhotoStorage.remove).not.toHaveBeenCalled();
@@ -878,8 +774,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         'Senhas diferentes',
         'A confirmação precisa ser igual à nova senha.'
       );
-      expect(onboardingService.saveUserProfile).not.toHaveBeenCalled();
-      expect(sessionService.saveCredentials).not.toHaveBeenCalled();
+      expect(profileService.saveProfile).not.toHaveBeenCalled();
+      expect(accountService.changePassword).not.toHaveBeenCalled();
     });
 
     it('deve bloquear quando a confirmação estiver vazia', async () => {
@@ -897,7 +793,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         'Senhas diferentes',
         'A confirmação precisa ser igual à nova senha.'
       );
-      expect(onboardingService.saveUserProfile).not.toHaveBeenCalled();
+      expect(profileService.saveProfile).not.toHaveBeenCalled();
     });
 
     it('deve limpar e esconder a confirmação ao apagar a nova senha', async () => {
@@ -914,13 +810,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
 
     it('deve ir para a confirmação pelo teclado e salvar ao concluir', async () => {
-      onboardingService.saveUserProfile.mockResolvedValueOnce();
-      sessionService.getCredentials
-        .mockResolvedValueOnce({ passwordHash: 'hash' })
-        .mockResolvedValueOnce({
-          usuario: 'irlam@test.com',
-          hasBiometrics: false,
-        });
+      profileService.saveProfile.mockResolvedValueOnce();
       const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
       const { getByPlaceholderText } = await renderUnlocked();
 
@@ -934,10 +824,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         fireEvent(getByPlaceholderText(CONFIRM), 'submitEditing');
       });
 
-      expect(sessionService.saveCredentials).toHaveBeenCalledWith(
+      expect(accountService.changePassword).toHaveBeenCalledWith(
         'irlam@test.com',
-        'senha123',
-        false
+        'senha123'
       );
     });
 

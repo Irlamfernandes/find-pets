@@ -1,88 +1,73 @@
-import { useState } from 'react';
 import { biometricService } from '../services/biometrics';
-import { sessionService } from '../services/session';
+import { accountService } from '../services/accountService';
 import { useAppAlert } from '../../../shared/components/AppAlert';
+import { usePasswordPrompt } from './usePasswordPrompt';
 
-// Ao terminar o cadastro, convida a pessoa a ativar a biometria (se o
-// celular tiver e nenhuma outra conta já a usar). Antes de ativar, pede a
-// senha da conta. `offerBiometrics` retorna se o convite foi exibido, para
-// quem chama não sobrepor outro aviso; `passwordPromptProps` vai para um
-// PasswordPromptModal.
+const ALERTS = {
+  activated: {
+    type: 'success',
+    title: 'Biometria ativada',
+    message: 'Da próxima vez, você poderá entrar com a biometria.',
+  },
+  notConfirmed: {
+    type: 'warning',
+    title: 'Biometria não confirmada',
+    message: 'Você pode ativá-la depois, no seu Perfil.',
+  },
+  failed: {
+    type: 'danger',
+    title: 'Não foi possível ativar',
+    message: 'Tente novamente depois, no seu Perfil.',
+  },
+};
+
+// Confirma a biometria e ativa na conta; devolve o aviso a exibir, ou null
+// quando a pessoa cancelou
+async function activateBiometrics(usuario) {
+  try {
+    const result = await biometricService.authenticate(
+      'Confirme sua biometria para ativá-la nesta conta'
+    );
+    if (result.error === 'user_cancel') return null;
+    if (!result.success) return ALERTS.notConfirmed;
+
+    await accountService.setBiometrics(usuario, true);
+    return ALERTS.activated;
+  } catch {
+    return ALERTS.failed;
+  }
+}
+
+// Só oferece quando o celular tem biometria e nenhuma conta a usa
+async function canOfferBiometrics() {
+  try {
+    const [isAvailable, owner] = await Promise.all([
+      biometricService.checkAvailability(),
+      accountService.getBiometricOwner(),
+    ]);
+    return isAvailable && !owner;
+  } catch {
+    return false;
+  }
+}
+
+// Ao terminar o cadastro, convida a pessoa a ativar a biometria. Antes de
+// ativar, pede a senha da conta. `offerBiometrics` retorna se o convite foi
+// exibido, para quem chama não sobrepor outro aviso; `passwordPromptProps`
+// vai para um PasswordPromptModal.
 export function useBiometricOffer() {
   const showAlert = useAppAlert();
-  const [pendingUser, setPendingUser] = useState(null);
-  const [passwordError, setPasswordError] = useState('');
-
-  const closePasswordPrompt = () => {
-    setPasswordError('');
-    setPendingUser(null);
-  };
-
-  const activate = async (usuario) => {
-    try {
-      const result = await biometricService.authenticate(
-        'Confirme sua biometria para ativá-la nesta conta'
-      );
-      if (result.success) {
-        await sessionService.setBiometrics(usuario, true);
-        showAlert({
-          type: 'success',
-          title: 'Biometria ativada',
-          message: 'Da próxima vez, você poderá entrar com a biometria.',
-        });
-      } else if (result.error !== 'user_cancel') {
-        showAlert({
-          type: 'warning',
-          title: 'Biometria não confirmada',
-          message: 'Você pode ativá-la depois, no seu Perfil.',
-        });
-      }
-    } catch {
-      showAlert({
-        type: 'danger',
-        title: 'Não foi possível ativar',
-        message: 'Tente novamente depois, no seu Perfil.',
-      });
-    }
-  };
-
-  const confirmPassword = async (password) => {
-    if (!password.trim()) {
-      setPasswordError('Digite sua senha.');
-      return false;
-    }
-
-    try {
-      const credentials = await sessionService.getCredentials(pendingUser);
-      const isValid = await sessionService.verifyPassword(
-        password,
-        credentials?.passwordHash
-      );
-      if (!isValid) {
-        setPasswordError('Senha incorreta. Tente novamente.');
-        return false;
-      }
-    } catch {
-      setPasswordError('Não foi possível verificar a senha agora.');
-      return false;
-    }
-
-    const usuario = pendingUser;
-    closePasswordPrompt();
-    await activate(usuario);
-    return true;
-  };
+  const prompt = usePasswordPrompt({
+    verify: (password, usuario) =>
+      accountService.checkPassword(usuario, password),
+    onConfirmed: async (usuario) => {
+      const alert = await activateBiometrics(usuario);
+      if (alert) showAlert(alert);
+    },
+  });
 
   const offerBiometrics = async (usuario, name) => {
-    try {
-      const [isAvailable, owner] = await Promise.all([
-        biometricService.checkAvailability(),
-        sessionService.getBiometricOwner(),
-      ]);
-      if (!isAvailable || owner) return false;
-    } catch {
-      return false;
-    }
+    if (!(await canOfferBiometrics())) return false;
 
     showAlert({
       type: 'info',
@@ -91,7 +76,7 @@ export function useBiometricOffer() {
         'Quer entrar mais rápido nas próximas vezes? Ative a biometria. Atenção: qualquer digital ou rosto cadastrado neste celular poderá entrar nesta conta.',
       confirmText: 'Ativar agora',
       cancelText: 'Depois',
-      onConfirm: () => setPendingUser(usuario),
+      onConfirm: () => prompt.open(usuario),
     });
     return true;
   };
@@ -99,12 +84,9 @@ export function useBiometricOffer() {
   return {
     offerBiometrics,
     passwordPromptProps: {
-      visible: pendingUser !== null,
       title: 'Ativar biometria',
       message: 'Digite a senha da sua conta para ativar a biometria.',
-      errorMessage: passwordError,
-      onCancel: closePasswordPrompt,
-      onConfirm: confirmPassword,
+      ...prompt.promptProps,
     },
   };
 }

@@ -1,88 +1,49 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../../../shared/constants/storageKeys';
+import {
+  createJsonStore,
+  withErrorContext,
+} from '../../../shared/services/storage';
+
+// Registros de pets, do mais novo para o mais antigo
+const postsStore = createJsonStore(STORAGE_KEYS.POSTS, { fallback: [] });
+
+function requireId(postId) {
+  if (!postId) {
+    throw new Error('ID da publicação é obrigatório.');
+  }
+}
 
 export const postService = {
-  async getPosts() {
-    try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.POSTS);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      throw new Error(`Erro ao carregar as publicações: ${error.message}`);
-    }
+  getPosts() {
+    return withErrorContext('Erro ao carregar as publicações', postsStore.read);
   },
 
-  async savePost(post) {
+  // Devolve a lista atualizada
+  savePost(post) {
     if (!post?.id) {
       throw new Error('Dados do post inválidos.');
     }
-
-    try {
-      const posts = await this.getPosts();
-      const newPosts = [post, ...posts];
-      await AsyncStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(newPosts));
-      return newPosts;
-    } catch (error) {
-      throw new Error(`Erro ao salvar a publicação: ${error.message}`);
-    }
+    return withErrorContext('Erro ao salvar a publicação', () =>
+      postsStore.update((posts) => [post, ...posts])
+    );
   },
 
-  async deletePost(postId) {
-    if (!postId) {
-      throw new Error('ID da publicação é obrigatório.');
-    }
-
-    try {
-      const posts = await this.getPosts();
-      const remainingPosts = posts.filter((post) => post.id !== postId);
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.POSTS,
-        JSON.stringify(remainingPosts)
-      );
-      return remainingPosts;
-    } catch (error) {
-      throw new Error(`Erro ao excluir a publicação: ${error.message}`);
-    }
+  deletePost(postId) {
+    requireId(postId);
+    return withErrorContext('Erro ao excluir a publicação', () =>
+      postsStore.update((posts) => posts.filter((post) => post.id !== postId))
+    );
   },
 
-  // Atualiza os campos de um registro (usado na edição)
-  async updatePost(postId, changes) {
-    if (!postId) {
-      throw new Error('ID da publicação é obrigatório.');
-    }
-
-    try {
-      const posts = await this.getPosts();
-      const updatedPosts = posts.map((post) =>
-        post.id === postId ? { ...post, ...changes, id: post.id } : post
-      );
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.POSTS,
-        JSON.stringify(updatedPosts)
-      );
-      return updatedPosts;
-    } catch (error) {
-      throw new Error(`Erro ao atualizar a publicação: ${error.message}`);
-    }
-  },
-
-  // details permite anexar dados extras, como as informações do reencontro
-  async updatePostStatus(postId, status, details = {}) {
-    if (!postId || !status) {
-      throw new Error('ID e status da publicação são obrigatórios.');
-    }
-
-    try {
-      const posts = await this.getPosts();
-      const updatedPosts = posts.map((post) =>
-        post.id === postId ? { ...post, ...details, status } : post
-      );
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.POSTS,
-        JSON.stringify(updatedPosts)
-      );
-      return updatedPosts;
-    } catch (error) {
-      throw new Error(`Erro ao atualizar a publicação: ${error.message}`);
-    }
+  // Aplica `changes` ao registro, mantendo o id
+  updatePost(postId, changes) {
+    requireId(postId);
+    return withErrorContext('Erro ao atualizar a publicação', () =>
+      postsStore.update((posts) =>
+        posts.map((post) =>
+          post.id === postId ? { ...post, ...changes, id: post.id } : post
+        )
+      )
+    );
   },
 };

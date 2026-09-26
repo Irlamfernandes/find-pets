@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLatestCallback } from '../../../shared/hooks/useLatestCallback';
 import { biometricService } from '../services/biometrics';
-import { sessionService } from '../services/session';
+import { accountService } from '../services/accountService';
 
 // Confirma a identidade de quem reabre o app com uma sessão salva:
 // o dono da biometria usa digital/rosto; as demais contas usam a senha.
@@ -28,7 +28,7 @@ export function useUnlock(usuario, onUnlocked) {
     const prepare = async () => {
       try {
         const [owner, isAvailable] = await Promise.all([
-          sessionService.getBiometricOwner(),
+          accountService.getBiometricOwner(),
           biometricService.checkAvailability(),
         ]);
         const isOwner = isAvailable && owner?.usuario === usuario;
@@ -56,12 +56,7 @@ export function useUnlock(usuario, onUnlocked) {
     }
 
     try {
-      const credentials = await sessionService.getCredentials(usuario);
-      const isValid = await sessionService.verifyPassword(
-        password,
-        credentials?.passwordHash
-      );
-      if (!isValid) {
+      if (!(await accountService.checkPassword(usuario, password))) {
         setErrorMessage('Senha incorreta.');
         return;
       }

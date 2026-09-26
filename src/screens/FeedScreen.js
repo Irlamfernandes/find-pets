@@ -1,46 +1,35 @@
-import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-  Image,
-} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
+import { SafeTouchable } from '../components/SafeTouchable';
 import { useFeed } from '../hooks/useFeed';
 import { externalLinkService } from '../services/externalLinkService';
-import { PetCard } from './components/PetCard';
+import { PetCard, getPostImages } from './components/PetCard';
+import { PhotoViewerModal } from '../components/PhotoViewerModal';
+import { MapViewerModal } from '../components/MapViewerModal';
+import { FoundPetModal } from '../components/FoundPetModal';
+import { UserAvatar } from '../components/UserAvatar';
+import { FeedGuideCard } from '../components/FeedGuideCard';
+import { useFeedGuide } from '../hooks/useFeedGuide';
 import { palette } from '../theme/colors';
 
-export default function FeedScreen({
-  onOpenProfile,
-  openCameraOnMount,
-  onCameraRequestHandled,
-}) {
+export default function FeedScreen({ onOpenProfile, onOpenReport }) {
   const {
     posts,
     userName,
+    userPhoto,
     currentUser,
-    isCameraOpen,
-    setCameraRef,
-    openCamera,
-    closeCamera,
-    takePicture,
     deletePost,
+    isFoundFormOpen,
     markPostAsFound,
+    cancelFound,
+    confirmFound,
   } = useFeed();
-
-  useEffect(() => {
-    if (openCameraOnMount) {
-      openCamera();
-      onCameraRequestHandled?.();
-    }
-  }, [openCameraOnMount, openCamera, onCameraRequestHandled]);
+  const [photoViewer, setPhotoViewer] = useState({ images: [], index: 0 });
+  const [mapPost, setMapPost] = useState(null);
+  const { isGuideVisible, dismissGuide, showGuide } = useFeedGuide(currentUser);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,28 +45,46 @@ export default function FeedScreen({
             <Text style={styles.welcomeText}>Olá, {userName}</Text>
           ) : null}
         </View>
+        {isGuideVisible ? null : (
+          <SafeTouchable
+            accessibilityLabel="Como funciona o app"
+            style={styles.helpButton}
+            onPress={showGuide}
+          >
+            <Ionicons
+              name="help-circle-outline"
+              size={28}
+              color={palette.primary}
+            />
+          </SafeTouchable>
+        )}
+        <UserAvatar
+          uri={userPhoto}
+          size={42}
+          accessibilityLabel="Abrir meu perfil"
+          onPress={onOpenProfile}
+        />
       </View>
 
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Nenhum pet cadastrado ainda.</Text>
-            <Text style={styles.emptySubText}>
-              Toque na câmera para registrar o primeiro.
-            </Text>
-          </View>
+        ListHeaderComponent={
+          isGuideVisible ? <FeedGuideCard onDismiss={dismissGuide} /> : null
         }
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <PetCard
             item={item}
-            onOpenMap={(lat, lon, addr) =>
-              externalLinkService.openMap(lat, lon, addr)
+            onOpenPhoto={(index) =>
+              setPhotoViewer({ images: getPostImages(item), index })
             }
+            onOpenMap={() => setMapPost(item)}
             onOpenWhatsApp={(phone) => externalLinkService.openWhatsApp(phone)}
+            onOpenRoute={() =>
+              externalLinkService.openRoute(item.latitude, item.longitude)
+            }
             onDelete={
               item.author === currentUser
                 ? () => deletePost(item.id)
@@ -94,56 +101,54 @@ export default function FeedScreen({
       />
 
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={[styles.tabButton, styles.tabButtonActive]}>
-          <Ionicons name="home-outline" size={22} color={palette.primary} />
-          <Text style={styles.tabButtonText}>Feed</Text>
-        </TouchableOpacity>
+        <SafeTouchable style={[styles.tabButton, styles.tabButtonActive]}>
+          <Ionicons name="paw-outline" size={22} color={palette.primary} />
+          <Text style={styles.tabButtonText}>Pets perdidos</Text>
+        </SafeTouchable>
 
-        <TouchableOpacity style={styles.tabButton} onPress={openCamera}>
-          <Ionicons name="camera-outline" size={22} color={palette.textMuted} />
-          <Text style={styles.tabButtonText}>Camera</Text>
-        </TouchableOpacity>
+        <SafeTouchable style={styles.tabButton} onPress={onOpenReport}>
+          <Ionicons
+            name="megaphone-outline"
+            size={22}
+            color={palette.textMuted}
+          />
+          <Text style={styles.tabButtonText} numberOfLines={2}>
+            Registrar desaparecimento
+          </Text>
+        </SafeTouchable>
 
         {onOpenProfile && (
-          <TouchableOpacity style={styles.tabButton} onPress={onOpenProfile}>
+          <SafeTouchable style={styles.tabButton} onPress={onOpenProfile}>
             <Ionicons
               name="person-outline"
               size={22}
               color={palette.textMuted}
             />
             <Text style={styles.tabButtonText}>Perfil</Text>
-          </TouchableOpacity>
+          </SafeTouchable>
         )}
       </View>
 
-      <Modal visible={isCameraOpen} animationType="slide">
-        <View style={styles.cameraContainer}>
-          <CameraView style={styles.camera} ref={setCameraRef} />
+      <PhotoViewerModal
+        images={photoViewer.images}
+        initialIndex={photoViewer.index}
+        onClose={() => setPhotoViewer({ images: [], index: 0 })}
+      />
 
-          <View style={styles.cameraButtonContainer}>
-            <TouchableOpacity
-              style={styles.captureButton}
-              onPress={takePicture}
-            >
-              <View style={styles.captureInner} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeCameraButton}
-              onPress={closeCamera}
-            >
-              <Text style={styles.closeCameraText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <MapViewerModal post={mapPost} onClose={() => setMapPost(null)} />
+
+      <FoundPetModal
+        visible={isFoundFormOpen}
+        onCancel={cancelFound}
+        onConfirm={confirmFound}
+      />
     </SafeAreaView>
   );
 }
 
 FeedScreen.propTypes = {
   onOpenProfile: PropTypes.func,
-  openCameraOnMount: PropTypes.bool,
-  onCameraRequestHandled: PropTypes.func,
+  onOpenReport: PropTypes.func.isRequired,
 };
 
 const styles = StyleSheet.create({
@@ -162,6 +167,7 @@ const styles = StyleSheet.create({
   headerTitleContainer: {
     flex: 1,
   },
+  helpButton: { padding: 4, marginRight: 8 },
   headerLogo: {
     width: 34,
     height: 34,
@@ -174,13 +180,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 120,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 60,
-  },
-  emptyText: { fontSize: 16, fontWeight: 'bold', color: palette.textMuted },
-  emptySubText: { fontSize: 14, color: '#94A3B8', marginTop: 4 },
   bottomBar: {
     position: 'absolute',
     left: 0,
@@ -216,35 +215,6 @@ const styles = StyleSheet.create({
     color: palette.text,
     fontWeight: 'bold',
     fontSize: 12,
+    textAlign: 'center',
   },
-  cameraContainer: { flex: 1, backgroundColor: '#000' },
-  camera: { flex: 1 },
-  cameraButtonContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'transparent',
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
-    padding: 32,
-    alignItems: 'center',
-  },
-  captureButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  captureInner: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: palette.white,
-  },
-  closeCameraButton: { padding: 12 },
-  closeCameraText: { color: palette.white, fontSize: 16, fontWeight: 'bold' },
 });

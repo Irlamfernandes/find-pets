@@ -44,7 +44,8 @@ export const postService = {
     }
   },
 
-  async updatePostStatus(postId, status) {
+  // details permite anexar dados extras, como as informações do reencontro
+  async updatePostStatus(postId, status, details = {}) {
     if (!postId || !status) {
       throw new Error('ID e status da publicação são obrigatórios.');
     }
@@ -52,7 +53,7 @@ export const postService = {
     try {
       const posts = await this.getPosts();
       const updatedPosts = posts.map((post) =>
-        post.id === postId ? { ...post, status } : post
+        post.id === postId ? { ...post, ...details, status } : post
       );
       await AsyncStorage.setItem(
         STORAGE_KEYS.POSTS,

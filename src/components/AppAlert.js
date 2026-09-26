@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View, Alert } from 'react-native';
+import { Modal, StyleSheet, Text, View, Alert } from 'react-native';
+import { SafeTouchable } from './SafeTouchable';
 import { Ionicons } from '@expo/vector-icons';
 import { palette } from '../theme/colors';
 
@@ -102,21 +103,21 @@ export function AppAlertProvider({ children }) {
             <Text style={styles.message}>{alert?.message}</Text>
             <View style={styles.actions}>
               {alert?.cancelText ? (
-                <Pressable
+                <SafeTouchable
                   style={[styles.button, styles.cancelButton]}
                   onPress={() => closeAlert(false)}
                 >
                   <Text style={styles.cancelText}>{alert.cancelText}</Text>
-                </Pressable>
+                </SafeTouchable>
               ) : null}
-              <Pressable
+              <SafeTouchable
                 style={[styles.button, { backgroundColor: style.color }]}
                 onPress={() => closeAlert(true)}
               >
                 <Text style={styles.confirmText}>
                   {alert?.confirmText || 'Entendi'}
                 </Text>
-              </Pressable>
+              </SafeTouchable>
             </View>
           </View>
         </View>

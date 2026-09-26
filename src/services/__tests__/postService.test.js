@@ -117,6 +117,17 @@ describe('Post Service', () => {
     );
   });
 
+  it('deve anexar detalhes extras ao atualizar o status', async () => {
+    const posts = [{ id: '1', type: 'Perdido', status: 'Perdido' }];
+    const foundInfo = { receiverName: 'Ana' };
+    AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(posts));
+    AsyncStorage.setItem.mockResolvedValueOnce();
+
+    await expect(
+      postService.updatePostStatus('1', 'Encontrado', { foundInfo })
+    ).resolves.toEqual([{ ...posts[0], status: 'Encontrado', foundInfo }]);
+  });
+
   it('deve rejeitar atualização sem ID ou status', async () => {
     await expect(
       postService.updatePostStatus('', 'Encontrado')

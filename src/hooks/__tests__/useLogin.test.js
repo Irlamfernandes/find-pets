@@ -17,6 +17,9 @@ jest.spyOn(Alert, 'alert');
 describe('useLogin Hook', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Padrão: nenhum e-mail cadastrado e nenhuma conta com biometria
+    sessionService.getCredentials.mockResolvedValue(null);
+    sessionService.getBiometricOwner.mockResolvedValue(null);
   });
 
   it('deve inicializar com biometria disponível, mas não autenticar automaticamente', async () => {
@@ -31,19 +34,18 @@ describe('useLogin Hook', () => {
     expect(onSuccess).not.toHaveBeenCalled();
   });
 
-  it('deve disparar autenticação biométrica com sucesso ao chamar triggerBiometricAuth', async () => {
+  it('deve entrar na conta dona da biometria, e não na primeira cadastrada', async () => {
     biometricService.checkAvailability.mockResolvedValue(true);
     biometricService.authenticate.mockResolvedValue({ success: true });
-    sessionService.getCredentials.mockResolvedValue({
-      usuario: 'user@test.com',
+    sessionService.getBiometricOwner.mockResolvedValue({
+      usuario: 'dona@test.com',
       hasBiometrics: true,
     });
-
     const onSuccess = jest.fn();
     const { result } = renderHook(() => useLogin(onSuccess));
 
     await waitFor(() => {
-      expect(result.current.hasHardwareBiometric).toBe(true);
+      expect(result.current.biometricOwner).toBe('dona@test.com');
     });
 
     await act(async () => {
@@ -52,14 +54,13 @@ describe('useLogin Hook', () => {
 
     expect(onSuccess).toHaveBeenCalledWith({
       type: 'biometric',
-      usuario: 'user@test.com',
+      usuario: 'dona@test.com',
     });
+    expect(sessionService.getCredentials).not.toHaveBeenCalled();
   });
 
-  it('deve exibir erro se tentar biometria e não houver usuário cadastrado', async () => {
+  it('deve exibir erro se não houver conta com biometria no aparelho', async () => {
     biometricService.checkAvailability.mockResolvedValue(true);
-    sessionService.getCredentials.mockResolvedValue(null);
-
     const { result } = renderHook(() => useLogin(jest.fn()));
 
     await act(async () => {
@@ -67,74 +68,55 @@ describe('useLogin Hook', () => {
     });
 
     expect(result.current.errorMessage).toBe(
-      'Nenhum usuário cadastrado neste dispositivo.'
+      'Nenhuma conta com biometria neste aparelho.'
     );
+    expect(biometricService.authenticate).not.toHaveBeenCalled();
   });
 
-  it('deve exibir erro se a biometria não estiver habilitada para o usuário', async () => {
+  it('deve considerar sem dona de biometria se falhar ao verificar ao abrir', async () => {
     biometricService.checkAvailability.mockResolvedValue(true);
-    sessionService.getCredentials.mockResolvedValue({
-      usuario: 'user@test.com',
-      hasBiometrics: false,
-    });
-
-    const { result } = renderHook(() => useLogin(jest.fn()));
-
-    await act(async () => {
-      await result.current.triggerBiometricAuth();
-    });
-
-    expect(result.current.errorMessage).toBe(
-      'A biometria não foi cadastrada para este usuário.'
-    );
-  });
-
-  it('deve exibir erro se a biometria falhar', async () => {
-    biometricService.checkAvailability.mockResolvedValue(true);
-    biometricService.authenticate.mockResolvedValue({
-      success: false,
-      error: 'system_cancel',
-    });
-    sessionService.getCredentials.mockResolvedValue({
-      usuario: 'user@test.com',
-      hasBiometrics: true,
-    });
-
+    sessionService.getBiometricOwner.mockRejectedValueOnce(new Error('x'));
     const { result } = renderHook(() => useLogin(jest.fn()));
 
     await waitFor(() => {
       expect(result.current.hasHardwareBiometric).toBe(true);
     });
-
-    await act(async () => {
-      await result.current.triggerBiometricAuth();
-    });
-
-    expect(result.current.errorMessage).toBe('Biometria não reconhecida.');
+    expect(result.current.biometricOwner).toBeNull();
   });
 
-  it('nao deve definir mensagem de erro se o usuario cancelar a biometria', async () => {
+  it('deve exibir erro se a biometria falhar e ignorar o cancelamento', async () => {
     biometricService.checkAvailability.mockResolvedValue(true);
-    biometricService.authenticate.mockResolvedValue({
+    sessionService.getBiometricOwner.mockResolvedValue({
+      usuario: 'dona@test.com',
+      hasBiometrics: true,
+    });
+    const onSuccess = jest.fn();
+    const { result } = renderHook(() => useLogin(onSuccess));
+
+    biometricService.authenticate.mockResolvedValueOnce({
       success: false,
       error: 'user_cancel',
     });
-    sessionService.getCredentials.mockResolvedValue({
-      usuario: 'user@test.com',
-      hasBiometrics: true,
-    });
-
-    const { result } = renderHook(() => useLogin(jest.fn()));
-
-    await waitFor(() => {
-      expect(result.current.hasHardwareBiometric).toBe(true);
-    });
-
     await act(async () => {
       await result.current.triggerBiometricAuth();
     });
-
     expect(result.current.errorMessage).toBe('');
+
+    biometricService.authenticate.mockResolvedValueOnce({
+      success: false,
+      error: 'authentication_failed',
+    });
+    await act(async () => {
+      await result.current.triggerBiometricAuth();
+    });
+    expect(result.current.errorMessage).toBe('Biometria não reconhecida.');
+
+    biometricService.authenticate.mockResolvedValueOnce({ success: false });
+    await act(async () => {
+      await result.current.triggerBiometricAuth();
+    });
+    expect(result.current.errorMessage).toBe('');
+    expect(onSuccess).not.toHaveBeenCalled();
   });
 
   it('deve exibir erro se credenciais manuais forem vazias', async () => {
@@ -251,19 +233,19 @@ describe('useLogin Hook', () => {
     );
   });
 
-  it('deve realizar o cadastro com sucesso ao chamar handleRegister', async () => {
+  it('deve criar a conta e entrar direto nela, sem voltar para o login', async () => {
     biometricService.checkAvailability.mockResolvedValue(true);
-    biometricService.authenticate.mockResolvedValue({ success: true });
     sessionService.saveCredentials.mockResolvedValue(true);
+    const onSuccess = jest.fn();
 
-    const { result } = renderHook(() => useLogin(jest.fn()));
+    const { result } = renderHook(() => useLogin(onSuccess));
 
     await waitFor(() => {
       expect(result.current.hasHardwareBiometric).toBe(true);
     });
 
     act(() => {
-      result.current.setUsuario('novo@test.com');
+      result.current.setUsuario(' novo@test.com ');
       result.current.setSenha('123456');
     });
 
@@ -271,12 +253,20 @@ describe('useLogin Hook', () => {
       await result.current.handleRegister();
     });
 
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Cadastro realizado',
-      'Sua conta foi criada. Agora faça login para continuar.'
+    expect(sessionService.saveCredentials).toHaveBeenCalledWith(
+      'novo@test.com',
+      '123456',
+      false
     );
+    // O cadastro não pede biometria (ela é oferecida no fim do cadastro)
+    expect(biometricService.authenticate).not.toHaveBeenCalled();
+    expect(onSuccess).toHaveBeenCalledWith({
+      type: 'register',
+      usuario: 'novo@test.com',
+    });
     expect(result.current.errorMessage).toBe('');
-    expect(result.current.authMode).toBe('home');
+    expect(result.current.usuario).toBe('');
+    expect(result.current.senha).toBe('');
   });
 
   it('deve exibir erro se ocorrer uma exceção ao tentar cadastrar', async () => {
@@ -295,37 +285,6 @@ describe('useLogin Hook', () => {
     });
 
     expect(result.current.errorMessage).toBe('Erro interno');
-  });
-
-  it('deve realizar o cadastro com sucesso mesmo se a biometria falhar ou for cancelada no registro', async () => {
-    biometricService.checkAvailability.mockResolvedValue(true);
-    biometricService.authenticate.mockResolvedValue({ success: false });
-    sessionService.saveCredentials.mockResolvedValue(true);
-
-    const { result } = renderHook(() => useLogin(jest.fn()));
-
-    await waitFor(() => {
-      expect(result.current.hasHardwareBiometric).toBe(true);
-    });
-
-    act(() => {
-      result.current.setUsuario('novo@test.com');
-      result.current.setSenha('123456');
-    });
-
-    await act(async () => {
-      await result.current.handleRegister();
-    });
-
-    expect(sessionService.saveCredentials).toHaveBeenCalledWith(
-      'novo@test.com',
-      '123456',
-      false
-    );
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Cadastro realizado',
-      'Sua conta foi criada. Agora faça login para continuar.'
-    );
   });
 
   it('deve exibir erro genérico se ocorrer uma exceção durante o login manual', async () => {
@@ -350,36 +309,6 @@ describe('useLogin Hook', () => {
     });
 
     expect(result.current.errorMessage).toBe('Erro no banco de dados');
-  });
-
-  it('deve realizar o cadastro com sucesso quando o hardware não tem suporte a biometria', async () => {
-    biometricService.checkAvailability.mockResolvedValue(false);
-    sessionService.saveCredentials.mockResolvedValue(true);
-
-    const { result } = renderHook(() => useLogin(jest.fn()));
-
-    await waitFor(() => {
-      expect(result.current.hasHardwareBiometric).toBe(false);
-    });
-
-    act(() => {
-      result.current.setUsuario('novo@test.com');
-      result.current.setSenha('123456');
-    });
-
-    await act(async () => {
-      await result.current.handleRegister();
-    });
-
-    expect(sessionService.saveCredentials).toHaveBeenCalledWith(
-      'novo@test.com',
-      '123456',
-      false
-    );
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Cadastro realizado',
-      'Sua conta foi criada. Agora faça login para continuar.'
-    );
   });
 
   it('deve lidar com erros genéricos de cadastro quando o erro não possui mensagem', async () => {
@@ -484,5 +413,33 @@ describe('useLogin Hook', () => {
     });
 
     expect(result.current.errorMessage).toBe('Erro ao realizar o login.');
+  });
+
+  describe('cadastro de contas', () => {
+    const fillForm = (result, email = 'nova@test.com') => {
+      act(() => {
+        result.current.setUsuario(email);
+        result.current.setSenha('123456');
+      });
+    };
+
+    it('deve impedir cadastrar de novo um e-mail existente', async () => {
+      biometricService.checkAvailability.mockResolvedValue(true);
+      sessionService.getCredentials.mockResolvedValue({
+        usuario: 'nova@test.com',
+      });
+      const { result } = renderHook(() => useLogin(jest.fn()));
+      fillForm(result);
+
+      await act(async () => {
+        await result.current.handleRegister();
+      });
+
+      expect(result.current.errorMessage).toBe(
+        'Este e-mail já está cadastrado. Faça login.'
+      );
+      expect(sessionService.saveCredentials).not.toHaveBeenCalled();
+      expect(biometricService.authenticate).not.toHaveBeenCalled();
+    });
   });
 });

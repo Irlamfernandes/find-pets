@@ -13,6 +13,7 @@ export default function LoginScreen({ onLoginSuccess }) {
     senha,
     setSenha,
     hasHardwareBiometric,
+    biometricOwner,
     errorMessage,
     authMode,
     setAuthMode,
@@ -46,6 +47,7 @@ export default function LoginScreen({ onLoginSuccess }) {
       senha={senha}
       setSenha={setSenha}
       hasHardwareBiometric={hasHardwareBiometric}
+      biometricOwner={biometricOwner}
       errorMessage={errorMessage}
       handleManualLogin={handleManualLogin}
       triggerBiometricAuth={triggerBiometricAuth}

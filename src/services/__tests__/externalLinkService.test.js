@@ -1,4 +1,4 @@
-import { externalLinkService } from '../externalLinkService';
+import { externalLinkService, buildRouteUrl } from '../externalLinkService';
 
 // Mock limpo e direto do módulo Linking sem quebrar o ecossistema do Expo
 jest.mock('react-native', () => {
@@ -20,31 +20,6 @@ describe('externalLinkService', () => {
     jest.clearAllMocks();
   });
 
-  describe('openMap', () => {
-    it('deve abrir o Google Maps usando latitude e longitude', () => {
-      externalLinkService.openMap(-23.5505, -46.6333, 'São Paulo, SP');
-
-      expect(Linking.openURL).toHaveBeenCalledWith(
-        'https://www.google.com/maps/search/?api=1&query=-23.5505,-46.6333'
-      );
-    });
-
-    it('deve abrir o Google Maps usando o endereço caso não haja coordenadas', () => {
-      const address = 'Avenida Paulista, 1000';
-      externalLinkService.openMap(null, null, address);
-
-      expect(Linking.openURL).toHaveBeenCalledWith(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-      );
-    });
-
-    it('não deve chamar openURL se não houver coordenadas nem endereço', () => {
-      externalLinkService.openMap(null, null, null);
-
-      expect(Linking.openURL).not.toHaveBeenCalled();
-    });
-  });
-
   describe('openWhatsApp', () => {
     it('deve abrir o WhatsApp com o telefone fornecido', () => {
       const phone = '5511988887777';
@@ -61,6 +36,31 @@ describe('externalLinkService', () => {
 
     it('não deve abrir o WhatsApp se nenhum número for fornecido', () => {
       externalLinkService.openWhatsApp(null);
+
+      expect(Linking.openURL).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('openRoute', () => {
+    it('deve montar a rota no Apple Maps para iOS e no Google Maps para Android', () => {
+      expect(buildRouteUrl(-23.55, -46.63, 'ios')).toBe(
+        'http://maps.apple.com/?daddr=-23.55,-46.63'
+      );
+      expect(buildRouteUrl(-23.55, -46.63, 'android')).toBe(
+        'https://www.google.com/maps/dir/?api=1&destination=-23.55,-46.63'
+      );
+    });
+
+    it('deve abrir o app de mapas com a rota até o local', () => {
+      externalLinkService.openRoute(-23.55, -46.63);
+
+      expect(Linking.openURL).toHaveBeenCalledTimes(1);
+      expect(Linking.openURL.mock.calls[0][0]).toContain('-23.55,-46.63');
+    });
+
+    it('não deve abrir o app de mapas sem coordenadas', () => {
+      externalLinkService.openRoute(null, -46.63);
+      externalLinkService.openRoute(-23.55, undefined);
 
       expect(Linking.openURL).not.toHaveBeenCalled();
     });

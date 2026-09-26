@@ -25,6 +25,7 @@ describe('LoginScreen Component', () => {
     senha: '',
     setSenha: mockSetSenha,
     hasHardwareBiometric: true,
+    biometricOwner: 'irlam@gmail.com',
     errorMessage: '',
     authMode: 'home',
     setAuthMode: mockSetAuthMode,
@@ -78,8 +79,8 @@ describe('LoginScreen Component', () => {
     expect(mockSetUsuario).toHaveBeenCalledWith('novo@test.com');
     expect(mockSetSenha).toHaveBeenCalledWith('123456');
 
-    // Salvar e Cadastrar Biometria
-    fireEvent.press(getByText('Salvar e Cadastrar Biometria'));
+    // Criar conta
+    fireEvent.press(getByText('Criar conta'));
     expect(mockHandleRegister).toHaveBeenCalled();
 
     // Voltar para Home

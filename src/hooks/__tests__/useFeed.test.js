@@ -1,13 +1,9 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useFeed } from '../useFeed';
 import { postService } from '../../services/postService';
-import { locationService } from '../../services/locationService';
 import { onboardingService } from '../../services/onboarding';
 import { sessionService } from '../../services/session';
 import { Alert } from 'react-native';
-
-let mockCameraPermissionValue = { granted: true };
-let mockRequestPermissionResult = { granted: true };
 
 jest.mock('../../services/postService', () => ({
   postService: {
@@ -15,12 +11,6 @@ jest.mock('../../services/postService', () => ({
     savePost: jest.fn(),
     deletePost: jest.fn(),
     updatePostStatus: jest.fn(),
-  },
-}));
-
-jest.mock('../../services/locationService', () => ({
-  locationService: {
-    getCurrentLocation: jest.fn(),
   },
 }));
 
@@ -36,30 +26,16 @@ jest.mock('../../services/session', () => ({
   },
 }));
 
-jest.mock('expo-camera', () => ({
-  useCameraPermissions: () => [
-    mockCameraPermissionValue,
-    jest.fn().mockImplementation(async () => mockRequestPermissionResult),
-  ],
-}));
-
 jest.spyOn(Alert, 'alert');
 
 describe('useFeed Hook - 100% Coverage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCameraPermissionValue = { granted: true };
-    mockRequestPermissionResult = { granted: true };
     onboardingService.getUserProfile.mockResolvedValue({
       name: 'Irlam',
       whatsapp: '11999999999',
     });
     sessionService.getSession.mockResolvedValue({ usuario: 'user1@test.com' });
-    locationService.getCurrentLocation.mockResolvedValue({
-      latitude: -22.5,
-      longitude: -44.1,
-      address: 'Lat: -22.5000, Lon: -44.1000',
-    });
   });
 
   it('deve carregar os posts e o perfil do usuário com sucesso', async () => {
@@ -98,179 +74,6 @@ describe('useFeed Hook - 100% Coverage', () => {
     await act(async () => {});
 
     expect(result.current.userName).toBe('');
-  });
-
-  it('deve abrir a câmera diretamente se a permissão já estiver concedida', async () => {
-    mockCameraPermissionValue = { granted: true };
-    postService.getPosts.mockResolvedValueOnce([]);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.openCamera();
-    });
-
-    expect(result.current.isCameraOpen).toBe(true);
-  });
-
-  it('deve solicitar permissão e abrir se o usuário aceitar no prompt', async () => {
-    mockCameraPermissionValue = { granted: false };
-    mockRequestPermissionResult = { granted: true };
-    postService.getPosts.mockResolvedValueOnce([]);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.openCamera();
-    });
-
-    expect(result.current.isCameraOpen).toBe(true);
-  });
-
-  it('deve solicitar permissão e não abrir se o usuário negar no prompt', async () => {
-    mockCameraPermissionValue = { granted: false };
-    mockRequestPermissionResult = { granted: false };
-    postService.getPosts.mockResolvedValueOnce([]);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.openCamera();
-    });
-
-    expect(result.current.isCameraOpen).toBe(false);
-  });
-
-  it('deve fechar a câmera corretamente', async () => {
-    postService.getPosts.mockResolvedValueOnce([]);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.openCamera();
-    });
-    expect(result.current.isCameraOpen).toBe(true);
-
-    act(() => {
-      result.current.closeCamera();
-    });
-    expect(result.current.isCameraOpen).toBe(false);
-  });
-
-  it('não deve tirar foto se a referência da câmera for nula', async () => {
-    postService.getPosts.mockResolvedValueOnce([]);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.takePicture();
-    });
-
-    expect(postService.savePost).not.toHaveBeenCalled();
-  });
-
-  it('deve tirar a foto e salvar o post com sucesso incluindo o WhatsApp', async () => {
-    postService.getPosts.mockResolvedValue([]);
-    postService.savePost.mockResolvedValueOnce();
-    onboardingService.getUserProfile.mockResolvedValue({
-      name: 'Irlam',
-      whatsapp: '11999999999',
-    });
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    const mockCamera = {
-      takePictureAsync: jest
-        .fn()
-        .mockResolvedValue({ uri: 'file://photo.jpg' }),
-    };
-
-    act(() => {
-      result.current.setCameraRef(mockCamera);
-    });
-
-    await act(async () => {
-      await result.current.openCamera();
-      await result.current.takePicture();
-    });
-
-    expect(postService.savePost).toHaveBeenCalledWith(
-      expect.objectContaining({
-        imageUri: 'file://photo.jpg',
-        contactPhone: '11999999999',
-        author: 'user1@test.com',
-      })
-    );
-    expect(result.current.isCameraOpen).toBe(false);
-  });
-
-  it('deve tirar a foto e salvar o post sem WhatsApp se o perfil não o possuir', async () => {
-    postService.getPosts.mockResolvedValue([]);
-    postService.savePost.mockResolvedValueOnce();
-    sessionService.getSession.mockResolvedValue(null);
-    onboardingService.getUserProfile.mockResolvedValue({
-      name: 'Irlam',
-      whatsapp: null,
-    });
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    const mockCamera = {
-      takePictureAsync: jest
-        .fn()
-        .mockResolvedValue({ uri: 'file://photo.jpg' }),
-    };
-
-    act(() => {
-      result.current.setCameraRef(mockCamera);
-    });
-
-    await act(async () => {
-      await result.current.openCamera();
-      await result.current.takePicture();
-    });
-
-    expect(postService.savePost).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contactPhone: null,
-        author: null,
-      })
-    );
-  });
-
-  it('deve disparar alerta de erro se falhar ao tirar a foto ou salvar', async () => {
-    postService.getPosts.mockResolvedValue([]);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    const mockCamera = {
-      takePictureAsync: jest
-        .fn()
-        .mockRejectedValueOnce(new Error('Falha câmera')),
-    };
-
-    act(() => {
-      result.current.setCameraRef(mockCamera);
-    });
-
-    await act(async () => {
-      await result.current.openCamera();
-      await result.current.takePicture();
-    });
-
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Não foi possível publicar',
-      'Não conseguimos capturar a foto ou obter a localização. Tente novamente.'
-    );
-    expect(result.current.isCameraOpen).toBe(false);
   });
 
   it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
@@ -368,35 +171,59 @@ describe('useFeed Hook - 100% Coverage', () => {
     expect(postService.deletePost).toHaveBeenCalledWith('1');
   });
 
-  it('deve marcar como encontrado e manter o post no feed', async () => {
+  it('deve abrir o formulário e salvar o reencontro mantendo o post no feed', async () => {
     const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
-    const updatedPosts = [{ ...mockPosts[0], status: 'Encontrado' }];
+    const foundInfo = {
+      receiverName: 'Ana',
+      receiverRelation: 'Dono(a) / tutor',
+      foundAt: '2026-09-25T12:00:00.000Z',
+      foundLocation: '',
+      notes: '',
+    };
+    const updatedPosts = [{ ...mockPosts[0], status: 'Encontrado', foundInfo }];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
     postService.updatePostStatus.mockResolvedValueOnce(updatedPosts);
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
-    await act(async () => {
-      await result.current.markPostAsFound('1');
-    });
+    expect(result.current.isFoundFormOpen).toBe(false);
 
-    const alertCall = Alert.alert.mock.calls.find(
-      (call) => call[0] === 'Confirmar finalização'
-    );
-    const finishButton = alertCall[2].find((btn) => btn.text === 'Finalizado');
+    act(() => result.current.markPostAsFound('1'));
+    expect(result.current.isFoundFormOpen).toBe(true);
 
     await act(async () => {
-      await finishButton.onPress();
+      await result.current.confirmFound(foundInfo);
     });
 
     expect(postService.updatePostStatus).toHaveBeenCalledWith(
       '1',
-      'Encontrado'
+      'Encontrado',
+      { foundInfo }
     );
     expect(result.current.posts).toEqual(updatedPosts);
+    expect(result.current.isFoundFormOpen).toBe(false);
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Que notícia boa!',
+      'O reencontro foi registrado e o card continuará no feed.'
+    );
   });
 
-  it('não deve finalizar post de outro usuário ou já encontrado', async () => {
+  it('deve fechar o formulário ao cancelar', async () => {
+    postService.getPosts.mockResolvedValueOnce([
+      { id: '1', type: 'Perdido', author: 'user1@test.com' },
+    ]);
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+
+    act(() => result.current.markPostAsFound('1'));
+    act(() => result.current.cancelFound());
+
+    expect(result.current.isFoundFormOpen).toBe(false);
+    expect(postService.updatePostStatus).not.toHaveBeenCalled();
+  });
+
+  it('não deve abrir o formulário para post de outro usuário, já encontrado ou inexistente', async () => {
     const mockPosts = [
       { id: '1', type: 'Perdido', author: 'user2@test.com' },
       {
@@ -410,38 +237,74 @@ describe('useFeed Hook - 100% Coverage', () => {
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
-    await act(async () => {
-      await result.current.markPostAsFound('1');
-      await result.current.markPostAsFound('2');
+    act(() => {
+      result.current.markPostAsFound('1');
+      result.current.markPostAsFound('2');
+      result.current.markPostAsFound('999');
     });
 
-    expect(postService.updatePostStatus).not.toHaveBeenCalled();
+    expect(result.current.isFoundFormOpen).toBe(false);
   });
 
-  it('deve exibir erro quando a finalização persistida falhar', async () => {
-    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
+  it('não deve abrir o formulário sem usuário logado', async () => {
+    postService.getPosts.mockResolvedValueOnce([
+      { id: '1', type: 'Perdido', author: 'user1@test.com' },
+    ]);
+    sessionService.getSession.mockResolvedValueOnce(null);
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+    act(() => result.current.markPostAsFound('1'));
+
+    expect(result.current.isFoundFormOpen).toBe(false);
+  });
+
+  it('deve manter o formulário aberto e avisar quando falhar ao salvar', async () => {
+    postService.getPosts.mockResolvedValueOnce([
+      { id: '1', type: 'Perdido', author: 'user1@test.com' },
+    ]);
     postService.updatePostStatus.mockRejectedValueOnce(
       new Error('Erro storage')
     );
 
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
+    act(() => result.current.markPostAsFound('1'));
     await act(async () => {
-      await result.current.markPostAsFound('1');
+      await result.current.confirmFound({ receiverName: 'Ana' });
     });
 
-    const alertCall = Alert.alert.mock.calls.find(
-      (call) => call[0] === 'Confirmar finalização'
-    );
-    const finishButton = alertCall[2].find((btn) => btn.text === 'Finalizado');
-    await act(async () => {
-      await finishButton.onPress();
-    });
-
+    expect(result.current.isFoundFormOpen).toBe(true);
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Não foi possível finalizar',
+      'Não foi possível salvar',
       'Tente novamente em alguns instantes.'
     );
+  });
+
+  it('deve definir o usuário atual como null quando não houver sessão', async () => {
+    postService.getPosts.mockResolvedValueOnce([]);
+    sessionService.getSession.mockResolvedValueOnce(null);
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+
+    expect(result.current.currentUser).toBeNull();
+  });
+
+  it('deve carregar a foto do perfil e limpar quando não houver', async () => {
+    postService.getPosts.mockResolvedValue([]);
+    onboardingService.getUserProfile.mockResolvedValueOnce({
+      name: 'Irlam',
+      photoUri: 'file:///docs/profile-photo-1.jpg',
+    });
+
+    const { result } = renderHook(() => useFeed());
+    await act(async () => {});
+    expect(result.current.userPhoto).toBe('file:///docs/profile-photo-1.jpg');
+
+    onboardingService.getUserProfile.mockRejectedValueOnce(new Error('x'));
+    const second = renderHook(() => useFeed());
+    await act(async () => {});
+    expect(second.result.current.userPhoto).toBeNull();
   });
 });

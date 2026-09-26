@@ -91,6 +91,8 @@ describe('SafeTouchable', () => {
   });
 
   it('não deve atualizar o estado depois de desmontado', async () => {
+    // Atualizar estado de um componente desmontado gera erro no console
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
     let finish;
     const onPress = () =>
       new Promise((resolve) => {
@@ -108,6 +110,9 @@ describe('SafeTouchable', () => {
     unmount();
     await act(async () => {
       finish();
+
+      expect(consoleError).not.toHaveBeenCalled();
+      consoleError.mockRestore();
     });
   });
 });

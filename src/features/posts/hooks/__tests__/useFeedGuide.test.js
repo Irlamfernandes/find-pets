@@ -59,6 +59,8 @@ describe('useFeedGuide', () => {
   });
 
   it('deve ignorar a resposta se o componente desmontar antes', async () => {
+    // Atualizar estado de um componente desmontado gera erro no console
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
     let finish;
     guideService.hasSeenFeedGuide.mockReturnValueOnce(
       new Promise((resolve) => {
@@ -71,5 +73,9 @@ describe('useFeedGuide', () => {
     await act(async () => {
       finish(false);
     });
+
+    expect(guideService.hasSeenFeedGuide).toHaveBeenCalledWith('ana@test.com');
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

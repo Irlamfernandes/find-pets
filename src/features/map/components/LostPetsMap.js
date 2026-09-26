@@ -14,7 +14,7 @@ export function buildLostPetsMapHtml(posts) {
     longitude,
   }));
   // Evita que algum valor feche a tag <script> antes da hora
-  const pointsJson = JSON.stringify(points).replace(/</g, '\\u003c');
+  const pointsJson = JSON.stringify(points).replaceAll('<', String.raw`\u003c`);
 
   return `<!DOCTYPE html>
 <html>

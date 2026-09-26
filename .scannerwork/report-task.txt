@@ -2,5 +2,5 @@ projectKey=FindPets
 serverUrl=http://localhost:9000
 serverVersion=26.9.0.129388
 dashboardUrl=http://localhost:9000/dashboard?id=FindPets
-ceTaskId=0146768d-9a68-45a1-b0a7-36af16f57dae
-ceTaskUrl=http://localhost:9000/api/ce/task?id=0146768d-9a68-45a1-b0a7-36af16f57dae
+ceTaskId=0936078b-daf8-4957-a013-8ab84d9ddb95
+ceTaskUrl=http://localhost:9000/api/ce/task?id=0936078b-daf8-4957-a013-8ab84d9ddb95

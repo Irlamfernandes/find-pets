@@ -200,8 +200,10 @@ describe('useFeed Hook - 100% Coverage', () => {
     await act(async () => {});
     expect(result.current.isFoundFormOpen).toBe(false);
 
+    expect(result.current.foundPost).toBeNull();
     act(() => result.current.markPostAsFound('1'));
     expect(result.current.isFoundFormOpen).toBe(true);
+    expect(result.current.foundPost).toEqual(mockPosts[0]);
 
     await act(async () => {
       await result.current.confirmFound(foundInfo);

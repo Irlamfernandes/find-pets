@@ -20,7 +20,8 @@ export function getPosterContent(post) {
     title: getPetTitle(post) || 'Pet',
     // O nome já aparece como título do cartaz
     fields: getPetFields(post, { includeName: false }),
-    occurredAt: getOccurredAtLabel(post),
+    // Sem data conhecida, a linha some do cartaz
+    occurredAt: getOccurredAtLabel(post, ''),
     location: post.location || '',
     description: post.description || '',
     phone: getPosterPhone(post, isFound),

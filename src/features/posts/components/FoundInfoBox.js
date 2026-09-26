@@ -5,11 +5,17 @@ import PropTypes from 'prop-types';
 import { formatDateTime } from '../../../shared/utils/timeZone';
 import { palette } from '../../../shared/theme/colors';
 
+const describeReceiver = ({ receiverName, receiverRelation }) =>
+  receiverRelation ? `${receiverName} (${receiverRelation})` : receiverName;
+
+const describeFoundAt = ({ foundAt, foundZone }) =>
+  formatDateTime(foundAt, foundZone) || 'data não informada';
+
 // Linhas do quadro; as opcionais só aparecem quando preenchidas
 function getFoundLines(foundInfo) {
   return [
-    `Com: ${foundInfo.receiverName} (${foundInfo.receiverRelation})`,
-    `Em: ${formatDateTime(foundInfo.foundAt, foundInfo.foundZone)}`,
+    foundInfo.receiverName && `Com: ${describeReceiver(foundInfo)}`,
+    `Em: ${describeFoundAt(foundInfo)}`,
     foundInfo.foundLocation && `Onde: ${foundInfo.foundLocation}`,
     foundInfo.notes,
   ].filter(Boolean);

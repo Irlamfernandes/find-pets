@@ -34,8 +34,18 @@ describe('externalLinkService', () => {
       );
     });
 
+    it('deve abrir números antigos sem +55 e números formatados', () => {
+      externalLinkService.openWhatsApp('11988887777');
+      externalLinkService.openWhatsApp('+55 (11) 98888-7777');
+
+      for (const [url] of Linking.openURL.mock.calls) {
+        expect(url).toMatch(/^https:\/\/wa\.me\/5511988887777\?text=/);
+      }
+    });
+
     it('não deve abrir o WhatsApp se nenhum número for fornecido', () => {
       externalLinkService.openWhatsApp(null);
+      externalLinkService.openWhatsApp('sem número');
 
       expect(Linking.openURL).not.toHaveBeenCalled();
     });

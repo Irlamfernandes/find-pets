@@ -1,5 +1,6 @@
 // src/services/externalLinkService.js
 import { Linking, Platform } from 'react-native';
+import { onlyDigits, withCountryCode } from '../utils/phoneMask';
 
 // iOS abre o Apple Maps (sempre instalado); Android abre o Google Maps.
 // O destino já vai preenchido e o app de mapas calcula a rota a partir da posição atual.
@@ -11,16 +12,19 @@ export function buildRouteUrl(latitude, longitude, os) {
 }
 
 export const externalLinkService = {
+  // O wa.me só aceita dígitos com o código do país. Números antigos foram
+  // gravados sem o +55, e outros podem vir formatados.
   openWhatsApp(phoneNumber) {
-    // Se não houver telefone cadastrado, encerra a execução para não abrir chat fictício
-    if (!phoneNumber) {
+    const digits = withCountryCode(onlyDigits(phoneNumber));
+    // Sem telefone, não abre um chat fictício
+    if (!digits) {
       return;
     }
 
     const message = encodeURIComponent(
       'Olá! Vi seu post sobre o pet no FindPets e gostaria de ajudar.'
     );
-    Linking.openURL(`https://wa.me/${phoneNumber}?text=${message}`);
+    Linking.openURL(`https://wa.me/${digits}?text=${message}`);
   },
 
   openRoute(latitude, longitude) {

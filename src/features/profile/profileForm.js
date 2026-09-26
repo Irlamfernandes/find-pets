@@ -31,13 +31,14 @@ export function toProfileData(values) {
   return { name: values.name.trim(), whatsapp: onlyDigits(values.whatsapp) };
 }
 
-// Só acusa diferença depois que a pessoa começou a confirmar. Espaços nas
-// pontas são ignorados, como no salvamento.
+// Só acusa diferença depois que a pessoa começou a confirmar. A senha vale
+// exatamente como foi digitada, como no cadastro e no login.
 export function hasPasswordMismatch({ newPassword, confirmPassword }) {
-  return (
-    confirmPassword.length > 0 && confirmPassword.trim() !== newPassword.trim()
-  );
+  return confirmPassword.length > 0 && confirmPassword !== newPassword;
 }
+
+// Nova senha em branco (ou só espaços) significa "não trocar"
+export const wantsNewPassword = ({ newPassword }) => isFilled(newPassword);
 
 export const profileRules = [
   rule((values) => isFilled(values.name) && isFilled(values.whatsapp), {
@@ -52,8 +53,8 @@ export const profileRules = [
   }),
   rule(
     (values) =>
-      !isFilled(values.newPassword) ||
-      values.newPassword.trim() === values.confirmPassword.trim(),
+      !wantsNewPassword(values) ||
+      values.newPassword === values.confirmPassword,
     {
       type: 'warning',
       title: 'Senhas diferentes',

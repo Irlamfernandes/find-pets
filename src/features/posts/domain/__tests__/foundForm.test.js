@@ -39,6 +39,19 @@ describe('foundForm', () => {
     );
   });
 
+  it('não deve aceitar reencontro antes do desaparecimento', () => {
+    const lostAt = new Date(2026, 8, 24, 9, 30, 45).toISOString();
+
+    expect(validate({ ...valid, time: '09:29', lostAt }, foundFormRules)).toBe(
+      'A data do reencontro não pode ser anterior ao desaparecimento.'
+    );
+    // O mesmo minuto do sumiço é aceito, mesmo com os segundos
+    expect(validate({ ...valid, lostAt }, foundFormRules)).toBeNull();
+    expect(
+      validate({ ...valid, lostAt: undefined }, foundFormRules)
+    ).toBeNull();
+  });
+
   it('deve converter o formulário nos dados do reencontro', () => {
     expect(toFoundInfo(valid)).toEqual({
       receiverName: 'Ana',

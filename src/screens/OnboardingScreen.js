@@ -1,16 +1,10 @@
-import React from 'react';
-import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-  Keyboard,
-  Image,
-} from 'react-native';
+import React, { useRef } from 'react';
+import { Text, StyleSheet, Image } from 'react-native';
 import PropTypes from 'prop-types';
+import { SafeTouchable } from '../components/SafeTouchable';
+import { dismissKeyboardAnd } from '../utils/keyboard';
+import { useSingleFlight } from '../hooks/useSingleFlight';
+import { FormScrollView, FormTextInput } from '../components/FormScrollView';
 import { useOnboarding } from '../hooks/useOnboarding';
 import { palette } from '../theme/colors';
 
@@ -23,68 +17,63 @@ export default function OnboardingScreen({ onComplete }) {
     errorMessage,
     handleSaveProfile,
   } = useOnboarding(onComplete);
+  const whatsappRef = useRef(null);
+  // Botão e tecla "concluir" compartilham a mesma trava
+  const saveProfile = useSingleFlight(dismissKeyboardAnd(handleSaveProfile));
 
   return (
-    <KeyboardAvoidingView
+    <FormScrollView
       style={styles.keyboardContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      contentContainerStyle={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
+      <Image
+        source={require('../../assets/adaptive-icon.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <Text style={styles.title}>Complete seu Perfil</Text>
+      <Text style={styles.subtitle}>
+        Precisamos de algumas informações para facilitar o contato nos resgates.
+      </Text>
+
+      {errorMessage ? (
+        <Text style={styles.errorText}>{errorMessage}</Text>
+      ) : null}
+
+      <FormTextInput
+        testID="input-name"
+        style={styles.input}
+        placeholder="Seu Nome"
+        value={name}
+        onChangeText={setName}
+        selectionColor={palette.primary}
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => whatsappRef.current?.focus()}
+      />
+
+      <FormTextInput
+        ref={whatsappRef}
+        testID="input-whatsapp"
+        style={styles.input}
+        placeholder="WhatsApp: +55 (11) 99999-9999"
+        value={whatsapp}
+        onChangeText={setWhatsapp}
+        keyboardType="phone-pad"
+        maxLength={19}
+        selectionColor={palette.primary}
+        returnKeyType="done"
+        onSubmitEditing={saveProfile}
+      />
+
+      <SafeTouchable
+        testID="button-complete"
+        style={styles.button}
+        onPress={saveProfile}
       >
-        <Image
-          source={require('../../assets/adaptive-icon.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.title}>Complete seu Perfil</Text>
-        <Text style={styles.subtitle}>
-          Precisamos de algumas informações para facilitar o contato nos
-          resgates.
-        </Text>
-
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
-
-        <TextInput
-          testID="input-name"
-          style={styles.input}
-          placeholder="Seu Nome"
-          value={name}
-          onChangeText={setName}
-          selectionColor={palette.primary}
-          returnKeyType="next"
-        />
-
-        <TextInput
-          testID="input-whatsapp"
-          style={styles.input}
-          placeholder="WhatsApp (com DDD)"
-          value={whatsapp}
-          onChangeText={setWhatsapp}
-          keyboardType="phone-pad"
-          selectionColor={palette.primary}
-          returnKeyType="done"
-          onSubmitEditing={() => {
-            Keyboard.dismiss();
-            handleSaveProfile();
-          }}
-        />
-
-        <TouchableOpacity
-          testID="button-complete"
-          style={styles.button}
-          onPress={() => {
-            Keyboard.dismiss();
-            handleSaveProfile();
-          }}
-        >
-          <Text style={styles.buttonText}>Salvar e Continuar</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <Text style={styles.buttonText}>Salvar e Continuar</Text>
+      </SafeTouchable>
+    </FormScrollView>
   );
 }
 

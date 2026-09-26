@@ -67,6 +67,60 @@ export const sessionService = {
     }
   },
 
+  // A biometria do aparelho fica vinculada a uma única conta: o sistema não
+  // informa ao app qual digital/rosto foi usado, então não há como separar
+  // biometrias de pessoas diferentes no mesmo celular.
+  async getBiometricOwner() {
+    try {
+      const data = await SecureStore.getItemAsync(STORAGE_KEYS.CREDENTIALS);
+      if (!data) return null;
+
+      const savedCredentials = JSON.parse(data);
+      const credentials = Array.isArray(savedCredentials)
+        ? savedCredentials
+        : [savedCredentials];
+      return credentials.find((item) => item.hasBiometrics) || null;
+    } catch (error) {
+      throw new Error(`Erro ao verificar a biometria: ${error.message}`);
+    }
+  },
+
+  // Ativa/desativa a biometria de uma conta. Só uma conta por aparelho pode
+  // tê-la, pois o sistema não diferencia as digitais/rostos cadastrados.
+  async setBiometrics(usuario, enabled) {
+    try {
+      const data = await SecureStore.getItemAsync(STORAGE_KEYS.CREDENTIALS);
+      const savedCredentials = data ? JSON.parse(data) : [];
+      const credentials = Array.isArray(savedCredentials)
+        ? savedCredentials
+        : [savedCredentials];
+
+      if (!credentials.some((item) => item.usuario === usuario)) {
+        throw new Error('Conta não encontrada.');
+      }
+      const usedByOtherAccount = credentials.some(
+        (item) => item.hasBiometrics && item.usuario !== usuario
+      );
+      if (enabled && usedByOtherAccount) {
+        throw new Error('A biometria deste aparelho já está em uso.');
+      }
+
+      const updatedCredentials = credentials.map((item) =>
+        item.usuario === usuario ? { ...item, hasBiometrics: enabled } : item
+      );
+      await SecureStore.setItemAsync(
+        STORAGE_KEYS.CREDENTIALS,
+        JSON.stringify(
+          updatedCredentials.length === 1
+            ? updatedCredentials[0]
+            : updatedCredentials
+        )
+      );
+    } catch (error) {
+      throw new Error(`Erro ao atualizar a biometria: ${error.message}`);
+    }
+  },
+
   async saveSession(userData) {
     if (!userData) {
       throw new Error('Dados de sessão inválidos.');

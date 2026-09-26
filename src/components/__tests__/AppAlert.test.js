@@ -73,11 +73,11 @@ describe('AppAlert', () => {
       </AppAlertProvider>
     );
 
-    UNSAFE_getByType(Modal).props.onRequestClose();
+    fireEvent(UNSAFE_getByType(Modal), 'requestClose');
     fireEvent.press(getByTestId('open-alert'));
     fireEvent.press(getByText('Cancelar'));
     fireEvent.press(getByTestId('open-alert'));
-    UNSAFE_getByType(Modal).props.onRequestClose();
+    fireEvent(UNSAFE_getByType(Modal), 'requestClose');
     expect(getByText('Abrir')).toBeTruthy();
   });
 

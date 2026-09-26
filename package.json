@@ -36,7 +36,8 @@
       "!**/eslint.config.js",
       "!**/commitlint.config.js",
       "!**/index.js",
-      "!**/App.js"
+      "!**/App.js",
+      "!**/jest.setup.js"
     ],
     "coverageThreshold": {
       "global": {
@@ -45,7 +46,11 @@
         "lines": 100,
         "statements": 100
       }
-    }
+    },
+    "setupFiles": [
+      "./jest.setup.js"
+    ],
+    "testTimeout": 15000
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -53,8 +58,9 @@
     "bcryptjs": "^3.0.3",
     "expo": "~57.0.25",
     "expo-asset": "^57.0.18",
-    "expo-camera": "~57.0.5",
+    "expo-file-system": "~57.0.7",
     "expo-font": "^57.0.4",
+    "expo-image-picker": "~57.0.20",
     "expo-local-authentication": "~57.0.3",
     "expo-location": "~57.0.20",
     "expo-secure-store": "~57.0.4",
@@ -64,7 +70,8 @@
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-get-random-values": "~1.11.0",
-    "react-native-safe-area-context": "~5.7.0"
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-webview": "13.16.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",

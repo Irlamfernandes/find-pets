@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { onboardingService } from '../services/onboarding';
+import { formatPhone, onlyDigits, PHONE_MIN_DIGITS } from '../utils/phoneMask';
 
 export function useOnboarding(onComplete) {
   const [name, setName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
+  const [whatsapp, setWhatsappState] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  const setWhatsapp = (value) => setWhatsappState(formatPhone(value));
 
   const handleSaveProfile = async () => {
     setErrorMessage('');
@@ -13,9 +16,11 @@ export function useOnboarding(onComplete) {
       return;
     }
 
-    const cleanedPhone = whatsapp.replace(/\D/g, '');
-    if (cleanedPhone.length < 10) {
-      setErrorMessage('Insira um número de WhatsApp válido com DDD.');
+    const cleanedPhone = onlyDigits(whatsapp);
+    if (cleanedPhone.length < PHONE_MIN_DIGITS) {
+      setErrorMessage(
+        'Insira um número de WhatsApp válido com código do país e DDD.'
+      );
       return;
     }
 

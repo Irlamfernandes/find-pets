@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useCameraPermissions } from 'expo-camera';
 import { postService } from '../services/postService';
-import { locationService } from '../services/locationService';
 import { onboardingService } from '../services/onboarding';
 import { sessionService } from '../services/session';
 import { useAppAlert } from '../components/AppAlert';
@@ -10,10 +8,9 @@ export function useFeed() {
   const showAlert = useAppAlert();
   const [posts, setPosts] = useState([]);
   const [userName, setUserName] = useState('');
+  const [userPhoto, setUserPhoto] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const [cameraRef, setCameraRef] = useState(null);
+  const [foundPostId, setFoundPostId] = useState(null);
 
   const loadPosts = useCallback(async () => {
     try {
@@ -30,8 +27,10 @@ export function useFeed() {
       if (profile?.name) {
         setUserName(profile.name);
       }
+      setUserPhoto(profile?.photoUri || null);
     } catch {
       setUserName('');
+      setUserPhoto(null);
     }
   }, []);
 
@@ -50,59 +49,8 @@ export function useFeed() {
     loadCurrentUser();
   }, [loadPosts, loadUserProfile, loadCurrentUser]);
 
-  const openCamera = async () => {
-    const hasPermission = cameraPermission?.granted === true;
-    if (hasPermission) {
-      setIsCameraOpen(true);
-      return;
-    }
-    const permissionResult = await requestCameraPermission();
-    if (permissionResult?.granted === true) {
-      setIsCameraOpen(true);
-    }
-  };
-
-  const closeCamera = () => {
-    setIsCameraOpen(false);
-  };
-
-  const takePicture = async () => {
-    if (!cameraRef) return;
-
-    try {
-      const photo = await cameraRef.takePictureAsync({ quality: 0.5 });
-      const locationData = await locationService.getCurrentLocation();
-      const userProfile = await onboardingService.getUserProfile();
-      const session = await sessionService.getSession();
-
-      const newPost = {
-        id: Date.now().toString(),
-        author: session?.usuario || null,
-        imageUri: photo.uri,
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        location: locationData.address,
-        date: new Date().toLocaleDateString('pt-BR'),
-        type: 'Perdido',
-        status: 'Perdido',
-        contactPhone: userProfile?.whatsapp || null,
-      };
-
-      await postService.savePost(newPost);
-      await loadPosts();
-      setIsCameraOpen(false);
-    } catch {
-      setIsCameraOpen(false);
-      showAlert({
-        type: 'danger',
-        title: 'Não foi possível publicar',
-        message:
-          'Não conseguimos capturar a foto ou obter a localização. Tente novamente.',
-      });
-    }
-  };
-
-  const markPostAsFound = async (postId) => {
+  // Abre o formulário do reencontro para o dono do registro
+  const markPostAsFound = (postId) => {
     const post = posts.find((item) => item.id === postId);
     if (
       !post ||
@@ -113,28 +61,34 @@ export function useFeed() {
       return;
     }
 
-    showAlert({
-      type: 'success',
-      title: 'Confirmar finalização',
-      message: 'Este animal foi encontrado? O card continuará no feed.',
-      confirmText: 'Finalizado',
-      cancelText: 'Cancelar',
-      onConfirm: async () => {
-        try {
-          const updatedPosts = await postService.updatePostStatus(
-            postId,
-            'Encontrado'
-          );
-          setPosts(updatedPosts);
-        } catch {
-          showAlert({
-            type: 'danger',
-            title: 'Não foi possível finalizar',
-            message: 'Tente novamente em alguns instantes.',
-          });
-        }
-      },
-    });
+    setFoundPostId(postId);
+  };
+
+  const cancelFound = () => {
+    setFoundPostId(null);
+  };
+
+  const confirmFound = async (foundInfo) => {
+    try {
+      const updatedPosts = await postService.updatePostStatus(
+        foundPostId,
+        'Encontrado',
+        { foundInfo }
+      );
+      setPosts(updatedPosts);
+      setFoundPostId(null);
+      showAlert({
+        type: 'success',
+        title: 'Que notícia boa!',
+        message: 'O reencontro foi registrado e o card continuará no feed.',
+      });
+    } catch {
+      showAlert({
+        type: 'danger',
+        title: 'Não foi possível salvar',
+        message: 'Tente novamente em alguns instantes.',
+      });
+    }
   };
 
   // Função para excluir um post pelo ID com confirmação
@@ -166,13 +120,12 @@ export function useFeed() {
   return {
     posts,
     userName,
+    userPhoto,
     currentUser,
-    isCameraOpen,
-    setCameraRef,
-    openCamera,
-    closeCamera,
-    takePicture,
     deletePost,
+    isFoundFormOpen: foundPostId !== null,
     markPostAsFound,
+    cancelFound,
+    confirmFound,
   };
 }

@@ -1,19 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { biometricService } from '../services/biometrics';
 import { sessionService } from '../services/session';
-import { useAppAlert } from '../components/AppAlert';
 
 export function useLogin(onSuccess) {
-  const showAlert = useAppAlert();
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [hasHardwareBiometric, setHasHardwareBiometric] = useState(false);
+  const [biometricOwner, setBiometricOwner] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [authMode, setAuthMode] = useState('home'); // 'home', 'login', 'cadastro'
 
   const checkBiometricSupport = useCallback(async () => {
     const isAvailable = await biometricService.checkAvailability();
     setHasHardwareBiometric(isAvailable);
+    try {
+      const owner = await sessionService.getBiometricOwner();
+      setBiometricOwner(owner?.usuario || null);
+    } catch {
+      setBiometricOwner(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -40,33 +45,21 @@ export function useLogin(onSuccess) {
     }
 
     try {
-      let cadastrouBiometria = false;
+      const email = usuario.trim();
 
-      // Se o celular tiver leitor biométrico, tenta cadastrar/vincular
-      if (hasHardwareBiometric) {
-        const result = await biometricService.authenticate(
-          'Cadastre sua biometria para futuros logins'
-        );
-        if (result.success) {
-          cadastrouBiometria = true;
-        }
+      // Impede recadastrar um e-mail existente (isso trocaria a senha da conta)
+      if (await sessionService.getCredentials(email)) {
+        setErrorMessage('Este e-mail já está cadastrado. Faça login.');
+        return;
       }
 
-      // Salva as credenciais e se a biometria foi habilitada
-      await sessionService.saveCredentials(
-        usuario.trim(),
-        senha,
-        cadastrouBiometria
-      );
+      // A biometria é oferecida no fim do cadastro ou ativada no Perfil
+      await sessionService.saveCredentials(email, senha, false);
 
-      showAlert({
-        type: 'success',
-        title: 'Cadastro realizado',
-        message: 'Sua conta foi criada. Agora faça login para continuar.',
-      });
-      setAuthMode('home');
       setUsuario('');
       setSenha('');
+      // Entra direto na conta nova, sem voltar para o login
+      onSuccess?.({ type: 'register', usuario: email });
     } catch (error) {
       setErrorMessage(error.message || 'Erro ao realizar o cadastro.');
     }
@@ -111,23 +104,19 @@ export function useLogin(onSuccess) {
   // 3. LOGIN POR BIOMETRIA
   const triggerBiometricAuth = async () => {
     setErrorMessage('');
-    const savedCreds = await sessionService.getCredentials();
+    const owner = await sessionService.getBiometricOwner();
 
-    if (!savedCreds) {
-      setErrorMessage('Nenhum usuário cadastrado neste dispositivo.');
-      return;
-    }
-
-    if (!savedCreds.hasBiometrics) {
-      setErrorMessage('A biometria não foi cadastrada para este usuário.');
+    if (!owner) {
+      setErrorMessage('Nenhuma conta com biometria neste aparelho.');
       return;
     }
 
     const result = await biometricService.authenticate(
       'Autentique-se com sua biometria'
     );
+    // Entra sempre na conta dona da biometria, nunca em outra
     if (result.success) {
-      onSuccess?.({ type: 'biometric', usuario: savedCreds.usuario });
+      onSuccess?.({ type: 'biometric', usuario: owner.usuario });
     } else if (result.error && result.error !== 'user_cancel') {
       setErrorMessage('Biometria não reconhecida.');
     }
@@ -139,6 +128,7 @@ export function useLogin(onSuccess) {
     senha,
     setSenha,
     hasHardwareBiometric,
+    biometricOwner,
     errorMessage,
     authMode,
     setAuthMode,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import { PetCard, getPostImages } from '../PetCard';
 
 /* eslint-disable react/prop-types */
@@ -32,10 +32,21 @@ describe('PetCard', () => {
     onOpenMap: jest.fn(),
     onOpenWhatsApp: jest.fn(),
     onOpenRoute: jest.fn(),
+    onShare: jest.fn(),
   };
 
+  // O carrossel (FlatList) agenda atualizações internas com timers; com
+  // timers simulados elas rodam dentro do act(...) ao fim de cada teste
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
   });
 
   it('deve exibir fotos, descrição, data/hora, endereço e mapa', () => {
@@ -49,7 +60,9 @@ describe('PetCard', () => {
     expect(getByText('1/2')).toBeTruthy();
     expect(getByText('Perdido')).toBeTruthy();
     expect(getByText('Cachorro caramelo com coleira azul')).toBeTruthy();
-    expect(getByText('Desapareceu em: 25/09/2026 às 14:30')).toBeTruthy();
+    expect(
+      getByText('Desapareceu em: 25/09/2026 às 14:30 (BRT, UTC-3)')
+    ).toBeTruthy();
     expect(getByText('Av. Paulista, 1000 - São Paulo')).toBeTruthy();
     expect(getByText('mapa:-23.5505,-46.6333')).toBeTruthy();
   });
@@ -154,9 +167,34 @@ describe('PetCard', () => {
     expect(getByText('Encontrado')).toBeTruthy();
     expect(getByTestId('found-info')).toBeTruthy();
     expect(getByText('Com: Ana Souza (Dono(a) / tutor)')).toBeTruthy();
-    expect(getByText('Em: 26/09/2026 às 09:05')).toBeTruthy();
+    expect(getByText('Em: 26/09/2026 às 09:05 (BRT, UTC-3)')).toBeTruthy();
     expect(getByText('Onde: Praça Central')).toBeTruthy();
     expect(getByText('Estava com fome, mas bem.')).toBeTruthy();
+  });
+
+  it('deve exibir as horas no fuso em que foram registradas', () => {
+    const { getByText } = render(
+      <PetCard
+        item={{
+          ...baseItem,
+          status: 'Encontrado',
+          occurredAt: '2026-09-25T17:30:00.000Z',
+          occurredZone: { offsetMinutes: 540, abbreviation: null },
+          foundInfo: {
+            receiverName: 'Ana',
+            receiverRelation: 'Outro',
+            foundAt: '2026-09-26T12:00:00.000Z',
+            foundZone: { offsetMinutes: 60, abbreviation: 'CET' },
+          },
+        }}
+        {...handlers}
+      />
+    );
+
+    expect(
+      getByText('Desapareceu em: 26/09/2026 às 02:30 (UTC+9)')
+    ).toBeTruthy();
+    expect(getByText('Em: 26/09/2026 às 13:00 (CET, UTC+1)')).toBeTruthy();
   });
 
   it('deve omitir local e observações do reencontro quando vazios', () => {
@@ -205,5 +243,78 @@ describe('PetCard', () => {
 
     expect(getByLabelText('Marcar como encontrado')).toBeTruthy();
     expect(queryByText('Excluir')).toBeNull();
+  });
+
+  describe('dados do pet', () => {
+    const petItem = {
+      ...baseItem,
+      petName: 'Rex',
+      species: 'Cachorro',
+      size: 'Médio',
+      sex: 'Macho',
+      color: 'Caramelo',
+    };
+
+    it('deve mostrar cada dado do pet com seu rótulo', () => {
+      const { getByText, getByTestId } = render(
+        <PetCard item={petItem} {...handlers} />
+      );
+
+      expect(getByTestId('pet-info-grid')).toBeTruthy();
+      [
+        ['Nome', 'Rex'],
+        ['Espécie', 'Cachorro'],
+        ['Porte', 'Médio'],
+        ['Sexo', 'Macho'],
+        ['Cor', 'Caramelo'],
+      ].forEach(([label, value]) => {
+        expect(getByText(label)).toBeTruthy();
+        expect(getByText(value)).toBeTruthy();
+      });
+    });
+
+    it('deve mostrar só os dados preenchidos', () => {
+      const { queryByText, getByText } = render(
+        <PetCard item={{ ...petItem, petName: '', color: '' }} {...handlers} />
+      );
+
+      expect(getByText('Cachorro')).toBeTruthy();
+      expect(queryByText('Nome')).toBeNull();
+      expect(queryByText('Cor')).toBeNull();
+    });
+
+    it('não deve mostrar a grade de dados em registros antigos', () => {
+      const { queryByTestId } = render(
+        <PetCard
+          item={{ id: '9', imageUri: 'x.jpg', type: 'Perdido', date: '1/1' }}
+          {...handlers}
+        />
+      );
+
+      expect(queryByTestId('pet-info-grid')).toBeNull();
+    });
+  });
+
+  it('deve compartilhar e editar o registro', () => {
+    const onEdit = jest.fn();
+    const { getByLabelText } = render(
+      <PetCard item={baseItem} {...handlers} onEdit={onEdit} />
+    );
+
+    fireEvent.press(getByLabelText('Compartilhar este registro'));
+    fireEvent.press(getByLabelText('Editar registro'));
+
+    expect(handlers.onShare).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+
+  it('não deve mostrar o botão editar sem permissão', () => {
+    const { queryByLabelText, getByLabelText } = render(
+      <PetCard item={baseItem} {...handlers} />
+    );
+
+    expect(queryByLabelText('Editar registro')).toBeNull();
+    // Compartilhar fica disponível para todos
+    expect(getByLabelText('Compartilhar este registro')).toBeTruthy();
   });
 });

@@ -14,12 +14,12 @@ export const FEED_GUIDE_STEPS = [
   {
     icon: 'paw-outline',
     title: 'Viu algum pet da lista?',
-    text: 'Use "WhatsApp" para falar com o dono ou "Como chegar" para ver a rota até o local.',
+    text: 'Use "WhatsApp" para falar com o dono, "Como chegar" para ver a rota ou "Compartilhar" para espalhar o aviso.',
   },
   {
     icon: 'expand-outline',
     title: 'Veja os detalhes',
-    text: 'Toque nas fotos ou no mapa de cada registro para abrir em tela cheia.',
+    text: 'Toque nas fotos ou no mapa de cada registro para abrir em tela cheia. Em "Mapa", veja todos os pets perdidos de uma vez.',
   },
   {
     icon: 'heart-outline',

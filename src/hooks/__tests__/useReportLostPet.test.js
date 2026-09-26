@@ -3,16 +3,21 @@ import { Alert } from 'react-native';
 import { useReportLostPet, MAX_PHOTOS } from '../useReportLostPet';
 import { postService } from '../../services/postService';
 import { photoService } from '../../services/photoService';
+import { postPhotoStorage } from '../../services/photoStorage';
 import { locationService } from '../../services/locationService';
 import { onboardingService } from '../../services/onboarding';
 import { sessionService } from '../../services/session';
 
 jest.mock('../../services/postService', () => ({
-  postService: { savePost: jest.fn() },
+  postService: { savePost: jest.fn(), updatePost: jest.fn() },
 }));
 
 jest.mock('../../services/photoService', () => ({
   photoService: { pickFromGallery: jest.fn(), takePhoto: jest.fn() },
+}));
+
+jest.mock('../../services/photoStorage', () => ({
+  postPhotoStorage: { persistAll: jest.fn(), removeAll: jest.fn() },
 }));
 
 jest.mock('../../services/locationService', () => ({
@@ -35,6 +40,19 @@ jest.spyOn(Alert, 'alert');
 
 const photo = (uri, exif) => ({ uri, exif });
 
+const NOW = new Date(2026, 8, 25, 18, 0);
+
+const emptyPetData = {
+  petName: '',
+  species: '',
+  size: '',
+  sex: '',
+  color: '',
+  breed: '',
+  description: '',
+};
+
+// Renderiza o formulário já com fotos e espécie escolhidas
 async function setupWithPhotos(photos, onSaved = jest.fn()) {
   photoService.pickFromGallery.mockResolvedValueOnce({
     photos,
@@ -44,15 +62,20 @@ async function setupWithPhotos(photos, onSaved = jest.fn()) {
   await act(async () => {
     await hook.result.current.pickFromGallery();
   });
-  act(() => hook.result.current.setDescription('  Gato preto  '));
+  act(() => hook.result.current.setPetField('species', 'Gato'));
   return hook;
 }
 
 describe('useReportLostPet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers({ now: new Date(2026, 8, 25, 18, 0) });
+    jest.useFakeTimers({ now: NOW });
     postService.savePost.mockResolvedValue([]);
+    postService.updatePost.mockResolvedValue([]);
+    // Simula a cópia para a pasta permanente
+    postPhotoStorage.persistAll.mockImplementation(async (uris) =>
+      uris.map((uri) => (uri.startsWith('stored:') ? uri : `stored:${uri}`))
+    );
     onboardingService.getUserProfile.mockResolvedValue({
       whatsapp: '5511999999999',
     });
@@ -68,6 +91,15 @@ describe('useReportLostPet', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  it('deve começar vazio para um registro novo', () => {
+    const { result } = renderHook(() => useReportLostPet());
+
+    expect(result.current.isEditing).toBe(false);
+    expect(result.current.photos).toEqual([]);
+    expect(result.current.petData).toEqual(emptyPetData);
+    expect(result.current.address).toBe('');
   });
 
   it('deve adicionar fotos da galeria e da câmera respeitando o limite', async () => {
@@ -150,7 +182,71 @@ describe('useReportLostPet', () => {
     expect(result.current.photos).toEqual([]);
   });
 
-  it('deve exigir foto e descrição antes de salvar', async () => {
+  it('deve registrar o local no momento em que a foto é tirada pelo app', async () => {
+    photoService.takePhoto.mockResolvedValueOnce({
+      photos: [photo('cam.jpg', { DateTimeOriginal: '2026:09:25 10:00:00' })],
+      denied: false,
+    });
+    locationService.getCurrentLocation.mockResolvedValueOnce({
+      latitude: -7,
+      longitude: -8,
+      address: 'Lat',
+    });
+    const { result } = renderHook(() => useReportLostPet());
+
+    await act(async () => {
+      await result.current.takePhoto();
+    });
+    expect(result.current.photos[0].coords).toEqual({
+      latitude: -7,
+      longitude: -8,
+    });
+
+    act(() => result.current.setPetField('species', 'Cachorro'));
+    // Ao salvar mais tarde (em outro lugar), vale o local da foto e a
+    // localização do momento do salvamento nem é consultada
+    await act(async () => {
+      await result.current.submit();
+    });
+
+    expect(postService.savePost).toHaveBeenCalledWith(
+      expect.objectContaining({ latitude: -7, longitude: -8 })
+    );
+    expect(locationService.getCurrentLocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('deve manter a foto da câmera sem local quando a localização não estiver disponível', async () => {
+    photoService.takePhoto.mockResolvedValueOnce({
+      photos: [photo('cam.jpg')],
+      denied: false,
+    });
+    locationService.getCurrentLocation.mockResolvedValueOnce({
+      latitude: null,
+      longitude: null,
+      address: 'Localização não permitida',
+    });
+    const { result } = renderHook(() => useReportLostPet());
+
+    await act(async () => {
+      await result.current.takePhoto();
+    });
+
+    expect(result.current.photos).toEqual([photo('cam.jpg')]);
+  });
+
+  it('não deve buscar a localização se a câmera for cancelada', async () => {
+    photoService.takePhoto.mockResolvedValueOnce({ photos: [], denied: false });
+    const { result } = renderHook(() => useReportLostPet());
+
+    await act(async () => {
+      await result.current.takePhoto();
+    });
+
+    expect(locationService.getCurrentLocation).not.toHaveBeenCalled();
+    expect(result.current.photos).toEqual([]);
+  });
+
+  it('deve exigir foto e espécie antes de salvar', async () => {
     const { result } = renderHook(() => useReportLostPet());
 
     await act(async () => {
@@ -172,13 +268,13 @@ describe('useReportLostPet', () => {
       await result.current.submit();
     });
     expect(Alert.alert).toHaveBeenCalledWith(
-      'Descreva o pet',
-      'Conte como ele é e onde foi visto pela última vez (cor, porte, nome...).'
+      'Escolha a espécie',
+      'Informe se o pet é cachorro, gato ou outro animal.'
     );
     expect(postService.savePost).not.toHaveBeenCalled();
   });
 
-  it('deve salvar usando o GPS e a data da foto', async () => {
+  it('deve salvar os dados do pet, o GPS e a data da foto e copiar as fotos', async () => {
     const onSaved = jest.fn();
     const { result } = await setupWithPhotos(
       [
@@ -193,29 +289,47 @@ describe('useReportLostPet', () => {
       ],
       onSaved
     );
+    act(() => {
+      result.current.setPetField('petName', '  Mimi ');
+      result.current.setPetField('size', 'Pequeno');
+      result.current.setPetField('sex', 'Fêmea');
+      result.current.setPetField('color', 'Preta');
+      result.current.setPetField('breed', 'Siamês');
+      result.current.setPetField('description', ' Coleira rosa ');
+    });
 
     await act(async () => {
       await result.current.submit();
     });
 
     const occurredAt = new Date(2026, 8, 24, 9, 15);
+    expect(postPhotoStorage.persistAll).toHaveBeenCalledWith([
+      'a.jpg',
+      'b.jpg',
+    ]);
     expect(postService.savePost).toHaveBeenCalledWith({
-      id: String(new Date(2026, 8, 25, 18, 0).getTime()),
+      id: String(NOW.getTime()),
       author: 'user@test.com',
-      images: ['a.jpg', 'b.jpg'],
-      imageUri: 'a.jpg',
-      description: 'Gato preto',
+      images: ['stored:a.jpg', 'stored:b.jpg'],
+      imageUri: 'stored:a.jpg',
+      petName: 'Mimi',
+      species: 'Gato',
+      size: 'Pequeno',
+      sex: 'Fêmea',
+      color: 'Preta',
+      breed: 'Siamês',
+      description: 'Coleira rosa',
       latitude: -23.5,
       longitude: -46.6,
       location: 'Rua da Foto, 1',
       occurredAt: occurredAt.toISOString(),
+      occurredZone: { offsetMinutes: -180, abbreviation: 'BRT' },
       date: '24/09/2026',
       type: 'Perdido',
       status: 'Perdido',
       contactPhone: '5511999999999',
     });
     expect(locationService.getCoordsFromAddress).not.toHaveBeenCalled();
-    expect(locationService.getCurrentLocation).not.toHaveBeenCalled();
     expect(Alert.alert).toHaveBeenCalledWith(
       'Desaparecimento registrado',
       'O registro já aparece na lista de pets perdidos.'
@@ -249,7 +363,7 @@ describe('useReportLostPet', () => {
         latitude: 1,
         longitude: 2,
         location: 'Rua Digitada, 5',
-        occurredAt: new Date(2026, 8, 25, 18, 0).toISOString(),
+        occurredAt: NOW.toISOString(),
       })
     );
   });
@@ -325,5 +439,171 @@ describe('useReportLostPet', () => {
     );
     expect(onSaved).not.toHaveBeenCalled();
     expect(result.current.isSaving).toBe(false);
+  });
+
+  describe('edição de um registro', () => {
+    const existingPost = {
+      id: '42',
+      author: 'user@test.com',
+      images: ['stored:a.jpg', 'stored:b.jpg'],
+      imageUri: 'stored:a.jpg',
+      petName: 'Rex',
+      species: 'Cachorro',
+      size: 'Médio',
+      color: 'Caramelo',
+      latitude: -23,
+      longitude: -46,
+      location: 'Rua Antiga, 10',
+      occurredAt: '2026-09-20T12:00:00.000Z',
+      status: 'Perdido',
+    };
+
+    const renderEdit = (post = existingPost, onSaved = jest.fn()) =>
+      renderHook(() => useReportLostPet(onSaved, post));
+
+    it('deve abrir preenchido com os dados do registro', () => {
+      const { result } = renderEdit();
+
+      expect(result.current.isEditing).toBe(true);
+      expect(result.current.photos).toEqual([
+        { uri: 'stored:a.jpg' },
+        { uri: 'stored:b.jpg' },
+      ]);
+      expect(result.current.petData).toEqual({
+        ...emptyPetData,
+        petName: 'Rex',
+        species: 'Cachorro',
+        size: 'Médio',
+        color: 'Caramelo',
+      });
+      expect(result.current.address).toBe('Rua Antiga, 10');
+    });
+
+    it('deve atualizar os dados mantendo o local e apagar as fotos removidas', async () => {
+      const onSaved = jest.fn();
+      const { result } = renderEdit(existingPost, onSaved);
+
+      act(() => {
+        result.current.setPetField('petName', 'Rex Jr');
+        result.current.removePhoto('stored:a.jpg');
+      });
+      photoService.takePhoto.mockResolvedValueOnce({
+        photos: [photo('nova.jpg')],
+        denied: false,
+      });
+      await act(async () => {
+        await result.current.takePhoto();
+      });
+
+      await act(async () => {
+        await result.current.submit();
+      });
+
+      expect(postService.updatePost).toHaveBeenCalledWith('42', {
+        images: ['stored:b.jpg', 'stored:nova.jpg'],
+        imageUri: 'stored:b.jpg',
+        ...emptyPetData,
+        petName: 'Rex Jr',
+        species: 'Cachorro',
+        size: 'Médio',
+        color: 'Caramelo',
+        latitude: -23,
+        longitude: -46,
+        location: 'Rua Antiga, 10',
+      });
+      expect(postPhotoStorage.removeAll).toHaveBeenCalledWith(['stored:a.jpg']);
+      expect(postService.savePost).not.toHaveBeenCalled();
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Registro atualizado',
+        'As alterações já aparecem na lista de pets perdidos.'
+      );
+      expect(onSaved).toHaveBeenCalledTimes(1);
+    });
+
+    it('deve recalcular o ponto do mapa quando o endereço mudar', async () => {
+      locationService.getCoordsFromAddress.mockResolvedValueOnce({
+        latitude: 5,
+        longitude: 6,
+      });
+      const { result } = renderEdit();
+      act(() => result.current.setAddress('Rua Nova, 20'));
+
+      await act(async () => {
+        await result.current.submit();
+      });
+
+      expect(postService.updatePost).toHaveBeenCalledWith(
+        '42',
+        expect.objectContaining({
+          latitude: 5,
+          longitude: 6,
+          location: 'Rua Nova, 20',
+        })
+      );
+    });
+
+    it('deve manter as coordenadas se o endereço novo não for encontrado', async () => {
+      const { result } = renderEdit();
+      act(() => result.current.setAddress('Lugar desconhecido'));
+
+      await act(async () => {
+        await result.current.submit();
+      });
+
+      expect(postService.updatePost).toHaveBeenCalledWith(
+        '42',
+        expect.objectContaining({
+          latitude: -23,
+          longitude: -46,
+          location: 'Lugar desconhecido',
+        })
+      );
+    });
+
+    it('deve manter o local original com endereço vazio e aceitar registro antigo', async () => {
+      const legacyPost = {
+        id: '7',
+        imageUri: 'file:///antiga.jpg',
+        description: 'Cachorro preto',
+        species: 'Cachorro',
+        location: 'Centro',
+      };
+      const { result } = renderEdit(legacyPost);
+      expect(result.current.photos).toEqual([{ uri: 'file:///antiga.jpg' }]);
+      act(() => result.current.setAddress('   '));
+
+      await act(async () => {
+        await result.current.submit();
+      });
+
+      expect(postService.updatePost).toHaveBeenCalledWith(
+        '7',
+        expect.objectContaining({
+          images: ['stored:file:///antiga.jpg'],
+          description: 'Cachorro preto',
+          latitude: null,
+          longitude: null,
+          location: 'Centro',
+        })
+      );
+      expect(locationService.getCoordsFromAddress).not.toHaveBeenCalled();
+    });
+
+    it('deve avisar quando falhar ao salvar a edição', async () => {
+      postService.updatePost.mockRejectedValueOnce(new Error('falha'));
+      const onSaved = jest.fn();
+      const { result } = renderEdit(existingPost, onSaved);
+
+      await act(async () => {
+        await result.current.submit();
+      });
+
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Não foi possível salvar',
+        'Tente salvar o registro novamente.'
+      );
+      expect(postPhotoStorage.removeAll).not.toHaveBeenCalled();
+      expect(onSaved).not.toHaveBeenCalled();
+    });
   });
 });

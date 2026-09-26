@@ -44,6 +44,27 @@ export const postService = {
     }
   },
 
+  // Atualiza os campos de um registro (usado na edição)
+  async updatePost(postId, changes) {
+    if (!postId) {
+      throw new Error('ID da publicação é obrigatório.');
+    }
+
+    try {
+      const posts = await this.getPosts();
+      const updatedPosts = posts.map((post) =>
+        post.id === postId ? { ...post, ...changes, id: post.id } : post
+      );
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.POSTS,
+        JSON.stringify(updatedPosts)
+      );
+      return updatedPosts;
+    } catch (error) {
+      throw new Error(`Erro ao atualizar a publicação: ${error.message}`);
+    }
+  },
+
   // details permite anexar dados extras, como as informações do reencontro
   async updatePostStatus(postId, status, details = {}) {
     if (!postId || !status) {

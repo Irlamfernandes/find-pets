@@ -145,4 +145,41 @@ describe('Post Service', () => {
       postService.updatePostStatus('1', 'Encontrado')
     ).rejects.toThrow('Erro ao atualizar a publicação: Erro storage');
   });
+
+  describe('updatePost', () => {
+    it('deve atualizar os campos do registro mantendo o id', async () => {
+      const posts = [
+        { id: '1', petName: 'Rex', status: 'Perdido' },
+        { id: '2', petName: 'Mimi' },
+      ];
+      AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(posts));
+      AsyncStorage.setItem.mockResolvedValueOnce();
+
+      const updated = await postService.updatePost('1', {
+        id: 'outro',
+        petName: 'Rex Jr',
+      });
+
+      expect(updated).toEqual([
+        { id: '1', petName: 'Rex Jr', status: 'Perdido' },
+        posts[1],
+      ]);
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+        STORAGE_KEYS.POSTS,
+        JSON.stringify(updated)
+      );
+    });
+
+    it('deve rejeitar sem id e lançar erro se falhar ao salvar', async () => {
+      await expect(postService.updatePost('', {})).rejects.toThrow(
+        'ID da publicação é obrigatório.'
+      );
+
+      AsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([{ id: '1' }]));
+      AsyncStorage.setItem.mockRejectedValueOnce(new Error('Erro storage'));
+      await expect(postService.updatePost('1', {})).rejects.toThrow(
+        'Erro ao atualizar a publicação: Erro storage'
+      );
+    });
+  });
 });

@@ -12,7 +12,10 @@ export const locationService = {
         };
       }
 
-      const location = await Location.getCurrentPositionAsync({});
+      // Alta precisão: a localização baixa pode errar por centenas de metros
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
       const { latitude, longitude } = location.coords;
 
       return {

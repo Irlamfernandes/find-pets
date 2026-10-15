@@ -16,10 +16,9 @@ const WHITESPACE = /\s/;
 // um ponto que tenha ao menos 1 caractere antes e 2 depois. Feito sem uma
 // expressão regular única, que teria desempenho ruim (backtracking) com
 // textos longos.
-export function isValidEmail(email) {
-  const value = email || '';
-  const parts = value.split('@');
-  if (WHITESPACE.test(value) || parts.length !== 2) return false;
+export function isValidEmail(email = '') {
+  const parts = email.split('@');
+  if (WHITESPACE.test(email) || parts.length !== 2) return false;
 
   const [name, domain] = parts;
   // Ponto mais à esquerda (depois do 1º caractere): deixa o máximo depois

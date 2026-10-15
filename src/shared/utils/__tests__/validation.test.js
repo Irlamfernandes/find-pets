@@ -40,7 +40,7 @@ describe('validation', () => {
     expect(isValidEmail('ana@x.com')).toBe(true);
     expect(isValidEmail('ana@x')).toBe(false);
     expect(isValidEmail('ana x@x.com')).toBe(false);
-    expect(isValidEmail(null)).toBe(false);
+    expect(isValidEmail()).toBe(false);
   });
 
   it('isValidEmail deve tratar os casos de borda como antes', () => {

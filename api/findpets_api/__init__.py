@@ -32,13 +32,23 @@ SWAGGER_TEMPLATE = {
 }
 
 
+def enable_cors(app):
+    """Libera o navegador só para os sites listados em CORS_ORIGINS."""
+    origins = app.config["CORS_ORIGINS"]
+    if origins:
+        CORS(app, origins=origins)
+
+
 def create_app(overrides=None):
+    # Sem proteção CSRF de propósito: o login vai no cabeçalho Authorization
+    # (token), e não em cookie, então outro site não consegue agir em nome
+    # do usuário.
     app = Flask(__name__)
     app.config.update(load_settings())
     app.config.update(overrides or {})
     require_secret(app.config)
 
-    CORS(app)
+    enable_cors(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     register_error_handlers(app)
     init_database(app)

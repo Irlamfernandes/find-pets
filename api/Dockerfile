@@ -5,7 +5,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Só o código da API: nada de .env, testes ou arquivos locais na imagem
+COPY app.py .
+COPY findpets_api ./findpets_api
+
+# Roda sem ser root; a pasta de fotos (volume) pertence a esse usuário
+RUN useradd --create-home --uid 10001 findpets \
+    && mkdir -p /data/uploads \
+    && chown findpets /data/uploads
+USER findpets
 
 EXPOSE 5000
 

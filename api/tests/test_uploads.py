@@ -13,7 +13,8 @@ def test_envia_e_devolve_a_foto(client, sign_up):
 
     assert response.status_code == 201
     url = response.get_json()["url"]
-    assert url.startswith("http://localhost/uploads/") and url.endswith(".jpg")
+    assert url.startswith("http://localhost/uploads/")
+    assert url.endswith(".jpg")
     # A foto é pública: aparece no feed de todos
     photo = client.get(url.removeprefix("http://localhost"))
     assert photo.status_code == 200

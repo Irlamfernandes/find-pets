@@ -4,6 +4,7 @@ from flasgger import Swagger
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from . import csrf
 from .auth.routes import blueprint as auth_blueprint
 from .config import load_settings, require_secret
 from .database import init_database
@@ -40,15 +41,13 @@ def enable_cors(app):
 
 
 def create_app(overrides=None):
-    # Sem proteção CSRF de propósito: o login vai no cabeçalho Authorization
-    # (token), e não em cookie, então outro site não consegue agir em nome
-    # do usuário.
     app = Flask(__name__)
     app.config.update(load_settings())
     app.config.update(overrides or {})
     require_secret(app.config)
 
     enable_cors(app)
+    csrf.init_app(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     register_error_handlers(app)
     init_database(app)

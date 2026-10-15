@@ -37,7 +37,7 @@ As rotas com login recebem o cabeçalho `Authorization: Bearer <token>`.
 - **Pronta para o app offline**: o id do registro é um UUID gerado no celular e o `PUT` pode ser repetido sem criar duplicatas. Se o servidor já tiver uma versão mais nova (`updatedAt`), ela é mantida. O `GET /posts?since=` usa o `serverUpdatedAt`, que não depende do relógio do celular.
 - **Nada é apagado**: excluir preenche `deleted_at`; fotos que saem de um registro também.
 - **Senhas** guardadas só como hash (bcrypt); o login devolve um token JWT.
-- **Segurança**: o token vai no cabeçalho `Authorization` (e não em cookie), por isso a API não precisa de proteção CSRF. O CORS fica desligado, já que o app de celular não usa; para liberar um site no navegador, coloque o endereço em `CORS_ORIGINS`. O container roda sem ser root e só recebe o código da API.
+- **Segurança**: o token vai no cabeçalho `Authorization` (e não em cookie) e, contra CSRF, alterações pedidas pelo navegador a partir de outro site (cabeçalho `Origin`) são recusadas; o app de celular não manda `Origin` e passa normalmente. O CORS fica desligado, já que o app de celular não usa; para liberar um site no navegador, coloque o endereço em `CORS_ORIGINS`. O container roda sem ser root e só recebe o código da API.
 - **Banco trocável**: as tabelas e consultas usam o SQLAlchemy, então o mesmo código roda no MySQL, no Postgres (Supabase) ou no SQLite, mudando só a `DATABASE_URL` (para Postgres, instale também o driver `psycopg`).
 
 ## Estrutura
@@ -46,6 +46,7 @@ As rotas com login recebem o cabeçalho `Authorization: Bearer <token>`.
 findpets_api/
   __init__.py       monta a API (rotas, Swagger, CORS, erros)
   config.py         variáveis de ambiente
+  csrf.py           recusa alterações pedidas por outros sites
   tables.py         tabelas
   database.py       conexão, transação e "insere ou atualiza"
   auth/             senhas, token, proteção das rotas, cadastro e login

@@ -40,7 +40,7 @@
       "!**/jest.setup.js",
       "!**/jest.globalSetup.js",
       "!**/src/testing/**",
-      "!**/api/**"
+      "!api/**"
     ],
     "coverageThreshold": {
       "global": {

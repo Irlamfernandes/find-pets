@@ -23,6 +23,21 @@ describe('accountService', () => {
     jest.clearAllMocks();
   });
 
+  describe('rememberAccount', () => {
+    it('deve criar a conta no aparelho ou atualizar a senha dela', async () => {
+      await accountService.rememberAccount('ana@x.com', 'primeira');
+      await accountService.rememberAccount('Ana@X.com', 'segunda');
+
+      expect(storedAccounts()).toEqual([
+        {
+          usuario: 'ana@x.com',
+          passwordHash: 'hash:segunda',
+          hasBiometrics: false,
+        },
+      ]);
+    });
+  });
+
   describe('createAccount', () => {
     it('deve criar a conta com a senha criptografada e sem biometria', async () => {
       await accountService.createAccount('ana@x.com', '123456');

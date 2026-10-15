@@ -81,3 +81,32 @@ def test_nao_sobe_sem_uma_chave_segura(tmp_path, monkeypatch, secret):
 
     with pytest.raises(RuntimeError, match="JWT_SECRET"):
         create_app({**settings, "JWT_SECRET": secret})
+
+
+def test_troca_a_senha_para_todos_os_celulares(client, sign_up):
+    headers = sign_up()
+
+    changed = client.put(
+        "/auth/password", json={"newPassword": "nova123"}, headers=headers
+    )
+
+    assert changed.status_code == 204
+    old = client.post("/auth/login", json={**CREDENTIALS, "password": "senha123"})
+    new = client.post("/auth/login", json={**CREDENTIALS, "password": "nova123"})
+    assert (old.status_code, new.status_code) == (401, 200)
+
+
+def test_troca_de_senha_exige_login_e_senha(client, sign_up):
+    assert client.put("/auth/password", json={"newPassword": "x"}).status_code == 401
+
+    response = client.put("/auth/password", json={}, headers=sign_up())
+    assert response.status_code == 400
+
+
+def test_senha_vale_exatamente_como_foi_digitada(client):
+    client.post("/auth/register", json={**CREDENTIALS, "password": " com espaco "})
+
+    trimmed = client.post("/auth/login", json={**CREDENTIALS, "password": "com espaco"})
+    exact = client.post("/auth/login", json={**CREDENTIALS, "password": " com espaco "})
+
+    assert (trimmed.status_code, exact.status_code) == (401, 200)

@@ -3,13 +3,19 @@ import {
   insertCommand,
   runCommand,
   updateCommand,
+  upsertCommand,
 } from '../../../shared/database/sqlCommands';
 import {
   createdFields,
   deletedFields,
   updatedFields,
 } from '../../../shared/database/syncFields';
-import { fromPostRow, toPostRow } from './postMapper';
+import {
+  fromApiPost,
+  fromPostRow,
+  POST_COLUMNS,
+  toPostRow,
+} from './postMapper';
 import { postImageRepository } from './postImageRepository';
 
 const TABLE = 'posts';
@@ -23,6 +29,22 @@ ORDER BY created_at DESC, rowid DESC`;
 
 const SELECT_ACTIVE_BY_ID = `
 SELECT * FROM posts WHERE id = ? AND deleted_at IS NULL`;
+
+// Registros alterados neste celular que ainda não foram para o servidor
+// (inclusive os excluídos)
+const SELECT_PENDING = `
+SELECT * FROM posts WHERE sync_status = 'pending' ORDER BY rowid`;
+
+// Ao gravar o que veio do servidor, só a data de criação não muda
+const SYNCED_UPSERT_OPTIONS = {
+  conflictColumns: ['id'],
+  updateColumns: [
+    ...POST_COLUMNS.filter((column) => column !== 'id'),
+    'updated_at',
+    'deleted_at',
+    'sync_status',
+  ],
+};
 
 async function findById(postId) {
   const database = await getDatabase();
@@ -61,6 +83,28 @@ export const postRepository = {
     );
     if (changes.images)
       await postImageRepository.replace(postId, changes.images);
+  },
+
+  async findPendingRows() {
+    const database = await getDatabase();
+    return database.getAllAsync(SELECT_PENDING);
+  },
+
+  async findUpdatedAt(postId) {
+    const database = await getDatabase();
+    const row = await database.getFirstAsync(
+      'SELECT updated_at FROM posts WHERE id = ?',
+      [postId]
+    );
+    return row?.updated_at ?? null;
+  },
+
+  // Grava o registro como está no servidor (já sincronizado)
+  async saveSynced(remote) {
+    await runCommand(
+      upsertCommand(TABLE, fromApiPost(remote), SYNCED_UPSERT_OPTIONS)
+    );
+    await postImageRepository.replaceFromRemote(remote.id, remote.images);
   },
 
   // Exclusão lógica: o registro e as fotos continuam no banco como histórico

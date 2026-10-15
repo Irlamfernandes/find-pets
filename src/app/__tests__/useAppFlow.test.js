@@ -5,6 +5,8 @@ import { useSession } from '../../features/auth/hooks/useSession';
 import { useBiometricOffer } from '../../features/auth/hooks/useBiometricOffer';
 import { profileService } from '../../features/profile/services/profileService';
 import { useAppAlert } from '../../shared/components/AppAlert';
+import { syncService } from '../../features/sync/syncService';
+import { useSyncLifecycle } from '../../features/sync/useSyncLifecycle';
 
 jest.mock('../../features/auth/hooks/useSession');
 jest.mock('../../features/auth/hooks/useBiometricOffer');
@@ -12,6 +14,10 @@ jest.mock('../../features/profile/services/profileService');
 jest.mock('../../shared/components/AppAlert', () => ({
   useAppAlert: jest.fn(),
 }));
+jest.mock('../../features/sync/syncService', () => ({
+  syncService: { syncNow: jest.fn() },
+}));
+jest.mock('../../features/sync/useSyncLifecycle');
 
 describe('useAppFlow', () => {
   const showAlert = jest.fn();
@@ -33,6 +39,7 @@ describe('useAppFlow', () => {
       passwordPromptProps: { visible: false },
     });
     profileService.getProfile.mockResolvedValue({ name: 'Ana' });
+    syncService.syncNow.mockResolvedValue('synced');
   });
 
   const renderFlow = () => renderHook(() => useAppFlow());
@@ -182,5 +189,48 @@ describe('useAppFlow', () => {
 
     await act(() => hook.result.current.actions.logout());
     expect(screenOf(hook)).toBe(SCREENS.LOGIN);
+  });
+
+  describe('sincronização', () => {
+    it('deve sincronizar antes de entrar, para trazer os dados da conta', async () => {
+      const order = [];
+      syncService.syncNow.mockImplementation(async () => order.push('sync'));
+      profileService.getProfile.mockImplementation(async () => {
+        order.push('perfil');
+        return { name: 'Ana' };
+      });
+      const hook = renderFlow();
+
+      await act(() =>
+        hook.result.current.actions.loginSucceeded({ usuario: 'ana@x.com' })
+      );
+
+      expect(order).toEqual(['sync', 'perfil']);
+      expect(screenOf(hook)).toBe(SCREENS.HOME);
+    });
+
+    it('deve sincronizar em segundo plano ao desbloquear', async () => {
+      sessionState.session = { usuario: 'ana@x.com' };
+      const hook = renderFlow();
+
+      await act(() => hook.result.current.actions.unlocked());
+
+      expect(syncService.syncNow).toHaveBeenCalledTimes(1);
+      expect(screenOf(hook)).toBe(SCREENS.HOME);
+    });
+
+    it('deve pedir novo login quando o servidor recusar o token', async () => {
+      const hook = renderFlow();
+      await act(() => hook.result.current.actions.loginSucceeded({}));
+      const onSessionExpired = useSyncLifecycle.mock.calls.at(-1)[0];
+
+      await act(() => onSessionExpired());
+
+      expect(showAlert).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Entre novamente' })
+      );
+      expect(sessionState.logout).toHaveBeenCalled();
+      expect(screenOf(hook)).toBe(SCREENS.LOGIN);
+    });
   });
 });

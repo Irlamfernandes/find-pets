@@ -332,4 +332,20 @@ describe('PetCard', () => {
     // Compartilhar fica disponível para todos
     expect(getByLabelText('Compartilhar este registro')).toBeTruthy();
   });
+
+  it('deve avisar quando o registro ainda não foi enviado ao servidor', () => {
+    const { getByText, rerender, queryByText } = render(
+      <PetCard item={{ ...baseItem, syncStatus: 'pending' }} {...handlers} />
+    );
+    expect(
+      getByText('Aguardando internet para enviar ao servidor')
+    ).toBeTruthy();
+
+    rerender(
+      <PetCard item={{ ...baseItem, syncStatus: 'synced' }} {...handlers} />
+    );
+    expect(
+      queryByText('Aguardando internet para enviar ao servidor')
+    ).toBeNull();
+  });
 });

@@ -68,7 +68,19 @@ Tabelas `profiles`, `posts` e `post_images` (1 registro : N fotos), criadas em `
 - os ids são **UUID**, que não se repetem entre aparelhos;
 - toda tabela tem `created_at`, `updated_at` e `sync_status` (`pending` até ser enviada);
 - **nada é apagado de verdade**: excluir preenche `deleted_at` (exclusão lógica) e o registro some das consultas, mas fica como histórico;
-- os comandos usam parâmetros `?`, evitando SQL injection.
+- os comandos usam parâmetros `?`, evitando SQL injection;
+- mudanças de estrutura viram migrações numeradas (`src/shared/database/migrations.js`), controladas pelo `PRAGMA user_version`.
+
+### 🔄 Offline e sincronização
+
+O app funciona sem internet e sincroniza com a [API](api/README.md) quando a conexão volta (`src/features/sync/`):
+
+1. toda alteração é gravada primeiro no SQLite, como `pending`; o card mostra "Aguardando internet para enviar ao servidor";
+2. com internet, o app **envia** os pendentes (fotos primeiro, depois o perfil e os registros) e **baixa** o que mudou no servidor, inclusive registros de outros usuários e exclusões;
+3. conflitos: vale a alteração mais recente (`updatedAt`), decidida pela API;
+4. sincroniza ao entrar, quando a internet volta (NetInfo) e depois de cada alteração.
+
+O cadastro e o primeiro login num celular precisam de internet (a API confere a senha e devolve um token, guardado no SecureStore). Depois disso, o app reabre offline com a biometria ou com a senha guardada no aparelho.
 
 Regras que o ESLint (e o CI) exigem no código do app:
 
@@ -81,9 +93,24 @@ Regras que o ESLint (e o CI) exigem no código do app:
 
 ## ⚙️ Como Executar o Projeto
 
-1. **Clone o repositório:**
+1. **Clone o repositório e instale as dependências:**
    ```bash
-   git clone [https://github.com/Irlamfernandes/find-pets.git](https://github.com/Irlamfernandes/find-pets.git)
+   git clone https://github.com/Irlamfernandes/find-pets.git
+   cd find-pets
+   npm install --legacy-peer-deps
+   ```
+2. **Suba a API** (ver [api/README.md](api/README.md)):
+   ```bash
+   cd api && cp .env.example .env   # preencha as senhas e a JWT_SECRET
+   docker compose up --build
+   ```
+3. **Aponte o app para a API:** copie `.env.example` para `.env` e coloque o IP do computador na rede (o celular não enxerga `localhost`):
+   ```bash
+   EXPO_PUBLIC_API_URL=http://192.168.0.10:5001
+   ```
+4. **Rode o app no celular:**
+   ```bash
+   npx expo run:android
    ```
 
 ## atualizações

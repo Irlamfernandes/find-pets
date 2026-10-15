@@ -1,4 +1,5 @@
 import { File, Paths } from 'expo-file-system';
+import { isRemoteUri } from '../api/uploadsApi';
 
 // As fotos do seletor ficam no cache do app, que o sistema pode limpar.
 // Estas funções copiam as fotos para a pasta de documentos do app, onde
@@ -11,7 +12,8 @@ export function createPhotoStorage(filePrefix) {
 
   const persist = async (uri) => {
     if (!uri) return null;
-    if (isStored(uri)) return uri;
+    // Fotos já guardadas ou que estão no servidor não precisam de cópia
+    if (isStored(uri) || isRemoteUri(uri)) return uri;
 
     sequence += 1;
     const destination = new File(

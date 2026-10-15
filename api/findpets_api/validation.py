@@ -27,6 +27,14 @@ def required_text(data, field, max_length=None):
     return check_length(value.strip(), field, max_length)
 
 
+def required_password(data, field):
+    """Senha obrigatória, guardada exatamente como digitada (com espaços)."""
+    value = data.get(field)
+    if not isinstance(value, str) or not value.strip():
+        raise ApiError(400, f"O campo '{field}' é obrigatório.")
+    return value
+
+
 def optional_text(data, field, max_length=None):
     value = data.get(field)
     if value is None:

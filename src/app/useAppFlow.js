@@ -3,6 +3,8 @@ import { useSession } from '../features/auth/hooks/useSession';
 import { useBiometricOffer } from '../features/auth/hooks/useBiometricOffer';
 import { profileService } from '../features/profile/services/profileService';
 import { useAppAlert } from '../shared/components/AppAlert';
+import { syncService } from '../features/sync/syncService';
+import { useSyncLifecycle } from '../features/sync/useSyncLifecycle';
 import { navigationReducer, INITIAL_NAVIGATION } from './navigation';
 
 const loginAlert = ({ type, usuario }) => {
@@ -56,9 +58,18 @@ export function useAppFlow() {
     dispatch({ type: 'authenticated', hasProfile: await hasSavedProfile() });
   };
 
+  // Reabriu o app: entra na hora e sincroniza em segundo plano
+  const unlock = () => {
+    syncService.syncNow();
+    return enter();
+  };
+
+  // Sincroniza antes de entrar: num celular novo, traz o perfil e os
+  // registros da conta (sem internet, entra com o que houver no aparelho)
   const handleLoginSuccess = async (data) => {
     showAlert(loginAlert(data));
     await saveUserSession(data);
+    await syncService.syncNow();
     await enter();
   };
 
@@ -76,6 +87,18 @@ export function useAppFlow() {
       });
     }
   };
+
+  // O servidor recusou o token: os dados continuam no celular, mas para
+  // voltar a sincronizar é preciso entrar com a senha
+  useSyncLifecycle(async () => {
+    showAlert({
+      type: 'warning',
+      title: 'Entre novamente',
+      message:
+        'Sua sessão expirou. Entre com sua senha para voltar a sincronizar.',
+    });
+    await handleLogout();
+  });
 
   const handleLogout = async () => {
     try {
@@ -96,7 +119,7 @@ export function useAppFlow() {
     navigation,
     passwordPromptProps,
     actions: {
-      unlocked: enter,
+      unlocked: unlock,
       loginSucceeded: handleLoginSuccess,
       onboardingCompleted: handleOnboardingComplete,
       logout: handleLogout,

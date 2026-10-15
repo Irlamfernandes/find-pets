@@ -4,9 +4,8 @@ import { formatDateTime } from '../../../shared/utils/timeZone';
 
 export const POST_STATUS = { LOST: 'Perdido', FOUND: 'Encontrado' };
 
-// Registros antigos guardavam o status em `type`; sem nenhum, está perdido
-export const getPostStatus = (post) =>
-  post.status || post.type || POST_STATUS.LOST;
+// Sem status informado, o pet está perdido
+export const getPostStatus = (post) => post.status || POST_STATUS.LOST;
 
 export const isFound = (post) => getPostStatus(post) === POST_STATUS.FOUND;
 
@@ -21,11 +20,10 @@ export const canManage = (post, usuario) =>
 export const hasCoordinates = (post) =>
   Number.isFinite(post.latitude) && Number.isFinite(post.longitude);
 
-// Texto da data do desaparecimento, no fuso em que aconteceu. Registros
-// antigos só têm `date`; sem nenhuma data válida, usa `missing`.
+// Texto da data do desaparecimento, no fuso em que aconteceu; sem data
+// válida, usa `missing`
 export function getOccurredAtLabel(post, missing = 'Data não informada') {
-  const formatted = formatDateTime(post.occurredAt, post.occurredZone);
-  return formatted || post.date || missing;
+  return formatDateTime(post.occurredAt, post.occurredZone) || missing;
 }
 
 // Alterações que registram o reencontro
@@ -48,14 +46,11 @@ export function createLostPost({
     id,
     author: author || null,
     images,
-    imageUri: images[0],
     ...petData,
     ...location,
     occurredAt: occurredAt.toISOString(),
     // Fuso de onde aconteceu, para exibir a hora certa em qualquer país
     occurredZone,
-    date: occurredAt.toLocaleDateString('pt-BR'),
-    type: POST_STATUS.LOST,
     status: POST_STATUS.LOST,
     contactPhone: contactPhone || null,
   };

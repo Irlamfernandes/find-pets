@@ -8,14 +8,11 @@ import { InfoRow } from '../../../shared/components/InfoRow';
 import { palette } from '../../../shared/theme/colors';
 import { LocationMap } from '../../map/components/LocationMap';
 import { getPetFields } from '../utils/petDescription';
-import { getPostImages } from '../utils/postImages';
 import { getPostStatus, isFound, getOccurredAtLabel } from '../domain/post';
 import { PetInfoGrid } from './PetInfoGrid';
 import { PhotoCarousel } from './PhotoCarousel';
 import { FoundInfoBox } from './FoundInfoBox';
 import { ContactButtons } from './ContactButtons';
-
-export { getPostImages } from '../utils/postImages';
 
 // Ações exclusivas de quem registrou; cada uma aparece se a prop existir
 const OWNER_ACTIONS = [
@@ -69,7 +66,7 @@ export function PetCard({
 }) {
   return (
     <View style={styles.card}>
-      <PhotoCarousel images={getPostImages(item)} onOpenPhoto={onOpenPhoto} />
+      <PhotoCarousel images={item.images} onOpenPhoto={onOpenPhoto} />
 
       <View style={styles.info}>
         <Text style={[styles.badge, isFound(item) && styles.foundBadge]}>
@@ -134,12 +131,9 @@ export function PetCard({
 PetCard.propTypes = {
   item: PropTypes.shape({
     id: PropTypes.string.isRequired,
-    imageUri: PropTypes.string,
-    images: PropTypes.arrayOf(PropTypes.string),
+    images: PropTypes.arrayOf(PropTypes.string).isRequired,
     description: PropTypes.string,
-    type: PropTypes.string.isRequired,
-    status: PropTypes.string,
-    date: PropTypes.string.isRequired,
+    status: PropTypes.string.isRequired,
     occurredAt: PropTypes.string,
     occurredZone: PropTypes.shape({
       offsetMinutes: PropTypes.number,

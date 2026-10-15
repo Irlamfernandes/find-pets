@@ -1,30 +1,30 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postService } from '../postService';
+import { postRepository } from '../../data/postRepository';
+import { clearDatabase, selectRows } from '../../../../testing/database';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('../../../../testing/memoryStorage').createAsyncStorageMock()
-);
+const post = (id, extra = {}) => ({
+  id,
+  status: 'Perdido',
+  images: [],
+  ...extra,
+});
 
-const post = (id, extra = {}) => ({ id, status: 'Perdido', ...extra });
+const ids = (posts) => posts.map((item) => item.id);
 
 describe('postService', () => {
-  beforeEach(() => {
-    AsyncStorage.__backend.reset();
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    await clearDatabase();
+    jest.restoreAllMocks();
   });
 
   it('deve começar vazio e guardar o registro mais novo primeiro', async () => {
     await expect(postService.getPosts()).resolves.toEqual([]);
 
     await postService.savePost(post('1'));
-    await expect(postService.savePost(post('2'))).resolves.toEqual([
-      post('2'),
-      post('1'),
-    ]);
-    await expect(postService.getPosts()).resolves.toEqual([
-      post('2'),
-      post('1'),
-    ]);
+    const saved = await postService.savePost(post('2'));
+
+    expect(ids(saved)).toEqual(['2', '1']);
+    expect(ids(await postService.getPosts())).toEqual(['2', '1']);
   });
 
   it('deve atualizar os campos de um registro mantendo o id', async () => {
@@ -36,29 +36,30 @@ describe('postService', () => {
       status: 'Encontrado',
     });
 
-    expect(posts).toEqual([post('2'), post('1', { status: 'Encontrado' })]);
+    expect(posts).toMatchObject([
+      { id: '2', status: 'Perdido' },
+      { id: '1', status: 'Encontrado' },
+    ]);
   });
 
-  it('deve excluir apenas o registro indicado', async () => {
+  it('deve tirar da lista apenas o registro excluído, sem apagá-lo do banco', async () => {
     await postService.savePost(post('1'));
     await postService.savePost(post('2'));
 
-    await expect(postService.deletePost('1')).resolves.toEqual([post('2')]);
+    expect(ids(await postService.deletePost('1'))).toEqual(['2']);
+    await expect(selectRows('SELECT id FROM posts')).resolves.toHaveLength(2);
   });
 
-  it('deve ignorar dados corrompidos e registros inválidos', async () => {
-    const data = AsyncStorage.__backend.data;
-    data.set('FindPets_posts', '{"nao":"é lista"}');
-    await expect(postService.getPosts()).resolves.toEqual([]);
+  it('não deve gravar nada se o registro falhar no meio do salvamento', async () => {
+    // O id repetido faz o INSERT falhar dentro da transação
+    await postService.savePost(post('1', { images: ['a.jpg'] }));
 
-    data.set('FindPets_posts', '{quebrado');
-    await expect(postService.savePost(post('1'))).resolves.toEqual([post('1')]);
-
-    data.set(
-      'FindPets_posts',
-      JSON.stringify([null, 'texto', { semId: true }, post('2')])
-    );
-    await expect(postService.getPosts()).resolves.toEqual([post('2')]);
+    await expect(
+      postService.savePost(post('1', { images: ['b.jpg'] }))
+    ).rejects.toThrow('Erro ao salvar a publicação');
+    await expect(
+      selectRows('SELECT local_uri FROM post_images')
+    ).resolves.toEqual([{ local_uri: 'a.jpg' }]);
   });
 
   it('deve validar os dados recebidos', () => {
@@ -74,11 +75,10 @@ describe('postService', () => {
     );
   });
 
-  it('deve informar as falhas do armazenamento', async () => {
-    const failure = new Error('indisponível');
-    for (let i = 0; i < 4; i += 1) {
-      AsyncStorage.getItem.mockRejectedValueOnce(failure);
-    }
+  it('deve informar as falhas do banco', async () => {
+    jest
+      .spyOn(postRepository, 'findActive')
+      .mockRejectedValue(new Error('indisponível'));
 
     await expect(postService.getPosts()).rejects.toThrow(
       'Erro ao carregar as publicações: indisponível'

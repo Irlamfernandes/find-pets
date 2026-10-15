@@ -1,7 +1,6 @@
 import {
   formatPhone,
   onlyDigits,
-  withCountryCode,
   PHONE_MIN_DIGITS,
 } from '../../shared/utils/phoneMask';
 import { rule, isFilled } from '../../shared/utils/validation';
@@ -21,7 +20,7 @@ export const INITIAL_PROFILE_STATE = {
 export function toProfileValues(profile) {
   return {
     name: profile?.name || '',
-    whatsapp: formatPhone(withCountryCode(profile?.whatsapp)),
+    whatsapp: formatPhone(profile?.whatsapp),
     photoUri: profile?.photoUri || null,
   };
 }

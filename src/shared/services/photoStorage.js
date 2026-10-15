@@ -37,7 +37,6 @@ export function createPhotoStorage(filePrefix) {
     persist,
     remove,
     persistAll: (uris) => Promise.all(uris.map(persist)),
-    removeAll: (uris) => uris.forEach(remove),
   };
 }
 

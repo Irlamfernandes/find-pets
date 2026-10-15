@@ -50,7 +50,7 @@ function isValidZone(zone) {
 const pad = (value) => String(value).padStart(2, '0');
 
 // Formata no fuso em que a data foi registrada: "25/09/2026 às 14:30 (BRT, UTC-3)".
-// Registros antigos, sem fuso salvo, usam o fuso do aparelho.
+// Sem fuso informado, usa o fuso do aparelho.
 export function formatDateTime(value, zone) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';

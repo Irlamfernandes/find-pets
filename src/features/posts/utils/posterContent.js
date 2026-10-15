@@ -1,12 +1,11 @@
 import { isFound as isFoundPost, getOccurredAtLabel } from '../domain/post';
-import { formatPhone, withCountryCode } from '../../../shared/utils/phoneMask';
-import { getPostImages } from './postImages';
+import { formatPhone } from '../../../shared/utils/phoneMask';
 import { getPetFields, getPetTitle } from './petDescription';
 
 // Depois do reencontro, o contato não precisa mais circular
 function getPosterPhone(post, isFound) {
   if (isFound || !post.contactPhone) return '';
-  return formatPhone(withCountryCode(post.contactPhone));
+  return formatPhone(post.contactPhone);
 }
 
 // Informações exibidas no cartaz de compartilhamento
@@ -16,7 +15,7 @@ export function getPosterContent(post) {
   return {
     isFound,
     headline: isFound ? 'ENCONTRADO' : 'PROCURA-SE',
-    image: getPostImages(post)[0],
+    image: post.images[0],
     title: getPetTitle(post) || 'Pet',
     // O nome já aparece como título do cartaz
     fields: getPetFields(post, { includeName: false }),

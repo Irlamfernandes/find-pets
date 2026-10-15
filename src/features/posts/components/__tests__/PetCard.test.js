@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
-import { PetCard, getPostImages } from '../PetCard';
+import { PetCard } from '../PetCard';
 
 /* eslint-disable react/prop-types */
 jest.mock('../../../map/components/LocationMap', () => ({
@@ -15,11 +15,8 @@ describe('PetCard', () => {
   const baseItem = {
     id: '1',
     images: ['https://example.com/a.jpg', 'https://example.com/b.jpg'],
-    imageUri: 'https://example.com/a.jpg',
     description: 'Cachorro caramelo com coleira azul',
-    type: 'Perdido',
     status: 'Perdido',
-    date: '25/09/2026',
     occurredAt: new Date(2026, 8, 25, 14, 30).toISOString(),
     latitude: -23.5505,
     longitude: -46.6333,
@@ -110,22 +107,21 @@ describe('PetCard', () => {
     expect(handlers.onOpenRoute).toHaveBeenCalledTimes(1);
   });
 
-  it('deve suportar registros antigos com uma foto e sem descrição', () => {
-    const legacyItem = {
+  it('deve suportar registro com uma foto, sem descrição e sem data', () => {
+    const minimalItem = {
       id: '2',
-      imageUri: 'https://example.com/old.jpg',
-      type: 'Perdido',
-      date: '10/06/2026',
+      images: ['https://example.com/old.jpg'],
+      status: 'Perdido',
     };
 
     const { getAllByTestId, getByText, queryByText } = render(
-      <PetCard item={legacyItem} {...handlers} />
+      <PetCard item={minimalItem} {...handlers} />
     );
 
     expect(getAllByTestId('pet-image')).toHaveLength(1);
     expect(queryByText('1/1')).toBeNull();
     expect(getByText('Perdido')).toBeTruthy();
-    expect(getByText('Desapareceu em: 10/06/2026')).toBeTruthy();
+    expect(getByText('Desapareceu em: Data não informada')).toBeTruthy();
     // Sem coordenadas não há como traçar rota
     expect(queryByText('Como chegar')).toBeNull();
     expect(queryByText('Cachorro caramelo com coleira azul')).toBeNull();
@@ -255,14 +251,6 @@ describe('PetCard', () => {
     expect(queryByLabelText('Marcar como encontrado')).toBeNull();
   });
 
-  it('getPostImages deve priorizar a lista de fotos', () => {
-    expect(getPostImages({ images: ['a', 'b'], imageUri: 'a' })).toEqual([
-      'a',
-      'b',
-    ]);
-    expect(getPostImages({ images: [], imageUri: 'x' })).toEqual(['x']);
-  });
-
   it('deve exibir apenas o botão de encontrado quando não puder excluir', () => {
     const { getByLabelText, queryByText } = render(
       <PetCard item={baseItem} {...handlers} onMarkFound={jest.fn()} />
@@ -310,10 +298,10 @@ describe('PetCard', () => {
       expect(queryByText('Cor')).toBeNull();
     });
 
-    it('não deve mostrar a grade de dados em registros antigos', () => {
+    it('não deve mostrar a grade de dados sem dados do pet', () => {
       const { queryByTestId } = render(
         <PetCard
-          item={{ id: '9', imageUri: 'x.jpg', type: 'Perdido', date: '1/1' }}
+          item={{ id: '9', images: ['x.jpg'], status: 'Perdido' }}
           {...handlers}
         />
       );

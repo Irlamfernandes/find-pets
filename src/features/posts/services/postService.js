@@ -1,18 +1,6 @@
-import { STORAGE_KEYS } from '../../../shared/constants/storageKeys';
-import {
-  createJsonStore,
-  withErrorContext,
-} from '../../../shared/services/storage';
-
-// Registros sem id (ou que nem são objetos) não podem ser exibidos
-const isValidPost = (post) =>
-  post !== null && typeof post === 'object' && Boolean(post.id);
-
-// Registros de pets, do mais novo para o mais antigo
-const postsStore = createJsonStore(STORAGE_KEYS.POSTS, {
-  fallback: [],
-  normalize: (posts) => posts.filter(isValidPost),
-});
+import { inTransaction } from '../../../shared/database/connection';
+import { withErrorContext } from '../../../shared/services/storage';
+import { postRepository } from '../data/postRepository';
 
 function requireId(postId) {
   if (!postId) {
@@ -20,37 +8,40 @@ function requireId(postId) {
   }
 }
 
+// Registros de pets, do mais novo para o mais antigo. Cada alteração
+// devolve a lista atualizada.
 export const postService = {
   getPosts() {
-    return withErrorContext('Erro ao carregar as publicações', postsStore.read);
+    return withErrorContext('Erro ao carregar as publicações', () =>
+      postRepository.findActive()
+    );
   },
 
-  // Devolve a lista atualizada
   savePost(post) {
     if (!post?.id) {
       throw new Error('Dados do post inválidos.');
     }
-    return withErrorContext('Erro ao salvar a publicação', () =>
-      postsStore.update((posts) => [post, ...posts])
-    );
+    return withErrorContext('Erro ao salvar a publicação', async () => {
+      await inTransaction(() => postRepository.insert(post));
+      return postRepository.findActive();
+    });
   },
 
+  // Exclusão lógica: some do feed, mas continua no banco como histórico
   deletePost(postId) {
     requireId(postId);
-    return withErrorContext('Erro ao excluir a publicação', () =>
-      postsStore.update((posts) => posts.filter((post) => post.id !== postId))
-    );
+    return withErrorContext('Erro ao excluir a publicação', async () => {
+      await postRepository.softDelete(postId);
+      return postRepository.findActive();
+    });
   },
 
   // Aplica `changes` ao registro, mantendo o id
   updatePost(postId, changes) {
     requireId(postId);
-    return withErrorContext('Erro ao atualizar a publicação', () =>
-      postsStore.update((posts) =>
-        posts.map((post) =>
-          post.id === postId ? { ...post, ...changes, id: post.id } : post
-        )
-      )
-    );
+    return withErrorContext('Erro ao atualizar a publicação', async () => {
+      await inTransaction(() => postRepository.update(postId, changes));
+      return postRepository.findActive();
+    });
   },
 };

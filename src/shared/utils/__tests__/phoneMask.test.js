@@ -1,4 +1,4 @@
-import { formatPhone, onlyDigits, withCountryCode } from '../phoneMask';
+import { formatPhone, onlyDigits } from '../phoneMask';
 
 describe('phoneMask', () => {
   describe('onlyDigits', () => {
@@ -11,18 +11,6 @@ describe('phoneMask', () => {
       expect(onlyDigits('')).toBe('');
       expect(onlyDigits(null)).toBe('');
       expect(onlyDigits(undefined)).toBe('');
-    });
-  });
-
-  describe('withCountryCode', () => {
-    it('deve adicionar +55 em números salvos sem código do país', () => {
-      expect(withCountryCode('11999999999')).toBe('5511999999999');
-      expect(withCountryCode('1133334444')).toBe('551133334444');
-    });
-
-    it('deve manter números que já possuem código do país', () => {
-      expect(withCountryCode('5511999999999')).toBe('5511999999999');
-      expect(withCountryCode('')).toBe('');
     });
   });
 

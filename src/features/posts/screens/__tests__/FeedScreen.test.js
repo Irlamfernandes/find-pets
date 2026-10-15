@@ -53,7 +53,6 @@ jest.mock('../../../../shared/services/externalLinkService', () => ({
 
 /* eslint-disable react/prop-types */
 jest.mock('../../components/PetCard', () => ({
-  getPostImages: (item) => item.images || [item.imageUri],
   PetCard: ({
     item,
     onOpenPhoto,
@@ -212,7 +211,7 @@ describe('FeedScreen', () => {
   it('deve abrir e fechar as fotos em tela cheia a partir do card', () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
-      posts: [{ id: '1', type: 'Perdido', images: ['a.jpg', 'b.jpg'] }],
+      posts: [{ id: '1', status: 'Perdido', images: ['a.jpg', 'b.jpg'] }],
     });
 
     const { getByTestId, getByText, queryByTestId } = render(
@@ -229,7 +228,7 @@ describe('FeedScreen', () => {
   it('deve abrir e fechar o mapa em tela cheia a partir do card', () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
-      posts: [{ id: '1', type: 'Perdido', imageUri: 'a.jpg' }],
+      posts: [{ id: '1', status: 'Perdido', images: ['a.jpg'] }],
     });
 
     const { getByTestId, getByText, queryByTestId } = render(
@@ -249,8 +248,8 @@ describe('FeedScreen', () => {
       posts: [
         {
           id: '1',
-          type: 'Perdido',
-          imageUri: 'a.jpg',
+          status: 'Perdido',
+          images: ['a.jpg'],
           latitude: -23.5,
           longitude: -46.6,
         },
@@ -274,7 +273,7 @@ describe('FeedScreen', () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       currentUser: 'user1@test.com',
-      posts: [{ id: '1', type: 'Perdido', author: 'user1@test.com' }],
+      posts: [{ id: '1', status: 'Perdido', author: 'user1@test.com' }],
     });
 
     const { getByTestId } = render(
@@ -292,10 +291,9 @@ describe('FeedScreen', () => {
       ...mockUseFeedReturn,
       currentUser: 'user1@test.com',
       posts: [
-        { id: '1', type: 'Perdido', author: 'user2@test.com' },
+        { id: '1', status: 'Perdido', author: 'user2@test.com' },
         {
           id: '2',
-          type: 'Perdido',
           status: 'Encontrado',
           author: 'user1@test.com',
         },
@@ -351,7 +349,7 @@ describe('FeedScreen', () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       currentUser: 'ana@test.com',
-      posts: [{ id: '1', type: 'Perdido', imageUri: 'a.jpg' }],
+      posts: [{ id: '1', status: 'Perdido', images: ['a.jpg'] }],
     });
 
     const { getByTestId, getByText, queryByLabelText, UNSAFE_getByType } =
@@ -381,7 +379,7 @@ describe('FeedScreen', () => {
   });
 
   it('deve abrir o cartaz do registro e compartilhar a imagem', async () => {
-    const post = { id: '1', type: 'Perdido', imageUri: 'a.jpg' };
+    const post = { id: '1', status: 'Perdido', images: ['a.jpg'] };
     useFeed.mockReturnValue({ ...mockUseFeedReturn, posts: [post] });
 
     const { getByTestId, getByText, queryByText } = render(
@@ -403,16 +401,15 @@ describe('FeedScreen', () => {
 
   it('deve permitir editar só os registros ativos do próprio usuário', () => {
     const mockOnEditPost = jest.fn();
-    const own = { id: '1', type: 'Perdido', author: 'eu@test.com' };
+    const own = { id: '1', status: 'Perdido', author: 'eu@test.com' };
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       currentUser: 'eu@test.com',
       posts: [
         own,
-        { id: '2', type: 'Perdido', author: 'outro@test.com' },
+        { id: '2', status: 'Perdido', author: 'outro@test.com' },
         {
           id: '3',
-          type: 'Perdido',
           status: 'Encontrado',
           author: 'eu@test.com',
         },
@@ -436,8 +433,8 @@ describe('FeedScreen', () => {
   describe('mapa com todos os pets perdidos', () => {
     const lostPost = {
       id: '1',
-      type: 'Perdido',
-      imageUri: 'a.jpg',
+      status: 'Perdido',
+      images: ['a.jpg'],
       petName: 'Rex',
       latitude: -23.5,
       longitude: -46.6,
@@ -449,12 +446,11 @@ describe('FeedScreen', () => {
         ...mockUseFeedReturn,
         posts: [
           lostPost,
-          { id: '2', type: 'Perdido', imageUri: 'b.jpg' },
+          { id: '2', status: 'Perdido', images: ['b.jpg'] },
           {
             id: '3',
-            type: 'Perdido',
             status: 'Encontrado',
-            imageUri: 'c.jpg',
+            images: ['c.jpg'],
             latitude: 1,
             longitude: 2,
           },

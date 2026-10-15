@@ -55,9 +55,7 @@ describe('SharePoster', () => {
 
   it('deve omitir as informações que o registro não tiver', () => {
     const { getByText, queryByText } = render(
-      <SharePoster
-        post={{ type: 'Perdido', imageUri: 'file:///a.jpg', date: '' }}
-      />
+      <SharePoster post={{ status: 'Perdido', images: ['file:///a.jpg'] }} />
     );
 
     expect(getByText('Pet')).toBeTruthy();

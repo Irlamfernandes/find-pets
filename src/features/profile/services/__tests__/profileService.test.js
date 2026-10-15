@@ -1,47 +1,59 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { profileService } from '../profileService';
 import { sessionService } from '../../../auth/services/sessionService';
-
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('../../../../testing/memoryStorage').createAsyncStorageMock()
-);
+import { profileRepository } from '../../data/profileRepository';
+import { clearDatabase, selectRows } from '../../../../testing/database';
 
 const PROFILE = { name: 'Ana', whatsapp: '5511999999999' };
 
+const loginAs = (usuario) => sessionService.saveSession({ usuario });
+
 describe('profileService', () => {
-  beforeEach(() => {
-    AsyncStorage.__backend.reset();
-    jest.clearAllMocks();
+  beforeEach(async () => {
+    await clearDatabase();
+    await sessionService.clearSession();
+    jest.restoreAllMocks();
   });
 
   it('deve guardar o perfil de cada conta separadamente', async () => {
-    await profileService.saveProfile(PROFILE, 'ana@x.com');
-    await profileService.saveProfile({ ...PROFILE, name: 'Bia' }, 'bia@x.com');
+    await loginAs('ana@x.com');
+    await expect(profileService.saveProfile(PROFILE)).resolves.toEqual(PROFILE);
 
-    await expect(profileService.getProfile('ana@x.com')).resolves.toEqual(
-      PROFILE
-    );
-    await expect(profileService.getProfile('bia@x.com')).resolves.toEqual({
+    await loginAs('bia@x.com');
+    await profileService.saveProfile({ ...PROFILE, name: 'Bia' });
+    await expect(profileService.getProfile()).resolves.toEqual({
       ...PROFILE,
       name: 'Bia',
     });
-    await expect(profileService.getProfile('caio@x.com')).resolves.toBeNull();
+
+    await loginAs('ana@x.com');
+    await expect(profileService.getProfile()).resolves.toEqual(PROFILE);
+
+    await loginAs('caio@x.com');
+    await expect(profileService.getProfile()).resolves.toBeNull();
   });
 
-  it('deve usar a conta conectada quando a conta não for informada', async () => {
-    await sessionService.saveSession({ usuario: 'ana@x.com' });
+  it('deve atualizar o perfil existente, com ou sem foto', async () => {
+    await loginAs('ana@x.com');
+    await profileService.saveProfile({ ...PROFILE, photoUri: 'foto.jpg' });
+    await expect(profileService.getProfile()).resolves.toEqual({
+      ...PROFILE,
+      photoUri: 'foto.jpg',
+    });
 
-    await expect(profileService.saveProfile(PROFILE)).resolves.toEqual(PROFILE);
-    await expect(profileService.getProfile()).resolves.toEqual(PROFILE);
-    await expect(profileService.getProfile('ana@x.com')).resolves.toEqual(
-      PROFILE
-    );
+    await profileService.saveProfile({ ...PROFILE, name: 'Ana B' });
+
+    await expect(profileService.getProfile()).resolves.toEqual({
+      ...PROFILE,
+      name: 'Ana B',
+    });
+    // Continua uma linha só
+    await expect(selectRows('SELECT * FROM profiles')).resolves.toHaveLength(1);
   });
 
   it('deve exigir nome e WhatsApp', async () => {
-    await expect(
-      profileService.saveProfile({ name: 'Ana' }, 'ana@x.com')
-    ).rejects.toThrow('Dados inválidos para salvamento do perfil.');
+    await expect(profileService.saveProfile({ name: 'Ana' })).rejects.toThrow(
+      'Dados inválidos para salvamento do perfil.'
+    );
     await expect(profileService.saveProfile(null)).rejects.toThrow(
       'Dados inválidos para salvamento do perfil.'
     );
@@ -55,9 +67,12 @@ describe('profileService', () => {
   });
 
   it('deve informar a falha ao ler', async () => {
-    AsyncStorage.getItem.mockRejectedValueOnce(new Error('indisponível'));
+    await loginAs('ana@x.com');
+    jest
+      .spyOn(profileRepository, 'findByUser')
+      .mockRejectedValueOnce(new Error('indisponível'));
 
-    await expect(profileService.getProfile('ana@x.com')).rejects.toThrow(
+    await expect(profileService.getProfile()).rejects.toThrow(
       'Erro ao buscar perfil: indisponível'
     );
   });

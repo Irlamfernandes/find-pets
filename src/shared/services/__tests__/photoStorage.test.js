@@ -83,16 +83,6 @@ describe('photoStorage', () => {
     expect(mockFiles).toHaveLength(3);
   });
 
-  it('deve apagar várias fotos de uma vez', () => {
-    storage.removeAll([
-      'file:///docs/test-photo-1.jpg',
-      'file:///docs/test-photo-2.jpg',
-    ]);
-
-    expect(mockFiles).toHaveLength(2);
-    mockFiles.forEach((file) => expect(file.delete).toHaveBeenCalled());
-  });
-
   it('deve separar as fotos de perfil das fotos dos registros', async () => {
     await expect(
       profilePhotoStorage.persist('file:///cache/a.jpg')

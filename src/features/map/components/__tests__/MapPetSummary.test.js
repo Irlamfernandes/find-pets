@@ -57,16 +57,16 @@ describe('MapPetSummary', () => {
     expect(handlers.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('deve funcionar com registros antigos', () => {
+  it('deve funcionar só com os campos obrigatórios', () => {
     const { getByText, queryByText } = render(
       <MapPetSummary
-        post={{ id: '2', imageUri: 'x.jpg', type: 'Perdido', date: '10/06' }}
+        post={{ id: '2', images: ['x.jpg'], status: 'Perdido' }}
         {...handlers}
       />
     );
 
     expect(getByText('Pet perdido')).toBeTruthy();
-    expect(getByText('10/06')).toBeTruthy();
+    expect(getByText('Data não informada')).toBeTruthy();
     expect(queryByText('Espécie')).toBeNull();
   });
 });

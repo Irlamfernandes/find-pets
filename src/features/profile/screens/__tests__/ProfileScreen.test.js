@@ -65,7 +65,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     jest.clearAllMocks();
     profileService.getProfile.mockResolvedValue({
       name: 'Irlam',
-      whatsapp: '11999999999',
+      whatsapp: '5511999999999',
     });
     sessionService.getCurrentUser.mockResolvedValue('irlam@test.com');
     accountService.checkPassword.mockResolvedValue(true);

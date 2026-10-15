@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import { useFeed } from '../hooks/useFeed';
 import { useFeedGuide } from '../hooks/useFeedGuide';
 import { useSharePost } from '../hooks/useSharePost';
-import { getPostImages } from '../utils/postImages';
 import { PetList } from '../components/PetList';
 import { FoundPetModal } from '../components/FoundPetModal';
 import { FeedGuideCard } from '../components/FeedGuideCard';
@@ -39,7 +38,7 @@ export default function FeedScreen({
   const [viewMode, setViewMode] = useState('list');
 
   const openPhotos = (post, index = 0) =>
-    setPhotoViewer({ images: getPostImages(post), index });
+    setPhotoViewer({ images: post.images, index });
 
   return (
     <SafeAreaView style={styles.container}>

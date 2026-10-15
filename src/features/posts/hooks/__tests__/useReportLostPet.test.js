@@ -17,7 +17,7 @@ jest.mock('../../../../shared/services/photoService', () => ({
 }));
 
 jest.mock('../../../../shared/services/photoStorage', () => ({
-  postPhotoStorage: { persistAll: jest.fn(), removeAll: jest.fn() },
+  postPhotoStorage: { persistAll: jest.fn() },
 }));
 
 jest.mock('../../../../shared/services/locationService', () => ({
@@ -318,10 +318,10 @@ describe('useReportLostPet', () => {
       'b.jpg',
     ]);
     expect(postService.savePost).toHaveBeenCalledWith({
-      id: String(NOW.getTime()),
+      // UUID: não se repete entre aparelhos
+      id: expect.stringMatching(/^[0-9a-f-]{36}$/),
       author: 'user@test.com',
       images: ['stored:a.jpg', 'stored:b.jpg'],
-      imageUri: 'stored:a.jpg',
       petName: 'Mimi',
       species: 'Gato',
       size: 'Pequeno',
@@ -334,8 +334,6 @@ describe('useReportLostPet', () => {
       location: 'Rua da Foto, 1',
       occurredAt: occurredAt.toISOString(),
       occurredZone: { offsetMinutes: -180, abbreviation: 'BRT' },
-      date: '24/09/2026',
-      type: 'Perdido',
       status: 'Perdido',
       contactPhone: '5511999999999',
     });
@@ -458,7 +456,6 @@ describe('useReportLostPet', () => {
       id: '42',
       author: 'user@test.com',
       images: ['stored:a.jpg', 'stored:b.jpg'],
-      imageUri: 'stored:a.jpg',
       petName: 'Rex',
       species: 'Cachorro',
       size: 'Médio',
@@ -491,7 +488,7 @@ describe('useReportLostPet', () => {
       expect(result.current.address).toBe('Rua Antiga, 10');
     });
 
-    it('deve atualizar os dados mantendo o local e apagar as fotos removidas', async () => {
+    it('deve atualizar os dados mantendo o local e trocar as fotos', async () => {
       const onSaved = jest.fn();
       const { result } = renderEdit(existingPost, onSaved);
 
@@ -513,7 +510,6 @@ describe('useReportLostPet', () => {
 
       expect(postService.updatePost).toHaveBeenCalledWith('42', {
         images: ['stored:b.jpg', 'stored:nova.jpg'],
-        imageUri: 'stored:b.jpg',
         ...emptyPetData,
         petName: 'Rex Jr',
         species: 'Cachorro',
@@ -523,7 +519,6 @@ describe('useReportLostPet', () => {
         longitude: -46,
         location: 'Rua Antiga, 10',
       });
-      expect(postPhotoStorage.removeAll).toHaveBeenCalledWith(['stored:a.jpg']);
       expect(postService.savePost).not.toHaveBeenCalled();
       expect(Alert.alert).toHaveBeenCalledWith(
         'Registro atualizado',
@@ -572,10 +567,10 @@ describe('useReportLostPet', () => {
       );
     });
 
-    it('deve manter o local original com endereço vazio e aceitar registro antigo', async () => {
+    it('deve manter o local original com endereço vazio', async () => {
       const legacyPost = {
         id: '7',
-        imageUri: 'file:///antiga.jpg',
+        images: ['file:///antiga.jpg'],
         description: 'Cachorro preto',
         species: 'Cachorro',
         location: 'Centro',
@@ -614,7 +609,6 @@ describe('useReportLostPet', () => {
         'Não foi possível salvar',
         'Tente salvar o registro novamente.'
       );
-      expect(postPhotoStorage.removeAll).not.toHaveBeenCalled();
       expect(onSaved).not.toHaveBeenCalled();
     });
   });

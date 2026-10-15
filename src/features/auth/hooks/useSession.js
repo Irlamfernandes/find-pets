@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sessionService } from '../services/sessionService';
-import { runStorageMigrations } from '../../../app/storageMigrations';
 
 export function useSession() {
   const [isLoading, setIsLoading] = useState(true);
@@ -9,8 +8,6 @@ export function useSession() {
   const checkSession = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Converte dados gravados por versões antigas antes de qualquer leitura
-      await runStorageMigrations();
       const currentSession = await sessionService.getSession();
       setSession(currentSession);
     } catch {
@@ -39,6 +36,5 @@ export function useSession() {
     session,
     saveUserSession,
     logout,
-    checkSession,
   };
 }

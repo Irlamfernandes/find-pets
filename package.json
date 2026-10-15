@@ -39,7 +39,8 @@
       "!**/App.js",
       "!**/jest.setup.js",
       "!**/jest.globalSetup.js",
-      "!**/src/testing/**"
+      "!**/src/testing/**",
+      "!**/api/**"
     ],
     "coverageThreshold": {
       "global": {
@@ -53,7 +54,14 @@
       "./jest.setup.js"
     ],
     "testTimeout": 15000,
-    "globalSetup": "./jest.globalSetup.js"
+    "globalSetup": "./jest.globalSetup.js",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/api/"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/api/"
+    ]
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",

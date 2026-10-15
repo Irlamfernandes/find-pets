@@ -7,7 +7,8 @@ import globals from 'globals';
 
 export default [
   {
-    ignores: ['coverage/**'],
+    // api/ é a API em Python (tem lint próprio, com o Ruff)
+    ignores: ['coverage/**', 'api/**'],
   },
   js.configs.recommended,
   {

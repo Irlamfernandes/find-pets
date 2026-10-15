@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { postService } from '../services/postService';
-import { postPhotoStorage } from '../../../shared/services/photoStorage';
-import { getPostImages } from '../utils/postImages';
 import { isFound, isOwnedBy, markAsFound } from '../domain/post';
 import { profileService } from '../../profile/services/profileService';
 import { sessionService } from '../../auth/services/sessionService';
@@ -78,9 +76,8 @@ export function useFeed() {
 
   const removePost = async (post) => {
     try {
+      // Exclusão lógica: o registro e as fotos ficam guardados como histórico
       setPosts(await postService.deletePost(post.id));
-      // Libera o espaço das fotos do registro excluído
-      postPhotoStorage.removeAll(getPostImages(post));
     } catch {
       showAlert(ALERTS.deleteFailed);
     }

@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { PetInfoGrid } from '../../posts/components/PetInfoGrid';
 import { getPetFields, getPetTitle } from '../../posts/utils/petDescription';
-import { getPostImages } from '../../posts/utils/postImages';
 import { getOccurredAtLabel } from '../../posts/domain/post';
 import { ContactButtons } from '../../posts/components/ContactButtons';
 import { InfoRow } from '../../../shared/components/InfoRow';
@@ -19,7 +18,7 @@ export function MapPetSummary({
   onOpenWhatsApp,
   onOpenRoute,
 }) {
-  const [photo] = getPostImages(post);
+  const [photo] = post.images;
 
   return (
     <View testID="map-pet-summary" style={styles.card}>

@@ -1,8 +1,8 @@
 import { postService } from './postService';
 import { resolveNewPostLocation, resolveEditedLocation } from './postLocation';
 import { createLostPost } from '../domain/post';
-import { getPostImages } from '../utils/postImages';
 import { postPhotoStorage } from '../../../shared/services/photoStorage';
+import { createId } from '../../../shared/utils/id';
 import { getPhotosMetadata } from '../../../shared/utils/photoMetadata';
 import { getTimeZoneInfo } from '../../../shared/utils/timeZone';
 import { profileService } from '../../profile/services/profileService';
@@ -27,7 +27,7 @@ export async function publishLostPost({ photos, petData, address }) {
 
   await postService.savePost(
     createLostPost({
-      id: Date.now().toString(),
+      id: createId(),
       author,
       images,
       petData,
@@ -39,18 +39,14 @@ export async function publishLostPost({ photos, petData, address }) {
   );
 }
 
-// Salva a edição de um registro e apaga do aparelho as fotos que saíram dele
+// Salva a edição de um registro. As fotos que saíram dele continuam no
+// aparelho, ligadas ao histórico do registro.
 export async function updateLostPost(post, { photos, petData, address }) {
   const images = await persistPhotos(photos);
   const location = await resolveEditedLocation(post, address);
   await postService.updatePost(post.id, {
     images,
-    imageUri: images[0],
     ...petData,
     ...location,
   });
-
-  postPhotoStorage.removeAll(
-    getPostImages(post).filter((uri) => !images.includes(uri))
-  );
 }

@@ -19,3 +19,11 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('expo-secure-store', () =>
   require('./src/testing/memoryStorage').createSecureStoreMock()
 );
+jest.mock('expo-sqlite', () =>
+  require('./src/testing/sqliteMock').createSQLiteMock()
+);
+
+// O UUID do expo-crypto é gerado pelo código nativo; nos testes, pelo Node
+jest.mock('expo-crypto', () => ({
+  randomUUID: () => require('node:crypto').randomUUID(),
+}));

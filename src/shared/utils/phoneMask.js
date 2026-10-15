@@ -1,19 +1,9 @@
 // Código do país (2) + DDD (2) + número (até 9)
 export const PHONE_MAX_DIGITS = 13;
 export const PHONE_MIN_DIGITS = 12;
-const DEFAULT_COUNTRY_CODE = '55';
 
 export function onlyDigits(value) {
   return (value || '').replaceAll(/\D/g, '').slice(0, PHONE_MAX_DIGITS);
-}
-
-// Números antigos foram salvos sem o código do país (apenas DDD + número)
-export function withCountryCode(value) {
-  const digits = onlyDigits(value);
-  if (digits.length === 10 || digits.length === 11) {
-    return `${DEFAULT_COUNTRY_CODE}${digits}`;
-  }
-  return digits;
 }
 
 // Formata para exibição: +55 (11) 99999-9999

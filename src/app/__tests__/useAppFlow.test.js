@@ -118,14 +118,14 @@ describe('useAppFlow', () => {
       return hook;
     };
 
-    it('deve guardar o perfil na sessão e oferecer a biometria', async () => {
+    it('deve ir para o feed e oferecer a biometria', async () => {
       offerBiometrics.mockResolvedValueOnce(true);
       const hook = await completeOnboarding();
 
-      expect(sessionState.saveUserSession).toHaveBeenCalledWith({
-        usuario: 'ana@x.com',
-        profile: { name: 'Ana' },
-      });
+      // O perfil fica só no banco: a sessão guarda apenas quem está logado
+      expect(sessionState.saveUserSession).not.toHaveBeenCalledWith(
+        expect.objectContaining({ profile: expect.anything() })
+      );
       expect(offerBiometrics).toHaveBeenCalledWith('ana@x.com', 'Ana');
       expect(showAlert).not.toHaveBeenCalled();
       expect(screenOf(hook)).toBe(SCREENS.HOME);
@@ -137,17 +137,6 @@ describe('useAppFlow', () => {
       expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ title: 'Perfil completo' })
       );
-    });
-
-    it('deve avisar quando não conseguir salvar a sessão', async () => {
-      sessionState.saveUserSession.mockRejectedValueOnce(new Error('disco'));
-      const hook = await completeOnboarding();
-      expect(showAlert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Falha ao salvar sessão com o perfil. disco',
-        })
-      );
-      expect(screenOf(hook)).toBe(SCREENS.ONBOARDING);
     });
 
     it('deve funcionar sem sessão carregada', async () => {

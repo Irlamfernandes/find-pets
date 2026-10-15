@@ -14,12 +14,10 @@ const lost = { id: '1', author: 'ana@x.com', status: POST_STATUS.LOST };
 const found = { ...lost, status: POST_STATUS.FOUND };
 
 describe('post', () => {
-  it('deve ler o status, inclusive de registros antigos', () => {
+  it('deve ler o status, considerando perdido quando não houver', () => {
     expect(getPostStatus(lost)).toBe('Perdido');
-    expect(getPostStatus({ type: 'Encontrado' })).toBe('Encontrado');
     expect(getPostStatus({ status: null })).toBe('Perdido');
     expect(isFound(found)).toBe(true);
-    expect(isFound({ type: 'Encontrado' })).toBe(true);
     expect(isFound(lost)).toBe(false);
   });
 
@@ -39,14 +37,13 @@ describe('post', () => {
     expect(hasCoordinates({})).toBe(false);
   });
 
-  it('deve mostrar a data no fuso registrado ou a data antiga', () => {
+  it('deve mostrar a data no fuso registrado', () => {
     expect(
       getOccurredAtLabel({
         occurredAt: '2026-09-25T17:30:00.000Z',
         occurredZone: { offsetMinutes: -180, abbreviation: 'BRT' },
       })
     ).toBe('25/09/2026 às 14:30 (BRT, UTC-3)');
-    expect(getOccurredAtLabel({ date: '10/06/2026' })).toBe('10/06/2026');
     expect(getOccurredAtLabel({})).toBe('Data não informada');
     expect(getOccurredAtLabel({ occurredAt: 'lixo' })).toBe(
       'Data não informada'
@@ -79,15 +76,12 @@ describe('post', () => {
       id: '10',
       author: 'ana@x.com',
       images: ['a.jpg', 'b.jpg'],
-      imageUri: 'a.jpg',
       species: 'Gato',
       latitude: 1,
       longitude: 2,
       location: 'Rua A',
       occurredAt: occurredAt.toISOString(),
       occurredZone: zone,
-      date: '24/09/2026',
-      type: 'Perdido',
       status: 'Perdido',
       contactPhone: '5511999999999',
     });

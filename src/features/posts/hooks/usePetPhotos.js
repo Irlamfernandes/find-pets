@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { photoService } from '../../../shared/services/photoService';
 import { locationService } from '../../../shared/services/locationService';
 import { useAppAlert } from '../../../shared/components/AppAlert';
-import { getPostImages } from '../utils/postImages';
 
 export const MAX_PHOTOS = 5;
 
@@ -30,7 +29,7 @@ async function takePhotoWithLocation() {
 export function usePetPhotos(initialPost) {
   const showAlert = useAppAlert();
   const [photos, setPhotos] = useState(() =>
-    initialPost ? getPostImages(initialPost).map((uri) => ({ uri })) : []
+    initialPost ? initialPost.images.map((uri) => ({ uri })) : []
   );
   const remainingPhotos = MAX_PHOTOS - photos.length;
 

@@ -44,20 +44,16 @@ describe('getPosterContent', () => {
     );
   });
 
-  it('deve aceitar registros antigos, sem os campos novos', () => {
+  it('deve aceitar um registro só com os campos obrigatórios', () => {
     expect(
-      getPosterContent({
-        type: 'Perdido',
-        imageUri: 'file:///antiga.jpg',
-        date: '10/06/2026',
-      })
+      getPosterContent({ status: 'Perdido', images: ['file:///a.jpg'] })
     ).toEqual({
       isFound: false,
       headline: 'PROCURA-SE',
-      image: 'file:///antiga.jpg',
+      image: 'file:///a.jpg',
       title: 'Pet',
       fields: [],
-      occurredAt: '10/06/2026',
+      occurredAt: '',
       location: '',
       description: '',
       phone: '',

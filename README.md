@@ -39,24 +39,35 @@ O código fica em `src/`, organizado por funcionalidade:
 
 ```
 src/
-  app/        fluxo do app: navegação (máquina de estados) e migração dos dados
+  app/        fluxo do app: navegação (máquina de estados)
   features/
     auth/     conta, sessão, biometria, login e desbloqueio
     profile/  cadastro e edição do perfil
     posts/    registros de pets: feed, registro, reencontro e compartilhamento
     map/      mapas (Leaflet + OpenStreetMap dentro do app)
   shared/     componentes, hooks, serviços, utilitários e tema comuns
+    database/ conexão SQLite, tabelas e montagem dos comandos SQL
   testing/    utilitários dos testes (armazenamento em memória)
 ```
 
 Dentro de cada funcionalidade:
 
 - **`domain/`**: regras puras, sem tela nem armazenamento (ex.: `post.js`, `foundForm.js`).
-- **`services/`**: dados e casos de uso. Todo acesso ao armazenamento passa pelo `createJsonStore` de `shared/services/storage.js`.
+- **`data/`**: acesso ao banco SQLite (repositórios com o SQL) e conversão entre o registro do app e a linha da tabela (mappers).
+- **`services/`**: casos de uso usados pelos hooks. Registros e perfis ficam no SQLite (via `data/`); sessão e preferências continuam no AsyncStorage (`createJsonStore` de `shared/services/storage.js`) e as senhas no SecureStore.
 - **`hooks/`**: estado e lógica das telas.
 - **`components/`** e **`screens/`**: só apresentação.
 
 Os testes ficam em `__tests__/`, ao lado do código que testam.
+
+### 🗄️ Banco de dados (SQLite)
+
+Tabelas `profiles`, `posts` e `post_images` (1 registro : N fotos), criadas em `src/shared/database/`. Pensando na ida para a nuvem (Firebase ou Supabase):
+
+- os ids são **UUID**, que não se repetem entre aparelhos;
+- toda tabela tem `created_at`, `updated_at` e `sync_status` (`pending` até ser enviada);
+- **nada é apagado de verdade**: excluir preenche `deleted_at` (exclusão lógica) e o registro some das consultas, mas fica como histórico;
+- os comandos usam parâmetros `?`, evitando SQL injection.
 
 Regras que o ESLint (e o CI) exigem no código do app:
 

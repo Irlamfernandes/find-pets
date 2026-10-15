@@ -1,40 +1,25 @@
-import { STORAGE_KEYS } from '../../../shared/constants/storageKeys';
-import {
-  createJsonStore,
-  withErrorContext,
-} from '../../../shared/services/storage';
+import { withErrorContext } from '../../../shared/services/storage';
 import { sessionService } from '../../auth/services/sessionService';
+import { profileRepository } from '../data/profileRepository';
 
-// Perfis por conta: { [usuario]: { name, whatsapp, photoUri } }
-const profilesStore = createJsonStore(STORAGE_KEYS.PROFILE, { fallback: {} });
-
-// Sem usuário informado, usa a conta conectada
-async function resolveOwner(usuario) {
-  return usuario || sessionService.getCurrentUser();
-}
-
+// Perfil da conta conectada
 export const profileService = {
-  async saveProfile(profile, usuario) {
+  async saveProfile(profile) {
     if (!profile?.name || !profile?.whatsapp) {
       throw new Error('Dados inválidos para salvamento do perfil.');
     }
     return withErrorContext('Erro ao salvar perfil', async () => {
-      const owner = await resolveOwner(usuario);
+      const owner = await sessionService.getCurrentUser();
       if (!owner) throw new Error('Nenhuma conta conectada.');
-      await profilesStore.update((profiles) => ({
-        ...profiles,
-        [owner]: profile,
-      }));
+      await profileRepository.save(owner, profile);
       return profile;
     });
   },
 
-  getProfile(usuario) {
+  getProfile() {
     return withErrorContext('Erro ao buscar perfil', async () => {
-      const owner = await resolveOwner(usuario);
-      if (!owner) return null;
-      const profiles = await profilesStore.read();
-      return profiles[owner] || null;
+      const owner = await sessionService.getCurrentUser();
+      return owner ? profileRepository.findByUser(owner) : null;
     });
   },
 };

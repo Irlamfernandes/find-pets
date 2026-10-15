@@ -1,7 +1,6 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useFeed } from '../useFeed';
 import { postService } from '../../services/postService';
-import { postPhotoStorage } from '../../../../shared/services/photoStorage';
 import { profileService } from '../../../profile/services/profileService';
 import { sessionService } from '../../../auth/services/sessionService';
 import { Alert } from 'react-native';
@@ -13,10 +12,6 @@ jest.mock('../../services/postService', () => ({
     deletePost: jest.fn(),
     updatePost: jest.fn(),
   },
-}));
-
-jest.mock('../../../../shared/services/photoStorage', () => ({
-  postPhotoStorage: { removeAll: jest.fn() },
 }));
 
 jest.mock('../../../profile/services/profileService', () => ({
@@ -106,10 +101,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     });
 
     expect(result.current.posts).toEqual([]);
-    // As fotos do registro excluído são apagadas do aparelho
-    expect(postPhotoStorage.removeAll).toHaveBeenCalledWith([
-      'file:///docs/post-photo-1.jpg',
-    ]);
+    expect(postService.deletePost).toHaveBeenCalledWith('1');
   });
 
   it('não deve abrir confirmação para excluir post de outro usuário', async () => {

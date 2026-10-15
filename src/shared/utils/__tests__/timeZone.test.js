@@ -83,7 +83,7 @@ describe('timeZone', () => {
       ).toBe('25/09/2026 às 13:30 (EDT, UTC-4)');
     });
 
-    it('deve usar o fuso do aparelho em registros antigos sem fuso', () => {
+    it('deve usar o fuso do aparelho quando a data não tiver fuso', () => {
       expect(formatDateTime(value)).toBe('25/09/2026 às 14:30 (BRT, UTC-3)');
       expect(formatDateTime(value, { abbreviation: 'X' })).toBe(
         '25/09/2026 às 14:30 (BRT, UTC-3)'

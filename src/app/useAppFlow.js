@@ -62,25 +62,17 @@ export function useAppFlow() {
     await enter();
   };
 
+  // O perfil já foi gravado no banco pela tela de cadastro
   const handleOnboardingComplete = async (profile) => {
-    try {
-      await saveUserSession({ ...session, profile });
-      dispatch({ type: 'onboardingCompleted' });
+    dispatch({ type: 'onboardingCompleted' });
 
-      // Fim do cadastro: convida a ativar a biometria, se estiver disponível
-      const offered = await offerBiometrics(session?.usuario, profile.name);
-      if (!offered) {
-        showAlert({
-          type: 'success',
-          title: 'Perfil completo',
-          message: `Seja bem-vindo, ${profile.name}! Seu cadastro foi salvo com sucesso.`,
-        });
-      }
-    } catch (error) {
+    // Fim do cadastro: convida a ativar a biometria, se estiver disponível
+    const offered = await offerBiometrics(session?.usuario, profile.name);
+    if (!offered) {
       showAlert({
-        type: 'danger',
-        title: 'Não foi possível concluir',
-        message: `Falha ao salvar sessão com o perfil. ${error.message}`,
+        type: 'success',
+        title: 'Perfil completo',
+        message: `Seja bem-vindo, ${profile.name}! Seu cadastro foi salvo com sucesso.`,
       });
     }
   };

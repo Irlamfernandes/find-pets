@@ -13,6 +13,12 @@ API REST do FindPets em **Python + Flask**, com banco **MySQL** no **Docker** e 
 
 Para testar pelo celular, use o IP do computador na rede (ex.: `http://192.168.0.10:5001`).
 
+Se o envio de fotos der erro 500 em quem já tinha subido a API antes, o volume de fotos foi criado quando o container rodava como root. Corrija uma vez com:
+
+```bash
+docker compose run --rm --no-deps -u root api chown -R findpets /data/uploads
+```
+
 ## Rotas
 
 | Método e rota             | O que faz                                                     | Login |

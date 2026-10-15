@@ -1,6 +1,8 @@
 # FindPets
 
-O **FindPets** é um aplicativo mobile desenvolvido para auxiliar na localização, cadastro e resgate de animais de estimação perdidos, facilitando a conexão rápida entre tutores e a comunidade.
+O **FindPets** é um aplicativo mobile para ajudar a encontrar animais de estimação perdidos: o tutor registra o desaparecimento com fotos e localização, a comunidade acompanha pelo feed ou pelo mapa e entra em contato pelo WhatsApp quando encontra o pet.
+
+O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com a API** quando a conexão volta. Ao trocar de celular, basta entrar na conta para recuperar o perfil e os registros.
 
 ---
 
@@ -11,51 +13,75 @@ O **FindPets** é um aplicativo mobile desenvolvido para auxiliar na localizaç�
 
 ---
 
-## 🚀 Funcionalidades Implementadas
+## 🚀 Funcionalidades
 
-- **RF01:** Autenticação rápida e segura por biometria nativa do dispositivo (Expo Local Authentication).
-- **RF02:** Onboarding interativo para conclusão de cadastro e perfil do usuário (com validação de nome e WhatsApp).
-- **RF03:** Gestão de sessão persistente e opção de "Sair da Conta" (Logout) utilizando AsyncStorage, preservando o estado de acesso do usuário.
-- **RF04:** Feed principal com listagem de posts e integração com a câmera nativa (Expo Camera) para cadastro de pets perdidos/encontrados.
-- **RF05:** Captura automática de geolocalização em tempo real (Expo Location) para registrar coordenadas precisas no cadastro de cada pet.
-- **Cobertura de Testes:** 100% de cobertura validada via Jest.
+**Conta e acesso**
+
+- Cadastro e login com e-mail e senha, conferidos pela API (o token fica no SecureStore).
+- Desbloqueio por biometria do aparelho (Expo Local Authentication), configurável no perfil.
+- Sessão persistente e opção de sair da conta.
+
+**Perfil**
+
+- Onboarding para completar o cadastro (nome e WhatsApp validados).
+- Edição de nome, WhatsApp, foto e senha.
+
+**Registros de pets**
+
+- Registro de pet desaparecido com várias fotos (câmera ou galeria) e dados completos do animal.
+- Localização capturada automaticamente (Expo Location) e exibida em mapa.
+- Feed em lista ou em mapa geral com todos os pets perdidos (Leaflet + OpenStreetMap).
+- Edição e exclusão do próprio registro (exclusão lógica).
+- Marcar o pet como **reencontrado**, informando onde e quando.
+- Contato direto com o tutor pelo WhatsApp.
+- Cartaz de compartilhamento gerado a partir do registro.
+
+**Offline e nuvem**
+
+- Tudo funciona sem internet; as alterações ficam pendentes e são enviadas quando a conexão volta.
+- Aviso de modo offline e indicação no card de registros ainda não enviados.
+- API própria em Flask + MySQL com Docker e documentação Swagger.
 
 ---
 
-## 🛠️ Tecnologias e Ferramentas
+## 🛠️ Tecnologias
 
-- **React Native / Expo** (Expo Camera, Expo Local Authentication, Expo Location, SafeAreaContext)
-- **JavaScript**
-- **AsyncStorage** (Persistência local e suporte à arquitetura Offline-First)
-- **Jest & React Native Testing Library** (Testes automatizados e unitários)
-- **ESLint & Prettier** (Padronização e qualidade de código)
-- **GitHub Actions** (Integração Contínua - CI/CD)
+| Parte        | Ferramentas                                                                                                 |
+| ------------ | ----------------------------------------------------------------------------------------------------------- |
+| App          | React Native, Expo 57, JavaScript                                                                           |
+| Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (token e senha), NetInfo                     |
+| Recursos     | Image Picker (câmera e galeria), Location, Local Authentication, Sharing, View Shot, WebView (mapa Leaflet) |
+| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                         |
+| Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                        |
+| CI           | GitHub Actions                                                                                              |
 
 ---
 
 ## 🧱 Arquitetura
 
-O código fica em `src/`, organizado por funcionalidade:
-
 ```
 src/
-  app/        fluxo do app: navegação (máquina de estados)
+  app/          fluxo do app: navegação (máquina de estados)
   features/
-    auth/     conta, sessão, biometria, login e desbloqueio
-    profile/  cadastro e edição do perfil
-    posts/    registros de pets: feed, registro, reencontro e compartilhamento
-    map/      mapas (Leaflet + OpenStreetMap dentro do app)
-  shared/     componentes, hooks, serviços, utilitários e tema comuns
-    database/ conexão SQLite, tabelas e montagem dos comandos SQL
-  testing/    utilitários dos testes (armazenamento em memória)
-api/          API em Python + Flask + MySQL (ver api/README.md)
+    auth/       conta, sessão, biometria, login e desbloqueio
+    profile/    cadastro e edição do perfil
+    posts/      registros de pets: feed, registro, reencontro e compartilhamento
+    map/        mapas (Leaflet + OpenStreetMap dentro do app)
+    sync/       sincronização com a API (envio, download e conexão)
+  shared/
+    api/        cliente HTTP, endereço da API e envio de fotos
+    database/   conexão SQLite, tabelas, migrações e comandos SQL
+    ...         componentes, hooks, serviços, utilitários e tema comuns
+  testing/      utilitários dos testes (banco em memória)
+api/            API em Python + Flask + MySQL (ver api/README.md)
 ```
 
-Dentro de cada funcionalidade:
+Cada funcionalidade é dividida em camadas, do mais puro ao visual:
 
-- **`domain/`**: regras puras, sem tela nem armazenamento (ex.: `post.js`, `foundForm.js`).
-- **`data/`**: acesso ao banco SQLite (repositórios com o SQL) e conversão entre o registro do app e a linha da tabela (mappers).
-- **`services/`**: casos de uso usados pelos hooks. Registros e perfis ficam no SQLite (via `data/`); sessão e preferências continuam no AsyncStorage (`createJsonStore` de `shared/services/storage.js`) e as senhas no SecureStore.
+- **`domain/`**: regras puras, sem tela nem armazenamento.
+- **`data/`**: repositórios com o SQL e mappers entre o registro do app e a linha da tabela.
+- **`api/`**: chamadas à API daquela funcionalidade.
+- **`services/`**: casos de uso usados pelos hooks.
 - **`hooks/`**: estado e lógica das telas.
 - **`components/`** e **`screens/`**: só apresentação.
 
@@ -63,35 +89,42 @@ Os testes ficam em `__tests__/`, ao lado do código que testam.
 
 ### 🗄️ Banco de dados (SQLite)
 
-Tabelas `profiles`, `posts` e `post_images` (1 registro : N fotos), criadas em `src/shared/database/`. Pensando na ida para a nuvem (Firebase ou Supabase):
+Tabelas `profiles`, `posts` e `post_images` (1 registro : N fotos), criadas em `src/shared/database/`:
 
-- os ids são **UUID**, que não se repetem entre aparelhos;
+- ids **UUID** gerados no celular, que não se repetem entre aparelhos;
 - toda tabela tem `created_at`, `updated_at` e `sync_status` (`pending` até ser enviada);
-- **nada é apagado de verdade**: excluir preenche `deleted_at` (exclusão lógica) e o registro some das consultas, mas fica como histórico;
-- os comandos usam parâmetros `?`, evitando SQL injection;
-- mudanças de estrutura viram migrações numeradas (`src/shared/database/migrations.js`), controladas pelo `PRAGMA user_version`.
+- **nada é apagado de verdade**: excluir preenche `deleted_at` (exclusão lógica);
+- comandos com parâmetros `?`, evitando SQL injection;
+- mudanças de estrutura viram migrações numeradas, controladas pelo `PRAGMA user_version`.
 
 ### 🔄 Offline e sincronização
 
-O app funciona sem internet e sincroniza com a [API](api/README.md) quando a conexão volta (`src/features/sync/`):
+1. Toda alteração é gravada primeiro no SQLite como `pending`; o card mostra "Aguardando internet para enviar ao servidor".
+2. Com internet, o app **envia** os pendentes (fotos, perfil e registros) e depois **baixa** o que mudou no servidor, inclusive registros de outros usuários e exclusões.
+3. Em conflito vale a alteração mais recente (`updatedAt`), decidida pela API.
+4. A sincronização roda ao entrar, quando a internet volta e depois de cada alteração.
 
-1. toda alteração é gravada primeiro no SQLite, como `pending`; o card mostra "Aguardando internet para enviar ao servidor";
-2. com internet, o app **envia** os pendentes (fotos primeiro, depois o perfil e os registros) e **baixa** o que mudou no servidor, inclusive registros de outros usuários e exclusões;
-3. conflitos: vale a alteração mais recente (`updatedAt`), decidida pela API;
-4. sincroniza ao entrar, quando a internet volta (NetInfo) e depois de cada alteração.
+O cadastro e o primeiro login num celular precisam de internet. Depois disso, o app reabre offline com a biometria ou a senha guardada no aparelho.
 
-O cadastro e o primeiro login num celular precisam de internet (a API confere a senha e devolve um token, guardado no SecureStore). Depois disso, o app reabre offline com a biometria ou com a senha guardada no aparelho.
+### ☁️ API
 
-Regras que o ESLint (e o CI) exigem no código do app:
-
-- complexidade ciclomática de no máximo 6;
-- funções de até 80 linhas e arquivos de até 300;
-- no máximo 3 níveis de aninhamento;
-- regras de hooks do React.
+API REST em `api/`, com rotas de conta, perfil, registros e fotos. O banco é escolhido pela `DATABASE_URL`, então o MySQL do Docker pode ser trocado por um banco na nuvem (como o Postgres do Supabase) sem mudar o código. Rotas, decisões e como rodar estão em [api/README.md](api/README.md); com a API no ar, a documentação Swagger fica em `http://localhost:5001/apidocs`.
 
 ---
 
-## ⚙️ Como Executar o Projeto
+## ✅ Qualidade
+
+- **100% de cobertura de testes** no app (Jest) e na API (pytest).
+- ESLint com limites obrigatórios: complexidade ciclomática até 6, no máximo 3 níveis de aninhamento, funções de até 80 linhas e arquivos de até 300.
+- Prettier (app) e Ruff (API) para formatação.
+- Husky + Commitlint: commits no padrão _Conventional Commits_ e bloqueio de commit direto na `main`.
+- **CI no GitHub Actions** com dois jobs:
+  - **App**: `npm audit`, Gitleaks, Prettier, ESLint, testes com cobertura, Commitlint e `expo-doctor`;
+  - **API**: Ruff e pytest com cobertura.
+
+---
+
+## ⚙️ Como executar
 
 1. **Clone o repositório e instale as dependências:**
    ```bash
@@ -99,12 +132,12 @@ Regras que o ESLint (e o CI) exigem no código do app:
    cd find-pets
    npm install --legacy-peer-deps
    ```
-2. **Suba a API** (ver [api/README.md](api/README.md)):
+2. **Suba a API** (precisa do Docker):
    ```bash
    cd api && cp .env.example .env   # preencha as senhas e a JWT_SECRET
    docker compose up --build
    ```
-3. **Aponte o app para a API:** copie `.env.example` para `.env` e coloque o IP do computador na rede (o celular não enxerga `localhost`):
+3. **Aponte o app para a API:** copie `.env.example` para `.env` na raiz e use o IP do computador na rede (o celular não enxerga `localhost`):
    ```bash
    EXPO_PUBLIC_API_URL=http://192.168.0.10:5001
    ```
@@ -113,6 +146,10 @@ Regras que o ESLint (e o CI) exigem no código do app:
    npx expo run:android
    ```
 
-## atualizações
+### Testes
 
-adicionamos as interações (excluir e editar) solicitadas pelo professor na última previa do projeto.
+```bash
+npm test                 # app (Jest + cobertura)
+npm run lint             # ESLint
+cd api && pytest         # API (depois de: pip install -r requirements-dev.txt)
+```

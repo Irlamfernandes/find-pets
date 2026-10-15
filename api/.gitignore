@@ -7,3 +7,4 @@ __pycache__/
 .ruff_cache/
 /uploads/
 *.db
+coverage.xml

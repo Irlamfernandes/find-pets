@@ -14,7 +14,14 @@ def load_settings():
         "UPLOAD_DIR": os.environ.get("UPLOAD_DIR", "uploads"),
         # Tamanho máximo de uma requisição (fotos)
         "MAX_CONTENT_LENGTH": FIVE_MEGABYTES,
+        # Sites que podem chamar a API pelo navegador (separados por vírgula).
+        # O app de celular não precisa: CORS só vale para navegadores.
+        "CORS_ORIGINS": split_list(os.environ.get("CORS_ORIGINS", "")),
     }
+
+
+def split_list(text):
+    return [item.strip() for item in text.split(",") if item.strip()]
 
 
 # Mínimo recomendado para assinar tokens com HS256

@@ -78,44 +78,44 @@ describe('useFeed Hook - 100% Coverage', () => {
     expect(result.current.userName).toBe('');
   });
 
-  it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
-    const mockPosts = [
-      {
-        id: '1',
-        type: 'Perdido',
-        author: 'user1@test.com',
-        images: ['file:///docs/post-photo-1.jpg'],
-      },
-    ];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
-    postService.deletePost.mockResolvedValueOnce([]);
+  const OWN_POST = { id: '1', type: 'Perdido', author: 'user1@test.com' };
 
+  const renderFeed = async (posts) => {
+    postService.getPosts.mockResolvedValueOnce(posts);
     const { result } = renderHook(() => useFeed());
     await act(async () => {});
+    return result;
+  };
 
+  // Pede a exclusão e aperta "Excluir" no alerta de confirmação
+  const confirmDeletion = async (result, id) => {
     await act(async () => {
-      await result.current.deletePost('1');
+      await result.current.deletePost(id);
     });
-
     const alertCall = Alert.alert.mock.calls.find(
       (call) => call[0] === 'Confirmar Exclusão'
     );
     const deleteButton = alertCall[2].find((btn) => btn.text === 'Excluir');
-
     await act(async () => {
       await deleteButton.onPress();
     });
+  };
+
+  it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
+    postService.deletePost.mockResolvedValueOnce([]);
+    const result = await renderFeed([
+      { ...OWN_POST, images: ['file:///docs/post-photo-1.jpg'] },
+    ]);
+
+    await confirmDeletion(result, '1');
 
     expect(result.current.posts).toEqual([]);
     expect(postService.deletePost).toHaveBeenCalledWith('1');
   });
 
   it('não deve abrir confirmação para excluir post de outro usuário', async () => {
-    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user2@test.com' }];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
+    const mockPosts = [{ ...OWN_POST, author: 'user2@test.com' }];
+    const result = await renderFeed(mockPosts);
 
     await act(async () => {
       await result.current.deletePost('1');
@@ -130,55 +130,15 @@ describe('useFeed Hook - 100% Coverage', () => {
   });
 
   it('deve exibir erro quando a exclusão persistida falhar', async () => {
-    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
     postService.deletePost.mockRejectedValueOnce(new Error('Erro storage'));
+    const result = await renderFeed([OWN_POST]);
 
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.deletePost('1');
-    });
-
-    const alertCall = Alert.alert.mock.calls.find(
-      (call) => call[0] === 'Confirmar Exclusão'
-    );
-    const deleteButton = alertCall[2].find((btn) => btn.text === 'Excluir');
-
-    await act(async () => {
-      await deleteButton.onPress();
-    });
+    await confirmDeletion(result, '1');
 
     expect(Alert.alert).toHaveBeenCalledWith(
       'Não foi possível excluir',
       'Tente novamente em alguns instantes.'
     );
-  });
-
-  it('deve excluir um post com sucesso ao confirmar no alerta', async () => {
-    const mockPosts = [{ id: '1', type: 'Perdido', author: 'user1@test.com' }];
-    postService.getPosts.mockResolvedValueOnce(mockPosts);
-    postService.deletePost.mockResolvedValueOnce([]);
-
-    const { result } = renderHook(() => useFeed());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.deletePost('1');
-    });
-
-    const alertCall = Alert.alert.mock.calls.find(
-      (call) => call[0] === 'Confirmar Exclusão'
-    );
-    const deleteButton = alertCall[2].find((btn) => btn.text === 'Excluir');
-
-    await act(async () => {
-      await deleteButton.onPress();
-    });
-
-    expect(result.current.posts).toEqual([]);
-    expect(postService.deletePost).toHaveBeenCalledWith('1');
   });
 
   it('deve abrir o formulário e salvar o reencontro mantendo o post no feed', async () => {

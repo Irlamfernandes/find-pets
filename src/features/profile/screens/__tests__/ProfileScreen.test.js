@@ -55,6 +55,19 @@ async function unlockEditing(password = 'senha123') {
   });
 }
 
+// Espera o perfil carregar, desbloqueia a edição e preenche nome e WhatsApp
+async function unlockAndFillProfile() {
+  await waitFor(() => {
+    expect(screen.getByPlaceholderText('Seu nome')).toBeTruthy();
+  });
+  await unlockEditing();
+  fireEvent.changeText(screen.getByPlaceholderText('Seu nome'), 'Irlam');
+  fireEvent.changeText(
+    screen.getByPlaceholderText('Seu WhatsApp'),
+    '5511999999999'
+  );
+}
+
 const pressHardwareBack = () => {
   const [, listener] = BackHandler.addEventListener.mock.calls.at(-1);
   return listener();
@@ -219,14 +232,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       <ProfileScreen onBack={mockOnBack} />
     );
 
-    await waitFor(() => {
-      expect(getByPlaceholderText('Seu nome')).toBeTruthy();
-    });
-
-    await unlockEditing();
-
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999999999');
+    await unlockAndFillProfile();
     fireEvent.changeText(
       getByPlaceholderText('Digite uma nova senha se desejar alterar'),
       'newpass123'
@@ -255,18 +261,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       new Error('Falha ao salvar')
     );
 
-    const { getByPlaceholderText, getByText } = render(
-      <ProfileScreen onBack={mockOnBack} />
-    );
+    const { getByText } = render(<ProfileScreen onBack={mockOnBack} />);
 
-    await waitFor(() => {
-      expect(getByPlaceholderText('Seu nome')).toBeTruthy();
-    });
-
-    await unlockEditing();
-
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999999999');
+    await unlockAndFillProfile();
     fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
@@ -296,16 +293,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   it('deve salvar as alterações com sucesso mesmo quando a prop onBack não é fornecida', async () => {
     profileService.saveProfile.mockResolvedValueOnce();
 
-    const { getByPlaceholderText, getByText } = render(<ProfileScreen />);
+    const { getByText } = render(<ProfileScreen />);
 
-    await waitFor(() => {
-      expect(getByPlaceholderText('Seu nome')).toBeTruthy();
-    });
-
-    await unlockEditing();
-
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999999999');
+    await unlockAndFillProfile();
     fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
@@ -321,14 +311,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     const { getByPlaceholderText } = render(<ProfileScreen />);
 
-    await waitFor(() => {
-      expect(getByPlaceholderText('Seu nome')).toBeTruthy();
-    });
-
-    await unlockEditing();
-
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999999999');
+    await unlockAndFillProfile();
     fireEvent(
       getByPlaceholderText('Digite uma nova senha se desejar alterar'),
       'submitEditing'

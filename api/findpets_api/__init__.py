@@ -4,6 +4,7 @@ from flasgger import Swagger
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from . import csrf
 from .auth.routes import blueprint as auth_blueprint
 from .config import load_settings, require_secret
 from .database import init_database
@@ -32,13 +33,21 @@ SWAGGER_TEMPLATE = {
 }
 
 
+def enable_cors(app):
+    """Libera o navegador só para os sites listados em CORS_ORIGINS."""
+    origins = app.config["CORS_ORIGINS"]
+    if origins:
+        CORS(app, origins=origins)
+
+
 def create_app(overrides=None):
     app = Flask(__name__)
     app.config.update(load_settings())
     app.config.update(overrides or {})
     require_secret(app.config)
 
-    CORS(app)
+    enable_cors(app)
+    csrf.init_app(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     register_error_handlers(app)
     init_database(app)

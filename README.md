@@ -48,6 +48,7 @@ src/
   shared/     componentes, hooks, serviços, utilitários e tema comuns
     database/ conexão SQLite, tabelas e montagem dos comandos SQL
   testing/    utilitários dos testes (armazenamento em memória)
+api/          API em Python + Flask + MySQL (ver api/README.md)
 ```
 
 Dentro de cada funcionalidade:

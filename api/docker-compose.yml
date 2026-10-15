@@ -1,0 +1,39 @@
+# Sobe o banco MySQL e a API: docker compose up --build
+services:
+  mysqldb:
+    image: mysql:8.0.42
+    restart: always
+    environment:
+      MYSQL_DATABASE: findpets
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    # A API só sobe depois que o banco aceitar conexões
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build: .
+    restart: always
+    ports:
+      - '5001:5000'
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysqldb:3306/findpets
+      JWT_SECRET: ${JWT_SECRET}
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  mysql-data:
+  uploads:

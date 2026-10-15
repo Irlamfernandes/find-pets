@@ -1,0 +1,26 @@
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+# E/W/F: erros e estilo; I: ordem dos imports; B: bugs comuns;
+# C90: complexidade ciclomática; PL: Pylint (parâmetros, ramos, instruções)
+select = ["E", "W", "F", "I", "B", "C90", "PL", "UP"]
+# Números nos testes (status HTTP) são mais claros que constantes
+ignore = ["PLR2004"]
+
+[tool.ruff.lint.mccabe]
+# Mesmo limite do ESLint do app
+max-complexity = 6
+
+[tool.ruff.lint.pylint]
+max-args = 4
+max-branches = 6
+max-returns = 4
+max-statements = 30
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--cov=findpets_api --cov-report=term-missing --cov-fail-under=100"

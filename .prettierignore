@@ -7,3 +7,5 @@ api/.venv
 api/.pytest_cache
 api/.ruff_cache
 api/uploads
+api/coverage.xml
+.scannerwork

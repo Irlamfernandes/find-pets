@@ -1,6 +1,7 @@
 import { withErrorContext } from '../../../shared/services/storage';
 import { sessionService } from '../../auth/services/sessionService';
 import { profileRepository } from '../data/profileRepository';
+import { requestSync } from '../../../shared/services/syncScheduler';
 
 // Perfil da conta conectada
 export const profileService = {
@@ -12,6 +13,7 @@ export const profileService = {
       const owner = await sessionService.getCurrentUser();
       if (!owner) throw new Error('Nenhuma conta conectada.');
       await profileRepository.save(owner, profile);
+      requestSync();
       return profile;
     });
   },

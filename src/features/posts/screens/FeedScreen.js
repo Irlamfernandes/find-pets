@@ -9,6 +9,7 @@ import { PetList } from '../components/PetList';
 import { FoundPetModal } from '../components/FoundPetModal';
 import { FeedGuideCard } from '../components/FeedGuideCard';
 import { FeedHeader } from '../components/FeedHeader';
+import { OfflineBanner } from '../../../shared/components/OfflineBanner';
 import { ViewModeToggle } from '../components/ViewModeToggle';
 import { SharePreviewModal } from '../components/SharePreviewModal';
 import { LostPetsMapView } from '../../map/components/LostPetsMapView';
@@ -49,6 +50,7 @@ export default function FeedScreen({
         onOpenProfile={onOpenProfile}
       />
 
+      <OfflineBanner />
       <ViewModeToggle value={viewMode} onChange={setViewMode} />
 
       {viewMode === 'map' ? (

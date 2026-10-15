@@ -13,6 +13,7 @@ import { PetInfoGrid } from './PetInfoGrid';
 import { PhotoCarousel } from './PhotoCarousel';
 import { FoundInfoBox } from './FoundInfoBox';
 import { ContactButtons } from './ContactButtons';
+import { SyncPendingNotice } from './SyncPendingNotice';
 
 // Ações exclusivas de quem registrou; cada uma aparece se a prop existir
 const OWNER_ACTIONS = [
@@ -72,6 +73,8 @@ export function PetCard({
         <Text style={[styles.badge, isFound(item) && styles.foundBadge]}>
           {getPostStatus(item)}
         </Text>
+
+        <SyncPendingNotice syncStatus={item.syncStatus} />
 
         <PetInfoGrid fields={getPetFields(item)} />
 
@@ -134,6 +137,7 @@ PetCard.propTypes = {
     images: PropTypes.arrayOf(PropTypes.string).isRequired,
     description: PropTypes.string,
     status: PropTypes.string.isRequired,
+    syncStatus: PropTypes.string,
     occurredAt: PropTypes.string,
     occurredZone: PropTypes.shape({
       offsetMinutes: PropTypes.number,

@@ -4,6 +4,7 @@ import { isFound, isOwnedBy, markAsFound } from '../domain/post';
 import { profileService } from '../../profile/services/profileService';
 import { sessionService } from '../../auth/services/sessionService';
 import { useAppAlert } from '../../../shared/components/AppAlert';
+import { SYNC_RESULT, syncService } from '../../sync/syncService';
 
 const ALERTS = {
   foundSaved: {
@@ -48,8 +49,16 @@ export function useFeed() {
   const [foundPostId, setFoundPostId] = useState(null);
 
   useEffect(() => {
-    orDefault(postService.getPosts(), []).then(setPosts);
-    loadViewer().then(setViewer);
+    const load = () => {
+      orDefault(postService.getPosts(), []).then(setPosts);
+      loadViewer().then(setViewer);
+    };
+    load();
+    // Recarrega quando a sincronização traz novidades (ex.: posts de outros
+    // usuários ou o envio dos registros feitos offline)
+    return syncService.subscribe((result) => {
+      if (result === SYNC_RESULT.SYNCED) load();
+    });
   }, []);
 
   // Só o autor pode alterar o próprio registro

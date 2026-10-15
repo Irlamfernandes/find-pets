@@ -57,10 +57,13 @@ describe('photoStorage', () => {
     expect(uris[0]).toMatch(/test-photo-123-/);
   });
 
-  it('não deve copiar uma foto já salva nem valores vazios', async () => {
+  it('não deve copiar uma foto já salva, do servidor nem valores vazios', async () => {
     await expect(
       storage.persist('file:///docs/test-photo-1-1.jpg')
     ).resolves.toBe('file:///docs/test-photo-1-1.jpg');
+    await expect(storage.persist('https://api/uploads/1.jpg')).resolves.toBe(
+      'https://api/uploads/1.jpg'
+    );
     await expect(storage.persist(null)).resolves.toBeNull();
     expect(mockFiles).toHaveLength(0);
   });

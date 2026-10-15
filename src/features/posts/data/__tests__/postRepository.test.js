@@ -1,4 +1,5 @@
 import { postRepository } from '../postRepository';
+import { postImageRepository } from '../postImageRepository';
 import { clearDatabase, selectRows } from '../../../../testing/database';
 
 const post = (id, extra = {}) => ({
@@ -110,5 +111,90 @@ describe('postRepository', () => {
     expect(deleted.deleted_at).toEqual(expect.any(String));
     // As fotos continuam ligadas ao registro excluído, como histórico
     await expect(activeImages('1')).resolves.toHaveLength(2);
+  });
+
+  describe('sincronização', () => {
+    const remote = (extra = {}) => ({
+      id: 'r1',
+      author: 'bia@x.com',
+      petName: 'Mel',
+      status: 'Perdido',
+      images: ['http://api/uploads/a.jpg'],
+      createdAt: '2026-10-10T10:00:00.000Z',
+      updatedAt: '2026-10-10T11:00:00.000Z',
+      deletedAt: null,
+      ...extra,
+    });
+
+    it('deve listar os pendentes de envio, inclusive os excluídos', async () => {
+      await postRepository.insert(post('1'));
+      await postRepository.insert(post('2'));
+      await postRepository.softDelete('2');
+      await postRepository.saveSynced(remote());
+
+      const pending = await postRepository.findPendingRows();
+
+      expect(pending.map((row) => [row.id, Boolean(row.deleted_at)])).toEqual([
+        ['1', false],
+        ['2', true],
+      ]);
+    });
+
+    it('deve gravar o registro de outro usuário como já sincronizado', async () => {
+      await postRepository.saveSynced(remote());
+
+      const [saved] = await postRepository.findActive();
+      expect(saved).toMatchObject({
+        id: 'r1',
+        author: 'bia@x.com',
+        petName: 'Mel',
+        images: ['http://api/uploads/a.jpg'],
+        syncStatus: 'synced',
+      });
+      await expect(postRepository.findUpdatedAt('r1')).resolves.toBe(
+        '2026-10-10T11:00:00.000Z'
+      );
+      await expect(
+        postRepository.findUpdatedAt('nao-existe')
+      ).resolves.toBeNull();
+    });
+
+    it('deve aplicar alterações e exclusões que vieram do servidor', async () => {
+      await postRepository.saveSynced(remote());
+
+      await postRepository.saveSynced(
+        remote({ petName: 'Mel 2', images: ['http://api/uploads/b.jpg'] })
+      );
+      expect((await postRepository.findActive())[0]).toMatchObject({
+        petName: 'Mel 2',
+        images: ['http://api/uploads/b.jpg'],
+      });
+
+      await postRepository.saveSynced(
+        remote({ deletedAt: '2026-10-11T10:00:00.000Z' })
+      );
+      await expect(postRepository.findActive()).resolves.toEqual([]);
+    });
+
+    it('deve manter a foto do celular quando ela já foi enviada', async () => {
+      await postRepository.insert(post('1', { images: ['file:///1.jpg'] }));
+      const [image] = await postImageRepository.findActiveOfPost('1');
+      await postImageRepository.setRemoteUrl(image.id, 'http://api/1.jpg');
+
+      await postRepository.saveSynced(
+        remote({ id: '1', author: 'ana@x.com', images: ['http://api/1.jpg'] })
+      );
+
+      const [saved] = await postRepository.findActive();
+      expect(saved.images).toEqual(['file:///1.jpg']);
+      expect(saved.syncStatus).toBe('synced');
+      await expect(postImageRepository.findActiveOfPost('1')).resolves.toEqual([
+        {
+          id: image.id,
+          local_uri: 'file:///1.jpg',
+          remote_url: 'http://api/1.jpg',
+        },
+      ]);
+    });
   });
 });

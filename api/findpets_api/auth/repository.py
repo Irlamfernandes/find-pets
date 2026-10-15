@@ -1,6 +1,6 @@
 """Acesso à tabela users."""
 
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, update
 from sqlalchemy.exc import IntegrityError
 
 from ..clock import now_iso
@@ -34,3 +34,14 @@ def create_user(email, password_hash):
         # O e-mail é UNIQUE: o próprio banco recusa o repetido
         raise ApiError(409, "Este e-mail já está cadastrado. Faça login.") from error
     return user
+
+
+def update_password(user_id, password_hash):
+    now = now_iso()
+    changes = {
+        "password_hash": password_hash,
+        "updated_at": now,
+        "server_updated_at": now,
+    }
+    with transaction() as connection:
+        connection.execute(update(users).where(users.c.id == user_id).values(changes))

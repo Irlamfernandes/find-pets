@@ -9,6 +9,7 @@ import {
 import ProfileScreen from '../ProfileScreen';
 import { profileService } from '../../services/profileService';
 import { accountService } from '../../../auth/services/accountService';
+import { changeAccountPassword } from '../../../auth/services/passwordService';
 import { sessionService } from '../../../auth/services/sessionService';
 import { photoService } from '../../../../shared/services/photoService';
 import { profilePhotoStorage } from '../../../../shared/services/photoStorage';
@@ -18,6 +19,7 @@ import { useKeyboardVisible } from '../../../../shared/hooks/useKeyboardVisible'
 // Mock dos serviços
 jest.mock('../../services/profileService');
 jest.mock('../../../auth/services/accountService');
+jest.mock('../../../auth/services/passwordService');
 jest.mock('../../../auth/services/sessionService');
 
 jest.mock('../../../../shared/services/photoService', () => ({
@@ -211,7 +213,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   it('deve salvar o perfil e atualizar a senha quando informada e houver credenciais', async () => {
     profileService.saveProfile.mockResolvedValueOnce();
-    accountService.changePassword.mockResolvedValueOnce();
+    changeAccountPassword.mockResolvedValueOnce();
 
     const { getByPlaceholderText, getByText } = render(
       <ProfileScreen onBack={mockOnBack} />
@@ -236,7 +238,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
-      expect(accountService.changePassword).toHaveBeenCalledWith(
+      expect(changeAccountPassword).toHaveBeenCalledWith(
         'irlam@test.com',
         'newpass123'
       );
@@ -775,7 +777,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         'A confirmação precisa ser igual à nova senha.'
       );
       expect(profileService.saveProfile).not.toHaveBeenCalled();
-      expect(accountService.changePassword).not.toHaveBeenCalled();
+      expect(changeAccountPassword).not.toHaveBeenCalled();
     });
 
     it('deve bloquear quando a confirmação estiver vazia', async () => {
@@ -824,7 +826,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         fireEvent(getByPlaceholderText(CONFIRM), 'submitEditing');
       });
 
-      expect(accountService.changePassword).toHaveBeenCalledWith(
+      expect(changeAccountPassword).toHaveBeenCalledWith(
         'irlam@test.com',
         'senha123'
       );

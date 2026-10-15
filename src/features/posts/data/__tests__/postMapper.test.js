@@ -1,4 +1,4 @@
-import { toPostRow, fromPostRow } from '../postMapper';
+import { toPostRow, fromPostRow, toApiPost, fromApiPost } from '../postMapper';
 
 const ZONE = { offsetMinutes: -180, abbreviation: 'BRT' };
 const FOUND = { receiverName: 'Ana', foundAt: '2026-10-15T12:00:00.000Z' };
@@ -66,5 +66,48 @@ describe('postMapper', () => {
 
     expect(post.images).toEqual([]);
     expect(post.foundInfo).toBeNull();
+  });
+
+  it('deve informar se o registro aguarda envio', () => {
+    expect(fromPostRow({ ...ROW, sync_status: 'pending' }).syncStatus).toBe(
+      'pending'
+    );
+  });
+
+  it('deve montar o registro da API com as datas e as fotos enviadas', () => {
+    const row = {
+      ...ROW,
+      created_at: 'c',
+      updated_at: 'u',
+      deleted_at: null,
+      sync_status: 'pending',
+    };
+
+    expect(toApiPost(row, ['http://api/a.jpg'])).toMatchObject({
+      id: 'p1',
+      petName: 'Rex',
+      occurredZone: ZONE,
+      images: ['http://api/a.jpg'],
+      createdAt: 'c',
+      updatedAt: 'u',
+      deletedAt: null,
+    });
+  });
+
+  it('deve converter o registro da API em linha já sincronizada', () => {
+    const row = fromApiPost({
+      ...POST,
+      createdAt: 'c',
+      updatedAt: 'u',
+      deletedAt: 'd',
+    });
+
+    expect(row).toEqual({
+      ...ROW,
+      created_at: 'c',
+      updated_at: 'u',
+      deleted_at: 'd',
+      sync_status: 'synced',
+    });
   });
 });

@@ -1,4 +1,5 @@
 import { getPostStatus } from '../domain/post';
+import { SYNC_STATUS } from '../../../shared/database/syncFields';
 
 // Converte o registro usado pelo app ({ petName, ... }) na linha da tabela
 // posts ({ pet_name, ... }) e vice-versa. As fotos ficam em outra tabela.
@@ -41,6 +42,8 @@ function decode(field, value) {
 
 const COLUMN_ENTRIES = Object.entries(COLUMNS);
 
+export const POST_COLUMNS = Object.values(COLUMNS);
+
 export function toPostRow(post) {
   const values = { ...post, status: getPostStatus(post) };
   return Object.fromEntries(
@@ -55,5 +58,27 @@ export function fromPostRow(row, images = []) {
   const fields = Object.fromEntries(
     COLUMN_ENTRIES.map(([field, column]) => [field, decode(field, row[column])])
   );
-  return { ...fields, images };
+  return { ...fields, images, syncStatus: row.sync_status };
+}
+
+// Registro no formato da API, com as datas de controle e as fotos já
+// enviadas (endereços no servidor)
+export function toApiPost(row, imageUrls) {
+  return {
+    ...fromPostRow(row, imageUrls),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+  };
+}
+
+// Linha da tabela a partir do registro que veio da API (já sincronizado)
+export function fromApiPost(remote) {
+  return {
+    ...toPostRow(remote),
+    created_at: remote.createdAt,
+    updated_at: remote.updatedAt,
+    deleted_at: remote.deletedAt,
+    sync_status: SYNC_STATUS.SYNCED,
+  };
 }

@@ -27,3 +27,8 @@ jest.mock('expo-sqlite', () =>
 jest.mock('expo-crypto', () => ({
   randomUUID: () => require('node:crypto').randomUUID(),
 }));
+
+// Estado da conexão: o pacote traz um mock oficial (online por padrão)
+jest.mock('@react-native-community/netinfo', () =>
+  require('@react-native-community/netinfo/jest/netinfo-mock.js')
+);

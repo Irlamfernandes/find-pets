@@ -2,10 +2,12 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useLogin } from '../useLogin';
 import { biometricService } from '../../services/biometrics';
 import { accountService } from '../../services/accountService';
+import { signIn, signUp } from '../../services/signInService';
 import { Alert } from 'react-native';
 
 jest.mock('../../services/biometrics');
 jest.mock('../../services/accountService');
+jest.mock('../../services/signInService');
 
 jest.spyOn(Alert, 'alert');
 
@@ -13,7 +15,7 @@ describe('useLogin Hook', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Padrão: nenhum e-mail cadastrado e nenhuma conta com biometria
-    accountService.authenticate.mockResolvedValue(null);
+    signIn.mockResolvedValue(null);
     accountService.getBiometricOwner.mockResolvedValue(null);
   });
 
@@ -51,7 +53,7 @@ describe('useLogin Hook', () => {
       type: 'biometric',
       usuario: 'dona@test.com',
     });
-    expect(accountService.authenticate).not.toHaveBeenCalled();
+    expect(signIn).not.toHaveBeenCalled();
   });
 
   it('deve exibir erro se não houver conta com biometria no aparelho', async () => {
@@ -149,7 +151,7 @@ describe('useLogin Hook', () => {
 
   it('deve exibir erro se credenciais manuais estiverem incorretas', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.authenticate.mockResolvedValue(null);
+    signIn.mockResolvedValue(null);
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -169,7 +171,7 @@ describe('useLogin Hook', () => {
 
   it('deve chamar onSuccess ao fazer login manual válido', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.authenticate.mockResolvedValue('user@test.com');
+    signIn.mockResolvedValue('user@test.com');
 
     const onSuccess = jest.fn();
     const { result } = renderHook(() => useLogin(onSuccess));
@@ -222,7 +224,7 @@ describe('useLogin Hook', () => {
 
   it('deve criar a conta e entrar direto nela, sem voltar para o login', async () => {
     biometricService.checkAvailability.mockResolvedValue(true);
-    accountService.createAccount.mockResolvedValue();
+    signUp.mockResolvedValue('novo@test.com');
     const onSuccess = jest.fn();
 
     const { result } = renderHook(() => useLogin(onSuccess));
@@ -240,10 +242,7 @@ describe('useLogin Hook', () => {
       await result.current.handleRegister();
     });
 
-    expect(accountService.createAccount).toHaveBeenCalledWith(
-      'novo@test.com',
-      '123456'
-    );
+    expect(signUp).toHaveBeenCalledWith('novo@test.com', '123456');
     // O cadastro não pede biometria (ela é oferecida no fim do cadastro)
     expect(biometricService.authenticate).not.toHaveBeenCalled();
     expect(onSuccess).toHaveBeenCalledWith({
@@ -257,7 +256,7 @@ describe('useLogin Hook', () => {
 
   it('deve exibir erro se ocorrer uma exceção ao tentar cadastrar', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.createAccount.mockRejectedValue(new Error('Erro interno'));
+    signUp.mockRejectedValue(new Error('Erro interno'));
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -275,9 +274,7 @@ describe('useLogin Hook', () => {
 
   it('deve exibir erro genérico se ocorrer uma exceção durante o login manual', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.authenticate.mockRejectedValue(
-      new Error('Erro no banco de dados')
-    );
+    signIn.mockRejectedValue(new Error('Erro no banco de dados'));
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -295,7 +292,7 @@ describe('useLogin Hook', () => {
 
   it('deve lidar com erros genéricos de cadastro quando o erro não possui mensagem', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.createAccount.mockRejectedValue({});
+    signUp.mockRejectedValue({});
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -313,7 +310,7 @@ describe('useLogin Hook', () => {
 
   it('deve exibir erro de usuário incorreto se tentar login manual sem credenciais salvas', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.authenticate.mockResolvedValue(null);
+    signIn.mockResolvedValue(null);
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -333,7 +330,7 @@ describe('useLogin Hook', () => {
 
   it('deve exibir erro se tentar fazer login manual com senha inválida para o usuário salvo', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.authenticate.mockResolvedValue(null);
+    signIn.mockResolvedValue(null);
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -349,17 +346,12 @@ describe('useLogin Hook', () => {
     expect(result.current.errorMessage).toBe(
       'Usuário não existe ou senha errada.'
     );
-    expect(accountService.authenticate).toHaveBeenCalledWith(
-      'user@test.com',
-      'wrongpassword'
-    );
+    expect(signIn).toHaveBeenCalledWith('user@test.com', 'wrongpassword');
   });
 
   it('deve exibir erro genérico se ocorrer uma exceção ao buscar credenciais no login manual', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.authenticate.mockRejectedValue(
-      new Error('Erro ao ler banco')
-    );
+    signIn.mockRejectedValue(new Error('Erro ao ler banco'));
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -377,7 +369,7 @@ describe('useLogin Hook', () => {
 
   it('deve lidar com erros genéricos no login manual quando o erro não possui mensagem', async () => {
     biometricService.checkAvailability.mockResolvedValue(false);
-    accountService.authenticate.mockRejectedValue({});
+    signIn.mockRejectedValue({});
 
     const { result } = renderHook(() => useLogin(jest.fn()));
 
@@ -394,7 +386,7 @@ describe('useLogin Hook', () => {
   });
 
   it('deve entrar na conta como foi cadastrada, mesmo com outras maiúsculas', async () => {
-    accountService.authenticate.mockResolvedValue('Ana@Test.com');
+    signIn.mockResolvedValue('Ana@Test.com');
     const onSuccess = jest.fn();
     const { result } = renderHook(() => useLogin(onSuccess));
 
@@ -406,18 +398,15 @@ describe('useLogin Hook', () => {
       await result.current.handleManualLogin();
     });
 
-    expect(accountService.authenticate).toHaveBeenCalledWith(
-      'ANA@test.com',
-      '123456'
-    );
+    expect(signIn).toHaveBeenCalledWith('ANA@test.com', '123456');
     expect(onSuccess).toHaveBeenCalledWith({
       type: 'credentials',
       usuario: 'Ana@Test.com',
     });
   });
 
-  it('deve abrir a sessão da conta nova com o e-mail em minúsculas', async () => {
-    accountService.createAccount.mockResolvedValue();
+  it('deve abrir a sessão com o e-mail devolvido pelo servidor', async () => {
+    signUp.mockResolvedValue('novo@test.com');
     const onSuccess = jest.fn();
     const { result } = renderHook(() => useLogin(onSuccess));
 
@@ -445,7 +434,7 @@ describe('useLogin Hook', () => {
 
     it('deve impedir cadastrar de novo um e-mail existente', async () => {
       biometricService.checkAvailability.mockResolvedValue(true);
-      accountService.createAccount.mockRejectedValue(
+      signUp.mockRejectedValue(
         new Error('Este e-mail já está cadastrado. Faça login.')
       );
       const { result } = renderHook(() => useLogin(jest.fn()));

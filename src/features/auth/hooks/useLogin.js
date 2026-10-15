@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { biometricService } from '../services/biometrics';
 import { accountService } from '../services/accountService';
+import { signIn, signUp } from '../services/signInService';
 import {
   rule,
   validate,
   isFilled,
   isValidEmail,
-  normalizeEmail,
 } from '../../../shared/utils/validation';
 
 const credentialRules = [
@@ -61,19 +61,19 @@ export function useLogin(onSuccess) {
     }
   };
 
-  // Cria a conta e entra direto nela, sem voltar para o login. A biometria
-  // é oferecida no fim do cadastro ou ativada no Perfil.
+  // Cria a conta no servidor e entra direto nela, sem voltar para o login.
+  // A biometria é oferecida no fim do cadastro ou ativada no Perfil.
   const handleRegister = submitWith(async (email) => {
-    await accountService.createAccount(email, senha);
+    const usuarioConta = await signUp(email, senha);
     setUsuario('');
     setSenha('');
-    onSuccess?.({ type: 'register', usuario: normalizeEmail(email) });
+    onSuccess?.({ type: 'register', usuario: usuarioConta });
   }, 'Erro ao realizar o cadastro.');
 
   // Entra com o e-mail como foi cadastrado, mesmo que digitado com outras
   // maiúsculas, para a sessão sempre apontar para a mesma conta
   const handleManualLogin = submitWith(async (email) => {
-    const usuarioConta = await accountService.authenticate(email, senha);
+    const usuarioConta = await signIn(email, senha);
     if (!usuarioConta) return 'Usuário não existe ou senha errada.';
     onSuccess?.({ type: 'credentials', usuario: usuarioConta });
   }, 'Erro ao realizar o login.');

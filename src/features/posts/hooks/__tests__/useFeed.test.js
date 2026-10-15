@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { useFeed } from '../useFeed';
+import { syncService } from '../../../sync/syncService';
 import { postService } from '../../services/postService';
 import { profileService } from '../../../profile/services/profileService';
 import { sessionService } from '../../../auth/services/sessionService';
@@ -20,6 +21,11 @@ jest.mock('../../../profile/services/profileService', () => ({
 
 jest.mock('../../../auth/services/sessionService', () => ({
   sessionService: { getCurrentUser: jest.fn() },
+}));
+
+jest.mock('../../../sync/syncService', () => ({
+  SYNC_RESULT: { SYNCED: 'synced', OFFLINE: 'offline' },
+  syncService: { subscribe: jest.fn(() => jest.fn()) },
 }));
 
 jest.spyOn(Alert, 'alert');
@@ -309,5 +315,23 @@ describe('useFeed Hook - 100% Coverage', () => {
     const second = renderHook(() => useFeed());
     await act(async () => {});
     expect(second.result.current.userPhoto).toBeNull();
+  });
+
+  it('deve recarregar os posts quando a sincronização trouxer novidades', async () => {
+    postService.getPosts.mockResolvedValue([]);
+    const { unmount } = renderHook(() => useFeed());
+    await act(async () => {});
+    const listener = syncService.subscribe.mock.calls[0][0];
+
+    postService.getPosts.mockResolvedValueOnce([{ id: 'r1' }]);
+    await act(async () => listener('offline'));
+    expect(postService.getPosts).toHaveBeenCalledTimes(1);
+
+    await act(async () => listener('synced'));
+    expect(postService.getPosts).toHaveBeenCalledTimes(2);
+
+    unmount();
+    const stopListening = syncService.subscribe.mock.results[0].value;
+    expect(stopListening).toHaveBeenCalled();
   });
 });

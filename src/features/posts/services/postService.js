@@ -1,11 +1,19 @@
 import { inTransaction } from '../../../shared/database/connection';
 import { withErrorContext } from '../../../shared/services/storage';
 import { postRepository } from '../data/postRepository';
+import { requestSync } from '../../../shared/services/syncScheduler';
 
 function requireId(postId) {
   if (!postId) {
     throw new Error('ID da publicação é obrigatório.');
   }
+}
+
+// Depois de gravar no celular, pede o envio para o servidor (se houver
+// internet) e devolve a lista atualizada
+async function afterChange() {
+  requestSync();
+  return postRepository.findActive();
 }
 
 // Registros de pets, do mais novo para o mais antigo. Cada alteração
@@ -23,7 +31,7 @@ export const postService = {
     }
     return withErrorContext('Erro ao salvar a publicação', async () => {
       await inTransaction(() => postRepository.insert(post));
-      return postRepository.findActive();
+      return afterChange();
     });
   },
 
@@ -32,7 +40,7 @@ export const postService = {
     requireId(postId);
     return withErrorContext('Erro ao excluir a publicação', async () => {
       await postRepository.softDelete(postId);
-      return postRepository.findActive();
+      return afterChange();
     });
   },
 
@@ -41,7 +49,7 @@ export const postService = {
     requireId(postId);
     return withErrorContext('Erro ao atualizar a publicação', async () => {
       await inTransaction(() => postRepository.update(postId, changes));
-      return postRepository.findActive();
+      return afterChange();
     });
   },
 };

@@ -18,4 +18,4 @@ USER findpets
 EXPOSE 5000
 
 # Servidor de produção (o "python app.py" é só para desenvolvimento)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--access-logfile", "-", "app:app"]

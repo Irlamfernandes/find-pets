@@ -62,6 +62,6 @@ export async function pullPosts(usuario) {
   for (const remote of remotePosts) {
     if (!pendingIds.has(remote.id)) await saveSynced(remote);
   }
-  const last = remotePosts[remotePosts.length - 1];
+  const last = remotePosts.at(-1);
   if (last) await syncCursor.save(usuario, last.serverUpdatedAt);
 }

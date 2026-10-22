@@ -16,6 +16,7 @@ async function cloudPhotoOf(image) {
   return photo;
 }
 
+// Fotos do registro no formato da nuvem, na ordem
 async function cloudPhotosOf(postId) {
   const photos = [];
   for (const image of await postImageRepository.findActiveOfPost(postId)) {
@@ -24,9 +25,11 @@ async function cloudPhotosOf(postId) {
   return photos;
 }
 
+// Grava o registro como está na nuvem (sincronizado), numa transação
 const saveSynced = (remote) =>
   inTransaction(() => postRepository.saveSynced(remote));
 
+// Envia um registro com as fotos e marca como sincronizado
 async function pushPost(uid, row) {
   const photos = await cloudPhotosOf(row.id);
   const remote = await postsApi.save({

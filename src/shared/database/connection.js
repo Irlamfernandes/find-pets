@@ -6,6 +6,7 @@ const DATABASE_NAME = 'findpets.db';
 
 let opening = null;
 
+// Abre o banco, cria as tabelas que faltarem e aplica as migrações pendentes
 async function openAndPrepare() {
   const database = await SQLite.openDatabaseAsync(DATABASE_NAME);
   await database.execAsync(SCHEMA);

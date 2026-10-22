@@ -18,9 +18,11 @@ const PET_FIELDS = [
   'description',
 ];
 
+// Valores iniciais do formulário: os do registro editado ou vazios
 const initialPetData = (post) =>
   Object.fromEntries(PET_FIELDS.map((field) => [field, post?.[field] || '']));
 
+// Tira os espaços das pontas de cada campo
 const trimPetData = (petData) =>
   Object.fromEntries(PET_FIELDS.map((field) => [field, petData[field].trim()]));
 
@@ -39,6 +41,7 @@ const reportRules = [
 
 // O que muda entre criar um registro e editar um existente
 const CREATE_MODE = {
+  // Publica um registro novo
   save: (_post, draft) => publishLostPost(draft),
   successAlert: {
     type: 'success',
@@ -68,6 +71,7 @@ export function useReportLostPet(onSaved, initialPost = null) {
   const [address, setAddress] = useState(initialPost?.location || '');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Altera um campo dos dados do pet
   const setPetField = (field, value) => {
     setPetData((current) => ({ ...current, [field]: value }));
   };

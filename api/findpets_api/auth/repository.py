@@ -10,6 +10,7 @@ from ..tables import users
 from ..validation import new_id
 
 
+# Conta ativa com o e-mail, ou None
 def find_by_email(email):
     query = select(users).where(users.c.email == email, users.c.deleted_at.is_(None))
     with transaction() as connection:
@@ -17,6 +18,7 @@ def find_by_email(email):
     return dict(row) if row else None
 
 
+# Cria a conta e devolve os dados dela
 def create_user(email, password_hash):
     now = now_iso()
     user = {
@@ -36,6 +38,7 @@ def create_user(email, password_hash):
     return user
 
 
+# Troca o hash da senha da conta
 def update_password(user_id, password_hash):
     now = now_iso()
     changes = {

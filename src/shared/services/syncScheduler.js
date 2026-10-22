@@ -3,6 +3,7 @@
 // registra quem atende o pedido ao abrir).
 let handler = null;
 
+// Registra quem faz a sincronização (null ao fechar o app)
 export function setSyncHandler(syncNow) {
   handler = syncNow;
 }

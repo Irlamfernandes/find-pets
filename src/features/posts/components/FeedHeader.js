@@ -6,6 +6,7 @@ import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { palette } from '../../../shared/theme/colors';
 
+// Topo do feed: saudação, foto do usuário e botões de ajuda e de perfil
 export function FeedHeader({
   userName,
   userPhoto,

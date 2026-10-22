@@ -15,6 +15,7 @@ blueprint = Blueprint("profiles", __name__, url_prefix="/profile")
 WHATSAPP = re.compile(r"^\d{12,13}$")
 
 
+# Linha da tabela -> perfil em JSON
 def to_json(row):
     return {
         "name": row["name"],
@@ -24,6 +25,7 @@ def to_json(row):
     }
 
 
+# Perfil enviado no corpo da requisição, validado
 def read_profile():
     data = json_body()
     whatsapp = required_text(data, "whatsapp")

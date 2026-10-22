@@ -18,6 +18,8 @@ export const SYNC_RESULT = {
 
 const listeners = new Set();
 
+// Conta pronta para sincronizar: sessão aberta, login no Firebase da mesma
+// conta e internet. Senão, null.
 async function connectedAccount() {
   const usuario = await sessionService.getCurrentUser();
   const account = usuario ? await authApi.currentAccountOf(usuario) : null;
@@ -32,6 +34,7 @@ async function syncAccount({ usuario, uid }) {
   await pullPosts(usuario);
 }
 
+// Resultado de uma sincronização que falhou
 async function resultOfFailure(error) {
   if (isUnauthorized(error)) {
     await authApi.signOut();
@@ -42,6 +45,7 @@ async function resultOfFailure(error) {
     : SYNC_RESULT.FAILED;
 }
 
+// Uma sincronização completa; devolve um SYNC_RESULT
 async function runSync() {
   let account = null;
   try {
@@ -59,6 +63,7 @@ async function runSync() {
 let running = null;
 let requestedAgain = false;
 
+// Repete a sincronização enquanto houver pedidos feitos durante ela
 async function runUntilDone() {
   let result;
   do {

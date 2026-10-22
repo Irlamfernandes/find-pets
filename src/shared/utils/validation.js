@@ -3,11 +3,13 @@
 // falhar, ou null quando tudo está certo.
 export const rule = (test, error) => ({ test, error });
 
+// Confere as regras em ordem
 export function validate(values, rules) {
   const failed = rules.find(({ test }) => !test(values));
   return failed ? failed.error : null;
 }
 
+// Campo preenchido com algo além de espaços
 export const isFilled = (value) => Boolean(value?.trim());
 
 const WHITESPACE = /\s/;

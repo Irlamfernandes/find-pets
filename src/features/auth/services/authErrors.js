@@ -16,6 +16,7 @@ const WRONG_CREDENTIALS = new Set([
   'auth/user-not-found',
 ]);
 
+// Erro de e-mail ou senha incorretos
 export const isWrongCredentials = (error) => WRONG_CREDENTIALS.has(error?.code);
 
 // Erro com a mensagem amigável, quando o código é conhecido

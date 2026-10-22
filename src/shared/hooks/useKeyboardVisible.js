@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Keyboard } from 'react-native';
 
+// true enquanto o teclado está aberto (para esconder a barra inferior)
 export function useKeyboardVisible() {
   const [isVisible, setIsVisible] = useState(false);
 

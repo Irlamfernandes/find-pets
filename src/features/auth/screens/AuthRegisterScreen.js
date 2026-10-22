@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { AuthForm } from '../components/AuthForm';
 
+// Tela de cadastro: cria a conta com e-mail e senha
 export function AuthRegisterScreen({ handleRegister, ...formProps }) {
   return (
     <AuthForm

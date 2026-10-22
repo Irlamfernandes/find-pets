@@ -27,11 +27,13 @@ const UPSERT_OPTIONS = {
   ],
 };
 
+// Linha do perfil ativo da conta, ou null
 async function findRow(userId) {
   const database = await getDatabase();
   return database.getFirstAsync(SELECT_ACTIVE_BY_USER, [userId]);
 }
 
+// Cria ou atualiza a linha do perfil
 const saveRow = (row) => runCommand(upsertCommand(TABLE, row, UPSERT_OPTIONS));
 
 // Endereço da foto no servidor só continua valendo se a foto não mudou
@@ -50,6 +52,7 @@ function localPhotoFor(current, remotePhotoUrl) {
 export const profileRepository = {
   findRow,
 
+  // Perfil da conta no formato do app, ou null
   async findByUser(userId) {
     const row = await findRow(userId);
     return row ? fromProfileRow(row) : null;
@@ -80,6 +83,7 @@ export const profileRepository = {
     });
   },
 
+  // Guarda a foto já convertida para a nuvem (evita converter de novo)
   async setPhotoRemoteUrl(userId, url) {
     await runCommand({
       sql: 'UPDATE profiles SET photo_remote_url = ? WHERE user_id = ?',

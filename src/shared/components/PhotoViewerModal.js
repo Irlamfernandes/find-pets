@@ -14,11 +14,13 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from './SafeTouchable';
 import { palette } from '../theme/colors';
 
+// Visualizador de fotos em tela cheia, passando de uma para outra com o dedo
 export function PhotoViewerModal({ images, initialIndex = 0, onClose }) {
   const { width } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const visible = images.length > 0;
 
+  // Ao terminar de arrastar, descobre qual foto ficou na tela
   const handleScrollEnd = (event) => {
     setCurrentIndex(Math.round(event.nativeEvent.contentOffset.x / width));
   };

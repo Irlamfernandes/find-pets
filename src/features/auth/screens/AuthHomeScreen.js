@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { palette } from '../../../shared/theme/colors';
 
+// Tela inicial de quem não entrou: escolher entre entrar e criar conta
 export function AuthHomeScreen({ onNavigate }) {
   return (
     <View style={styles.container}>

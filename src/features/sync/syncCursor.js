@@ -10,11 +10,13 @@ const cursorsStore = createJsonStore(STORAGE_KEYS.SYNC_CURSORS, {
 });
 
 export const syncCursor = {
+  // Até onde a conta já baixou (0 na primeira vez)
   async get(usuario) {
     const cursors = await cursorsStore.read();
     return cursors[usuario] ?? FIRST_SYNC;
   },
 
+  // Guarda até onde a conta já baixou
   save(usuario, cursor) {
     return cursorsStore.update((cursors) => ({
       ...cursors,

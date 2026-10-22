@@ -6,10 +6,14 @@ import { isCloudPhoto } from './cloudPhoto';
 // ficam guardadas de forma permanente.
 let sequence = 0;
 
+// Cria o armazenamento de fotos de um tipo (perfil ou registro), separadas
+// pelo prefixo do nome do arquivo
 export function createPhotoStorage(filePrefix) {
+  // Foto já copiada para a pasta permanente por este armazenamento
   const isStored = (uri) =>
     typeof uri === 'string' && uri.includes(`/${filePrefix}`);
 
+  // Copia a foto para a pasta permanente e devolve o novo endereço
   const persist = async (uri) => {
     if (!uri) return null;
     // Fotos já guardadas ou que vieram da nuvem não precisam de cópia
@@ -38,6 +42,7 @@ export function createPhotoStorage(filePrefix) {
   return {
     persist,
     remove,
+    // Guarda várias fotos de uma vez, mantendo a ordem
     persistAll: (uris) => Promise.all(uris.map(persist)),
   };
 }

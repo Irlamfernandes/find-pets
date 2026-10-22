@@ -5,10 +5,13 @@
 const backend = { users: [], tree: {}, clock: 0, sequence: 0 };
 const auth = { currentUser: null, authStateReady: async () => {} };
 
+// Erro com código, no formato dos erros do Firebase Authentication
 const authError = (code) => Object.assign(new Error(code), { code });
 
+// E-mail sem espaços e em minúsculas, como o Firebase guarda
 const normalize = (email) => String(email).trim().toLowerCase();
 
+// Valor que o Firebase não guarda: nulo, lista ou objeto vazio
 const isEmpty = (value) =>
   value === null ||
   value === undefined ||
@@ -25,12 +28,15 @@ function clean(value) {
   return Object.fromEntries(entries.map(([key, item]) => [key, clean(item)]));
 }
 
+// "posts/1" -> ["posts", "1"]
 const keysOf = (path) => path.split('/').filter(Boolean);
 
+// Valor guardado no caminho, ou null
 function readPath(path) {
   return keysOf(path).reduce((node, key) => node?.[key] ?? null, backend.tree);
 }
 
+// Grava o valor no caminho, criando os níveis que faltarem
 function writePath(path, value) {
   const keys = keysOf(path);
   const last = keys.pop();
@@ -38,8 +44,10 @@ function writePath(path, value) {
   parent[last] = value;
 }
 
+// Cópia do valor, para o teste não alterar o banco sem querer
 const copy = (value) => (value === null ? null : structuredClone(value));
 
+// Resultado de uma leitura, com os métodos usados pelo app
 function snapshotOf(value, children = []) {
   return {
     exists: () => !isEmpty(value),

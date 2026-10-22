@@ -18,6 +18,7 @@ export function SharePreviewModal({ post, onShare, onClose }) {
   const posterRef = useRef(null);
   const [isImageReady, setIsImageReady] = useState(false);
 
+  // Fecha a prévia e volta a esperar a imagem na próxima abertura
   const handleClose = () => {
     setIsImageReady(false);
     onClose();

@@ -7,6 +7,7 @@ import { friendlyAuthError, isWrongCredentials } from './authErrors';
 // em qualquer celular. A conta também fica guardada neste aparelho, para
 // reabrir o app sem internet.
 
+// Guarda a conta no aparelho e devolve o e-mail dela
 async function remember(email, password) {
   await accountService.rememberAccount(email, password);
   return email;

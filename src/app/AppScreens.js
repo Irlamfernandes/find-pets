@@ -52,6 +52,7 @@ const SCREEN_CONFIG = {
   },
 };
 
+// Mostra a tela atual da navegação, com as props montadas para ela
 export function AppScreens({ navigation, session, actions }) {
   const config = SCREEN_CONFIG[navigation.screen];
   if (!config) return null;

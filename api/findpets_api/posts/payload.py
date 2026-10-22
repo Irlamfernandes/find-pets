@@ -33,15 +33,18 @@ DATE_FIELDS = {
 }
 
 
+# Data opcional, convertida para ISO em UTC
 def optional_date(data, field):
     value = data.get(field)
     return None if value is None else normalize_iso(value, field)
 
 
+# Objeto -> texto JSON para a coluna
 def encode_object(value):
     return None if value is None else json.dumps(value, ensure_ascii=False)
 
 
+# Status do registro ("Perdido" quando não informado)
 def read_status(data):
     status = data.get("status", STATUSES[0])
     if status not in STATUSES:
@@ -49,10 +52,12 @@ def read_status(data):
     return status
 
 
+# Endereço de foto válido (texto não vazio e não muito longo)
 def is_url(value):
     return isinstance(value, str) and 0 < len(value) <= MAX_URL_LENGTH
 
 
+# Lista de fotos validada, sem repetidas
 def read_images(data):
     images = data.get("images", [])
     if not isinstance(images, list) or not all(map(is_url, images)):
@@ -63,6 +68,7 @@ def read_images(data):
     return list(dict.fromkeys(images))
 
 
+# Colunas da tabela a partir dos campos validados do JSON
 def read_columns(data):
     texts = {
         column: optional_text(data, field, max_length)

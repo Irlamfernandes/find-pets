@@ -13,10 +13,12 @@ COLUMNS = {
 }
 
 
+# Texto JSON da coluna -> objeto
 def decode_object(value):
     return None if value is None else json.loads(value)
 
 
+# Linha da tabela -> registro em JSON (sem as fotos)
 def to_json(row):
     post = {field: row[column] for field, column in COLUMNS.items()}
     objects = {

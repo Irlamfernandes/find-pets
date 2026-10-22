@@ -12,6 +12,7 @@ export const profileApi = {
     return readValue(pathOf(uid));
   },
 
+  // Grava o perfil da conta na nuvem
   save(uid, profile) {
     return writeValue(pathOf(uid), profile);
   },

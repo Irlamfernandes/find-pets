@@ -64,12 +64,14 @@ export const profileRules = [
 
 // Ajustes aplicados ao digitar em cada campo
 const FIELD_CHANGES = {
+  // O WhatsApp é formatado enquanto digita
   whatsapp: (value) => ({ whatsapp: formatPhone(value) }),
   // Ao apagar a nova senha, a confirmação é limpa junto
   newPassword: (value) =>
     value ? { newPassword: value } : { ...EMPTY_PASSWORDS },
 };
 
+// Mudanças no estado ao digitar no campo
 const applyFieldChange = (field, value) =>
   FIELD_CHANGES[field]?.(value) ?? { [field]: value };
 
@@ -83,25 +85,32 @@ const lockedWith = (state, saved) => ({
 });
 
 const ACTION_HANDLERS = {
+  // Perfil carregado: mostra em modo leitura
   loaded: (state, { profile }) => lockedWith(state, toProfileValues(profile)),
+  // Campo alterado
   fieldChanged: (state, { field, value }) => ({
     ...state,
     values: { ...state.values, ...applyFieldChange(field, value) },
   }),
+  // Edição liberada
   editingStarted: (state) => ({ ...state, isEditing: true }),
+  // Edição cancelada: volta aos valores salvos
   editingCancelled: (state) => lockedWith(state, state.saved),
+  // Alterações salvas: viram os novos valores salvos
   saved: (state, { photoUri }) =>
     lockedWith(state, {
       name: state.values.name.trim(),
       whatsapp: state.values.whatsapp,
       photoUri,
     }),
+  // Mostrar ou esconder as senhas
   passwordVisibilityToggled: (state) => ({
     ...state,
     isPasswordVisible: !state.isPasswordVisible,
   }),
 };
 
+// Estado do formulário depois da ação
 export function profileReducer(state, action) {
   return ACTION_HANDLERS[action.type](state, action);
 }

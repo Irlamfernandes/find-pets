@@ -12,12 +12,14 @@ function createMemoryBackend() {
     remove: jest.fn(async (key) => {
       data.delete(key);
     }),
+    // Apaga tudo (cada teste começa do zero)
     reset() {
       data.clear();
     },
   };
 }
 
+// AsyncStorage em memória
 export function createAsyncStorageMock() {
   const backend = createMemoryBackend();
   return {
@@ -28,6 +30,7 @@ export function createAsyncStorageMock() {
   };
 }
 
+// SecureStore em memória
 export function createSecureStoreMock() {
   const backend = createMemoryBackend();
   return {

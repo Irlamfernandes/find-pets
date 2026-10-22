@@ -10,6 +10,7 @@ from .tokens import read_token
 PREFIX = "Bearer "
 
 
+# Token enviado no cabeçalho "Authorization: Bearer <token>"
 def bearer_token():
     header = request.headers.get("Authorization", "")
     if not header.startswith(PREFIX):

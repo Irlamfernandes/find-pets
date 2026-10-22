@@ -16,6 +16,7 @@ export function LostPetsMapView({
   const mappablePosts = useMemo(() => getMappablePosts(posts), [posts]);
   const selectedPost =
     mappablePosts.find((post) => post.id === selectedId) || null;
+  // Fecha o resumo do pet selecionado
   const clearSelection = () => setSelectedId(null);
 
   return (

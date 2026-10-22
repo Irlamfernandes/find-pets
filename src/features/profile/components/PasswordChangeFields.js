@@ -13,6 +13,7 @@ const secretInputProps = {
   selectionColor: palette.primary,
 };
 
+// Botão de mostrar ou esconder a senha
 function VisibilityToggle({ isVisible, onToggle }) {
   return (
     <SafeTouchable
@@ -35,6 +36,7 @@ VisibilityToggle.propTypes = {
   onToggle: PropTypes.func.isRequired,
 };
 
+// Campo de confirmar a nova senha, com aviso quando não confere
 function ConfirmPasswordField({
   inputRef,
   value,

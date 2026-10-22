@@ -3,11 +3,13 @@ import { getTimeZoneInfo } from './timeZone';
 // Extrai localização e data/hora dos metadados EXIF das fotos.
 // Android expõe as tags na raiz (GPSLatitude); iOS agrupa em "{GPS}" e "{Exif}".
 
+// Número a partir do valor do EXIF (pode vir como texto); inválido vira null
 function toNumber(value) {
   const number = typeof value === 'string' ? Number.parseFloat(value) : value;
   return Number.isFinite(number) ? number : null;
 }
 
+// Aplica o sinal da coordenada: Sul e Oeste são negativos
 function applyRef(value, ref, negativeRef) {
   if (value === null) return null;
   return ref === negativeRef ? -Math.abs(value) : value;
@@ -16,6 +18,7 @@ function applyRef(value, ref, negativeRef) {
 // Android usa a tag na raiz (GPSLatitude); iOS, dentro de "{GPS}" (Latitude)
 const readGpsTag = (exif, tag) => exif[`GPS${tag}`] ?? exif['{GPS}']?.[tag];
 
+// Latitude ou longitude gravada pela câmera, já com o sinal certo
 const readCoordinate = (exif, tag, negativeRef) =>
   applyRef(
     toNumber(readGpsTag(exif, tag)),
@@ -23,6 +26,7 @@ const readCoordinate = (exif, tag, negativeRef) =>
     negativeRef
   );
 
+// Coordenada existe e está dentro do limite permitido
 const isInRange = (value, limit) => value !== null && Math.abs(value) <= limit;
 
 // Latitude entre -90 e 90, longitude entre -180 e 180. Algumas câmeras
@@ -32,6 +36,7 @@ const isValidCoords = (latitude, longitude) =>
   isInRange(longitude, 180) &&
   (latitude !== 0 || longitude !== 0);
 
+// Coordenadas da foto ({ latitude, longitude }) ou null se não forem válidas
 export function getPhotoCoords(exif) {
   if (!exif) return null;
   const latitude = readCoordinate(exif, 'Latitude', 'S');
@@ -39,6 +44,7 @@ export function getPhotoCoords(exif) {
   return isValidCoords(latitude, longitude) ? { latitude, longitude } : null;
 }
 
+// Lê uma informação do EXIF, que pode vir na raiz ou dentro de "{Exif}"
 function readExif(exif, tag) {
   return exif?.[tag] ?? exif?.['{Exif}']?.[tag];
 }
@@ -85,6 +91,7 @@ function toPhotoDate(iso, offsetMinutes) {
   return new Date(new Date(`${iso}Z`).getTime() - offsetMinutes * 60000);
 }
 
+// Data possível para uma foto: não muito antiga nem no futuro
 const isPlausiblePhotoDate = (date) =>
   date.getFullYear() >= MIN_PHOTO_YEAR &&
   date.getTime() <= Date.now() + MAX_CLOCK_AHEAD_MS;

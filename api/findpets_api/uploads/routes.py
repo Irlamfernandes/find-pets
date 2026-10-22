@@ -13,10 +13,12 @@ blueprint = Blueprint("uploads", __name__, url_prefix="/uploads")
 EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
 
+# Pasta onde as fotos ficam guardadas
 def upload_dir():
     return Path(current_app.config["UPLOAD_DIR"])
 
 
+# Extensão da foto enviada (só imagens são aceitas)
 def extension_of(file):
     extension = Path(file.filename or "").suffix.lower().lstrip(".")
     if extension not in EXTENSIONS:

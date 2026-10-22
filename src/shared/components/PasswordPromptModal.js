@@ -13,6 +13,8 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from './SafeTouchable';
 import { palette } from '../theme/colors';
 
+// Janela que pede a senha atual antes de uma ação sensível (ex.: editar o
+// perfil ou ativar a biometria)
 export default function PasswordPromptModal({
   visible,
   title = 'Confirme sua senha',
@@ -24,12 +26,14 @@ export default function PasswordPromptModal({
 }) {
   const [password, setPassword] = useState('');
 
+  // Cancelou: fecha o teclado e limpa a senha digitada
   const handleCancel = () => {
     Keyboard.dismiss();
     setPassword('');
     onCancel();
   };
 
+  // Confirmou: quem abriu confere a senha; se estiver certa, o campo é limpo
   const handleConfirm = async () => {
     Keyboard.dismiss();
     const confirmed = await onConfirm(password);

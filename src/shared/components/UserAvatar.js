@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from './SafeTouchable';
 import { palette } from '../theme/colors';
 
+// Foto redonda do usuário; sem foto, mostra um ícone de pessoa
 export function UserAvatar({ uri, size = 40, onPress, accessibilityLabel }) {
   const shape = { width: size, height: size, borderRadius: size / 2 };
 

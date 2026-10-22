@@ -19,6 +19,7 @@ const onboardingRules = [
   ),
 ];
 
+// Estado e ações do cadastro do perfil (nome e WhatsApp)
 export function useOnboarding(onComplete) {
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
@@ -27,6 +28,7 @@ export function useOnboarding(onComplete) {
   // Aplica a máscara enquanto a pessoa digita
   const changeWhatsapp = (value) => setWhatsapp(formatPhone(value));
 
+  // Valida e salva o perfil; depois segue para o app
   const handleSaveProfile = async () => {
     const invalid = validate({ name, whatsapp }, onboardingRules);
     setErrorMessage(invalid || '');

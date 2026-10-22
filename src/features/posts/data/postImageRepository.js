@@ -90,6 +90,7 @@ const deleteActiveCommand = (postId) => {
 };
 
 export const postImageRepository = {
+  // Fotos ativas de todos os registros: { [id do registro]: [fotos] }
   async findActiveByPost() {
     const database = await getDatabase();
     return groupByPost(await database.getAllAsync(SELECT_ACTIVE));
@@ -104,11 +105,13 @@ export const postImageRepository = {
     }
   },
 
+  // Fotos ativas de um registro, com o endereço na nuvem (se já enviadas)
   async findActiveOfPost(postId) {
     const database = await getDatabase();
     return database.getAllAsync(SELECT_ACTIVE_OF_POST, [postId]);
   },
 
+  // Guarda a foto já convertida para a nuvem (evita converter de novo)
   async setRemoteUrl(imageId, url) {
     await runCommand({
       sql: 'UPDATE post_images SET remote_url = ? WHERE id = ?',

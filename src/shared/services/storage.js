@@ -9,12 +9,14 @@ export const asyncStorageAdapter = {
   removeItem: (key) => AsyncStorage.removeItem(key),
 };
 
+// Armazenamento criptografado do sistema (senhas)
 export const secureStorageAdapter = {
   getItem: (key) => SecureStore.getItemAsync(key),
   setItem: (key, value) => SecureStore.setItemAsync(key, value),
   removeItem: (key) => SecureStore.deleteItemAsync(key),
 };
 
+// Objeto comum { ... } (não é lista nem null)
 const isPlainObject = (value) =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
@@ -27,6 +29,7 @@ function matchesShape(value, fallback) {
   return typeof value === typeof fallback;
 }
 
+// Lê o JSON guardado sem lançar erro: { ok, value }
 function parseJson(raw) {
   try {
     return { ok: true, value: JSON.parse(raw) };
@@ -47,14 +50,17 @@ export function createJsonStore(
   // Cópia nova do padrão a cada leitura, lida do JSON guardado uma vez.
   // (structuredClone não é garantido no Hermes, o motor do Expo Go.)
   const emptyJson = JSON.stringify(fallback);
+  // Cópia nova do valor padrão
   const emptyValue = () => JSON.parse(emptyJson);
 
+  // Lê o valor guardado; ausente, corrompido ou em outro formato vira o padrão
   const read = async () => {
     const raw = await adapter.getItem(key);
     const parsed = raw === null ? { ok: false } : parseJson(raw);
     const isUsable = parsed.ok && matchesShape(parsed.value, fallback);
     return normalize(isUsable ? parsed.value : emptyValue());
   };
+  // Grava o valor como texto JSON
   const write = (value) => adapter.setItem(key, JSON.stringify(value));
 
   return {
@@ -66,6 +72,7 @@ export function createJsonStore(
       await write(next);
       return next;
     },
+    // Apaga o valor guardado
     clear: () => adapter.removeItem(key),
   };
 }

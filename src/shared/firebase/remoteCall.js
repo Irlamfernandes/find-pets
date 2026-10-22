@@ -5,14 +5,17 @@ const TIMEOUT_MS = 15000;
 // Não foi possível falar com o Firebase (sem internet). O app continua
 // funcionando offline e tenta de novo depois.
 export class OfflineError extends Error {
+  // A mensagem padrão é a exibida quando a pessoa está sem internet
   constructor(message = 'Sem conexão com o servidor.') {
     super(message);
     this.name = 'OfflineError';
   }
 }
 
+// Texto do erro, mesmo quando ele não tem mensagem
 const messageOf = (error) => String(error?.message ?? '');
 
+// Falha por falta de conexão (no login ou no banco de dados)
 const isNetworkFailure = (error) =>
   error?.code === 'auth/network-request-failed' ||
   /client is offline/i.test(messageOf(error));

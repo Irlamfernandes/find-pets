@@ -28,6 +28,7 @@ export const FEED_GUIDE_STEPS = [
   },
 ];
 
+// Cartão de boas-vindas do feed, explicando como usar o app
 export function FeedGuideCard({ onDismiss }) {
   return (
     <View testID="feed-guide" style={styles.card}>

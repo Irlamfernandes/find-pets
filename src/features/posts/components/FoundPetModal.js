@@ -25,6 +25,7 @@ import { useFoundForm } from '../hooks/useFoundForm';
 
 export { FOUND_RELATIONS } from '../domain/foundForm';
 
+// Título e ícone da janela de reencontro
 function FoundModalHeader() {
   return (
     <View style={styles.header}>
@@ -39,6 +40,7 @@ function FoundModalHeader() {
   );
 }
 
+// Campos de data e hora do reencontro, lado a lado
 function FoundDateTimeFields({ form, dateRef, timeRef, onChange, onSubmit }) {
   return (
     <View style={styles.row}>
@@ -83,6 +85,7 @@ FoundDateTimeFields.propTypes = {
   onSubmit: PropTypes.func.isRequired,
 };
 
+// Botões de cancelar e confirmar o reencontro
 function FoundModalActions({ isSaving, onCancel, onConfirm }) {
   return (
     <View style={styles.actions}>
@@ -114,6 +117,7 @@ FoundModalActions.propTypes = {
   onConfirm: PropTypes.func.isRequired,
 };
 
+// Janela para registrar o reencontro: quem recebeu o pet, quando e onde
 export function FoundPetModal({ visible, lostAt, onCancel, onConfirm }) {
   const { form, updateField, errorMessage, isSaving, reset, confirm } =
     useFoundForm(onConfirm, lostAt);

@@ -6,6 +6,7 @@ import {
 
 // Registros de todos os usuários no Realtime Database: posts/<id>
 const POSTS = 'posts';
+// Caminho de um registro no banco
 const pathOf = (id) => `${POSTS}/${id}`;
 
 // O banco não guarda campos vazios: lista de fotos vazia some

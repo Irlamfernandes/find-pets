@@ -27,6 +27,7 @@ def active_images(connection, post_ids):
     return groups
 
 
+# Executa a consulta e junta as fotos de cada registro
 def fetch(query):
     with transaction() as connection:
         rows = [dict(row) for row in connection.execute(query).mappings()]
@@ -34,6 +35,7 @@ def fetch(query):
     return [{**row, "images": images[row["id"]]} for row in rows]
 
 
+# Registros ativos, do mais novo para o mais antigo
 def list_active():
     return fetch(
         SELECT_POSTS.where(posts.c.deleted_at.is_(None)).order_by(*NEWEST_FIRST)
@@ -50,6 +52,7 @@ def list_changed_since(since):
     return fetch(query.order_by(posts.c.server_updated_at))
 
 
+# Um registro pelo id (com os excluídos, se pedido), ou None
 def find(post_id, include_deleted=False):
     query = SELECT_POSTS.where(posts.c.id == post_id)
     if not include_deleted:
@@ -95,6 +98,7 @@ def save(row, images):
         replace_images(connection, row["id"], images, now)
 
 
+# Exclusão lógica: preenche deleted_at, o registro continua no banco
 def soft_delete(post_id):
     now = now_iso()
     deleted = {"deleted_at": now, "updated_at": now, "server_updated_at": now}

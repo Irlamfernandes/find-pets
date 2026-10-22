@@ -33,6 +33,7 @@ const EDIT_COPY = {
   submit: 'Salvar alterações',
 };
 
+// Tela de registrar (ou editar) o desaparecimento de um pet
 export default function ReportLostPetScreen({
   onBack,
   onSaved,

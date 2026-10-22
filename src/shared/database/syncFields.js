@@ -2,6 +2,7 @@
 // alteração volta o registro para 'pending', para ser enviado à nuvem.
 export const SYNC_STATUS = { PENDING: 'pending', SYNCED: 'synced' };
 
+// Data e hora atuais no formato ISO, como ficam gravadas no banco
 const now = () => new Date().toISOString();
 
 export const createdFields = (at = now()) => ({

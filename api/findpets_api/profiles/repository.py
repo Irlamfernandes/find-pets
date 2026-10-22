@@ -7,6 +7,7 @@ from ..database import insert_or_update, transaction
 from ..tables import profiles
 
 
+# Perfil ativo da conta, ou None
 def find_by_user(user_id):
     query = select(profiles).where(
         profiles.c.user_id == user_id, profiles.c.deleted_at.is_(None)
@@ -16,6 +17,7 @@ def find_by_user(user_id):
     return dict(row) if row else None
 
 
+# Cria ou atualiza o perfil da conta
 def save(user_id, profile):
     now = now_iso()
     row = {

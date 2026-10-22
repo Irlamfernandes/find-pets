@@ -20,6 +20,8 @@ const credentialRules = [
   ),
 ];
 
+// Estado e ações das telas de login e cadastro: campos, erros, biometria,
+// entrada com senha e criação da conta
 export function useLogin(onSuccess) {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');

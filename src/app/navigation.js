@@ -16,10 +16,13 @@ export const INITIAL_NAVIGATION = {
   editingPost: null,
 };
 
+// Estado da navegação: a tela e, no registro, o post sendo editado
 const goTo = (screen, editingPost = null) => ({ screen, editingPost });
 
+// Telas em que a pessoa já entrou na conta
 const SIGNED_IN = [SCREENS.HOME, SCREENS.PROFILE, SCREENS.REPORT];
 
+// Transições permitidas: de quais telas (from) e para qual tela vão (to)
 const TRANSITIONS = {
   // Sessão salva de um uso anterior: confirmar a identidade antes de entrar
   sessionRestored: {
@@ -49,6 +52,8 @@ const TRANSITIONS = {
   },
 };
 
+// Aplica a transição pedida, se ela for permitida a partir da tela atual;
+// senão, a navegação não muda
 export function navigationReducer(state, action) {
   const transition = TRANSITIONS[action.type];
   if (!transition?.from.includes(state.screen)) return state;

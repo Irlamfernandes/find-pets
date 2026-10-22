@@ -28,13 +28,16 @@ const COLUMNS = {
 // Campos que guardam objetos, gravados como texto JSON
 const JSON_FIELDS = new Set(['occurredZone', 'foundInfo']);
 
+// Campo que é gravado como texto JSON
 const isJsonField = (field) => JSON_FIELDS.has(field);
 
+// Valor do registro -> valor da coluna (objetos viram texto JSON)
 function encode(field, value) {
   if (value === undefined || value === null) return null;
   return isJsonField(field) ? JSON.stringify(value) : value;
 }
 
+// Valor da coluna -> valor do registro (texto JSON volta a ser objeto)
 function decode(field, value) {
   if (value === null) return null;
   return isJsonField(field) ? JSON.parse(value) : value;
@@ -44,6 +47,7 @@ const COLUMN_ENTRIES = Object.entries(COLUMNS);
 
 export const POST_COLUMNS = Object.values(COLUMNS);
 
+// Registro do app -> linha da tabela posts (o status é sempre preenchido)
 export function toPostRow(post) {
   const values = { ...post, status: getPostStatus(post) };
   return Object.fromEntries(
@@ -54,6 +58,8 @@ export function toPostRow(post) {
   );
 }
 
+// Linha da tabela posts -> registro do app, com as fotos e a situação da
+// sincronização
 export function fromPostRow(row, images = []) {
   const fields = Object.fromEntries(
     COLUMN_ENTRIES.map(([field, column]) => [field, decode(field, row[column])])

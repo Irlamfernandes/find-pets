@@ -23,6 +23,7 @@ export function ProfilePhotoSection({ photoUri, isEditing, onChange }) {
   const options = getPhotoOptions({
     hasPhoto: Boolean(photoUri),
     onChoose: choosePhoto,
+    // Remove a foto do perfil
     onRemove: () => onChange(null),
   });
 

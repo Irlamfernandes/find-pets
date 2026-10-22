@@ -3,6 +3,7 @@ import { accountService } from './accountService';
 import { authApi } from './authApi';
 import { friendlyAuthError } from './authErrors';
 
+// Converte a falha da troca de senha numa mensagem para o usuário
 function toPasswordError(error) {
   if (error instanceof OfflineError) {
     return new Error('Conecte-se à internet para trocar a senha.');

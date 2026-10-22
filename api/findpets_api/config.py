@@ -5,6 +5,7 @@ import os
 FIVE_MEGABYTES = 5 * 1024 * 1024
 
 
+# Configurações lidas das variáveis de ambiente, com valores padrão
 def load_settings():
     return {
         # Trocando só esta URL, a API usa MySQL, Postgres (Supabase) ou SQLite
@@ -20,6 +21,7 @@ def load_settings():
     }
 
 
+# "a, b," -> ["a", "b"]
 def split_list(text):
     return [item.strip() for item in text.split(",") if item.strip()]
 
@@ -28,6 +30,7 @@ def split_list(text):
 MIN_SECRET_LENGTH = 32
 
 
+# Impede a API de subir com a chave dos tokens ausente ou curta demais
 def require_secret(settings):
     if len(settings.get("JWT_SECRET") or "") < MIN_SECRET_LENGTH:
         raise RuntimeError("Defina JWT_SECRET com pelo menos 32 caracteres aleatórios.")

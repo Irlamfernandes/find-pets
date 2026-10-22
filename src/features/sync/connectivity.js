@@ -5,6 +5,7 @@ import NetInfo from '@react-native-community/netinfo';
 const hasInternet = (state) =>
   Boolean(state.isConnected) && state.isInternetReachable !== false;
 
+// true quando há rede com acesso à internet
 export async function isOnline() {
   return hasInternet(await NetInfo.fetch());
 }

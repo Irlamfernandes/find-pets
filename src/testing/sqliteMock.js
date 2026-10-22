@@ -10,6 +10,7 @@ let sqlJsReady = null;
 const toParams = (params) =>
   params.length === 1 && Array.isArray(params[0]) ? params[0] : params;
 
+// Executa um SELECT e devolve as linhas como objetos
 function selectAll(database, source, params) {
   const statement = database.prepare(source);
   statement.bind(toParams(params));
@@ -19,6 +20,7 @@ function selectAll(database, source, params) {
   return rows;
 }
 
+// Executa a tarefa numa transação: desfaz tudo se ela falhar
 async function runInTransaction(database, task) {
   database.exec('BEGIN');
   try {
@@ -30,6 +32,7 @@ async function runInTransaction(database, task) {
   }
 }
 
+// Banco com os métodos do expo-sqlite usados pelo app
 function createDatabase(database) {
   return {
     execAsync: jest.fn(async (source) => {
@@ -50,6 +53,7 @@ function createDatabase(database) {
   };
 }
 
+// Substituto do módulo expo-sqlite
 export function createSQLiteMock() {
   return {
     openDatabaseAsync: jest.fn(async () => {

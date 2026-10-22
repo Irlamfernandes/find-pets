@@ -3,6 +3,7 @@ import { withErrorContext } from '../../../shared/services/storage';
 import { postRepository } from '../data/postRepository';
 import { requestSync } from '../../../shared/services/syncScheduler';
 
+// Recusa ações sem o id do registro
 function requireId(postId) {
   if (!postId) {
     throw new Error('ID da publicação é obrigatório.');
@@ -19,12 +20,14 @@ async function afterChange() {
 // Registros de pets, do mais novo para o mais antigo. Cada alteração
 // devolve a lista atualizada.
 export const postService = {
+  // Registros ativos para o feed
   getPosts() {
     return withErrorContext('Erro ao carregar as publicações', () =>
       postRepository.findActive()
     );
   },
 
+  // Grava um registro novo e pede a sincronização
   savePost(post) {
     if (!post?.id) {
       throw new Error('Dados do post inválidos.');

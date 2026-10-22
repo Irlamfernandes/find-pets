@@ -28,6 +28,7 @@ export function createFoundForm(now = new Date()) {
   };
 }
 
+// Data e hora digitadas no formulário, juntas numa data
 const getFoundAt = (form) => parseDateTimeInput(form.date, form.time);
 
 // A data digitada não tem segundos: compara a partir do minuto do sumiço

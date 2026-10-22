@@ -17,11 +17,17 @@ const isEmpty = (value) =>
   value === undefined ||
   (typeof value === 'object' && Object.keys(value).length === 0);
 
+// Hora do servidor: um relógio que só avança, um passo a cada gravação
+function nextServerTime() {
+  backend.clock += 1;
+  return backend.clock;
+}
+
 // Como no Firebase: nulos, listas e objetos vazios não são guardados, e
 // undefined é recusado
 function clean(value) {
   if (value === undefined) throw new Error('set failed: value is undefined');
-  if (value?.['.sv'] === 'timestamp') return (backend.clock += 1);
+  if (value?.['.sv'] === 'timestamp') return nextServerTime();
   if (Array.isArray(value)) return value.map(clean);
   if (value === null || typeof value !== 'object') return value;
   const entries = Object.entries(value).filter(([, item]) => !isEmpty(item));

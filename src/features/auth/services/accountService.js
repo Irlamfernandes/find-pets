@@ -19,6 +19,7 @@ const isValidAccount = (account) =>
 const accountsStore = createJsonStore(STORAGE_KEYS.CREDENTIALS, {
   adapter: secureStorageAdapter,
   fallback: [],
+  // Descarta contas corrompidas ao ler
   normalize: (accounts) => accounts.filter(isValidAccount),
 });
 

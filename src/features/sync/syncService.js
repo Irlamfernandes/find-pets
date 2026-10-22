@@ -1,4 +1,8 @@
-import { isUnauthorized, OfflineError } from '../../shared/firebase/remoteCall';
+import {
+  isUnauthorized,
+  OfflineError,
+  SignInRequiredError,
+} from '../../shared/firebase/remoteCall';
 import { authApi } from '../auth/services/authApi';
 import { sessionService } from '../auth/services/sessionService';
 import { isOnline } from './connectivity';
@@ -7,23 +11,25 @@ import { pullProfile, pushProfile } from './profileSync';
 
 export const SYNC_RESULT = {
   SYNCED: 'synced',
-  // Sem conta conectada, sem login no Firebase (entrou offline) ou sem
-  // internet
+  // Sem conta conectada ou sem internet
   SKIPPED: 'skipped',
   OFFLINE: 'offline',
-  // O Firebase recusou o login (expirou): é preciso entrar com a senha
+  // Sem login no Firebase, ou ele foi recusado: é preciso entrar com a senha
   UNAUTHORIZED: 'unauthorized',
   FAILED: 'failed',
 };
 
 const listeners = new Set();
 
-// Conta pronta para sincronizar: sessão aberta, login no Firebase da mesma
-// conta e internet. Senão, null.
+// Conta para sincronizar, ou null sem sessão ou sem internet. Com internet,
+// mas sem login no Firebase da mesma conta, pede para entrar com a senha
+// (senão os dados ficariam esperando para sempre).
 async function connectedAccount() {
   const usuario = await sessionService.getCurrentUser();
-  const account = usuario ? await authApi.currentAccountOf(usuario) : null;
-  return account && (await isOnline()) ? { usuario, uid: account.uid } : null;
+  if (!usuario || !(await isOnline())) return null;
+  const account = await authApi.currentAccountOf(usuario);
+  if (!account) throw new SignInRequiredError();
+  return { usuario, uid: account.uid };
 }
 
 // Envia primeiro (vale a alteração mais recente) e depois baixa as novidades
@@ -47,14 +53,13 @@ async function resultOfFailure(error) {
 
 // Uma sincronização completa; devolve um SYNC_RESULT
 async function runSync() {
-  let account = null;
   try {
-    account = await connectedAccount();
+    const account = await connectedAccount();
     if (!account) return SYNC_RESULT.SKIPPED;
     await syncAccount(account);
     return SYNC_RESULT.SYNCED;
   } catch (error) {
-    return account ? resultOfFailure(error) : SYNC_RESULT.FAILED;
+    return resultOfFailure(error);
   }
 }
 

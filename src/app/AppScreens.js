@@ -12,6 +12,7 @@ import { SCREENS } from './navigation';
 const SCREEN_CONFIG = {
   [SCREENS.UNLOCK]: {
     component: UnlockScreen,
+    // Desbloqueio: a conta salva, entrar ou trocar de conta
     props: ({ session, actions }) => ({
       usuario: session.usuario,
       onUnlocked: actions.unlocked,
@@ -20,14 +21,17 @@ const SCREEN_CONFIG = {
   },
   [SCREENS.LOGIN]: {
     component: LoginScreen,
+    // Login e cadastro: avisa quando a pessoa entrou
     props: ({ actions }) => ({ onLoginSuccess: actions.loginSucceeded }),
   },
   [SCREENS.ONBOARDING]: {
     component: OnboardingScreen,
+    // Cadastro do perfil: avisa quando terminou
     props: ({ actions }) => ({ onComplete: actions.onboardingCompleted }),
   },
   [SCREENS.HOME]: {
     component: FeedScreen,
+    // Feed: abre o perfil, um registro novo ou a edição de um registro
     props: ({ actions }) => ({
       onOpenProfile: actions.openProfile,
       onOpenReport: () => actions.openReport(null),
@@ -36,6 +40,7 @@ const SCREEN_CONFIG = {
   },
   [SCREENS.REPORT]: {
     component: ReportLostPetScreen,
+    // Registro: o post sendo editado (ou nenhum) e a volta para o feed
     props: ({ navigation, actions }) => ({
       initialPost: navigation.editingPost,
       onBack: actions.openHome,
@@ -44,6 +49,7 @@ const SCREEN_CONFIG = {
   },
   [SCREENS.PROFILE]: {
     component: ProfileScreen,
+    // Perfil: voltar, registrar um desaparecimento ou sair da conta
     props: ({ actions }) => ({
       onBack: actions.openHome,
       onOpenReport: () => actions.openReport(null),

@@ -50,8 +50,11 @@ const copy = (value) => (value === null ? null : structuredClone(value));
 // Resultado de uma leitura, com os métodos usados pelo app
 function snapshotOf(value, children = []) {
   return {
+    // O caminho tem algum valor guardado
     exists: () => !isEmpty(value),
+    // Cópia do valor guardado (null se não houver)
     val: () => (isEmpty(value) ? null : copy(value)),
+    // Percorre os filhos em ordem; para se o callback devolver true
     forEach: (callback) =>
       children.some((child) => callback(snapshotOf(child)) === true),
   };

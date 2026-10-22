@@ -27,16 +27,19 @@ const TRANSITIONS = {
   // Sessão salva de um uso anterior: confirmar a identidade antes de entrar
   sessionRestored: {
     from: [SCREENS.LOADING],
+    // Com sessão salva vai para o desbloqueio; sem, para o login
     to: ({ hasSession }) => goTo(hasSession ? SCREENS.UNLOCK : SCREENS.LOGIN),
   },
   // Entrou (login, cadastro ou desbloqueio): sem perfil, vai completá-lo
   authenticated: {
     from: [SCREENS.LOGIN, SCREENS.UNLOCK],
+    // Com perfil vai para o feed; sem, para o cadastro do perfil
     to: ({ hasProfile }) =>
       goTo(hasProfile ? SCREENS.HOME : SCREENS.ONBOARDING),
   },
   onboardingCompleted: {
     from: [SCREENS.ONBOARDING],
+    // Perfil completo: vai para o feed
     to: () => goTo(SCREENS.HOME),
   },
   homeOpened: { from: SIGNED_IN, to: () => goTo(SCREENS.HOME) },
@@ -44,10 +47,12 @@ const TRANSITIONS = {
   // Sem `post`, abre um registro novo; com ele, a edição
   reportOpened: {
     from: [SCREENS.HOME, SCREENS.PROFILE],
+    // Abre o registro, novo ou com o post a editar
     to: ({ post }) => goTo(SCREENS.REPORT, post || null),
   },
   loggedOut: {
     from: [SCREENS.UNLOCK, ...SIGNED_IN],
+    // Saiu da conta: volta para o login
     to: () => goTo(SCREENS.LOGIN),
   },
 };

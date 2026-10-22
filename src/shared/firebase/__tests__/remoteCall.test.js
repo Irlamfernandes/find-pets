@@ -1,4 +1,9 @@
-import { isUnauthorized, OfflineError, remoteCall } from '../remoteCall';
+import {
+  isUnauthorized,
+  OfflineError,
+  remoteCall,
+  SignInRequiredError,
+} from '../remoteCall';
 
 const withCode = (code) => Object.assign(new Error(code), { code });
 
@@ -38,6 +43,7 @@ describe('remoteCall', () => {
       isUnauthorized(new Error('PERMISSION_DENIED: Permission denied'))
     ).toBe(true);
     expect(isUnauthorized(withCode('auth/user-token-expired'))).toBe(true);
+    expect(isUnauthorized(new SignInRequiredError())).toBe(true);
     expect(isUnauthorized(new OfflineError())).toBe(false);
     expect(isUnauthorized(null)).toBe(false);
   });

@@ -53,15 +53,18 @@ describe('syncService', () => {
       'sem conta conectada',
       () => sessionService.getCurrentUser.mockResolvedValue(null),
     ],
-    [
-      'sem login no Firebase (entrou offline)',
-      () => authApi.currentAccountOf.mockResolvedValue(null),
-    ],
     ['sem internet', () => isOnline.mockResolvedValue(false)],
   ])('não deve sincronizar %s', async (_case, arrange) => {
     arrange();
 
     await expect(syncService.syncNow()).resolves.toBe(SYNC_RESULT.SKIPPED);
+    expect(pushProfile).not.toHaveBeenCalled();
+  });
+
+  it('deve pedir a senha quando a conta não está conectada no Firebase', async () => {
+    authApi.currentAccountOf.mockResolvedValue(null);
+
+    await expect(syncService.syncNow()).resolves.toBe(SYNC_RESULT.UNAUTHORIZED);
     expect(pushProfile).not.toHaveBeenCalled();
   });
 

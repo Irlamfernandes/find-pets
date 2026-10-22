@@ -84,7 +84,9 @@ export function BiometricSettingsCard() {
 
   // Cada ação devolve o aviso a exibir (ou nada, se a pessoa cancelou)
   const actions = {
+    // Ativa e devolve o aviso do resultado
     activate: async () => ACTIVATION_ALERTS[await activate()],
+    // Desativa e devolve o aviso de biometria desativada
     deactivate: async () => {
       await deactivate();
       return DEACTIVATED_ALERT;

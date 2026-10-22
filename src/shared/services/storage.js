@@ -4,15 +4,21 @@ import * as SecureStore from 'expo-secure-store';
 // Onde os dados ficam gravados. Dados sensíveis (senhas) vão para o
 // armazenamento criptografado do sistema; o restante, para o AsyncStorage.
 export const asyncStorageAdapter = {
+  // Lê o valor guardado na chave (null se não houver)
   getItem: (key) => AsyncStorage.getItem(key),
+  // Grava o valor (texto) na chave
   setItem: (key, value) => AsyncStorage.setItem(key, value),
+  // Apaga o valor da chave
   removeItem: (key) => AsyncStorage.removeItem(key),
 };
 
 // Armazenamento criptografado do sistema (senhas)
 export const secureStorageAdapter = {
+  // Lê o valor guardado na chave (null se não houver)
   getItem: (key) => SecureStore.getItemAsync(key),
+  // Grava o valor (texto) na chave
   setItem: (key, value) => SecureStore.setItemAsync(key, value),
+  // Apaga o valor da chave
   removeItem: (key) => SecureStore.deleteItemAsync(key),
 };
 

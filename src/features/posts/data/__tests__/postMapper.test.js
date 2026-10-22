@@ -92,6 +92,7 @@ describe('postMapper', () => {
       updatedAt: 'u',
       deletedAt: null,
     });
+    expect(toApiPost(row, [])).not.toHaveProperty('syncStatus');
   });
 
   it('deve converter o registro da API em linha já sincronizada', () => {

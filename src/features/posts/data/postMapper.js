@@ -70,8 +70,11 @@ export function fromPostRow(row, images = []) {
 // Registro no formato da nuvem, com as datas de controle e as fotos já
 // convertidas
 export function toApiPost(row, imageUrls) {
+  const post = fromPostRow(row, imageUrls);
+  // A situação da sincronização é só deste celular: não vai para a nuvem
+  delete post.syncStatus;
   return {
-    ...fromPostRow(row, imageUrls),
+    ...post,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,

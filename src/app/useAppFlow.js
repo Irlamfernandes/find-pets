@@ -88,7 +88,7 @@ export function useAppFlow() {
     }
   };
 
-  // O servidor recusou o token: os dados continuam no celular, mas para
+  // O Firebase recusou o login: os dados continuam no celular, mas para
   // voltar a sincronizar é preciso entrar com a senha
   useSyncLifecycle(async () => {
     showAlert({

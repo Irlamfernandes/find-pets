@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { sessionService } from '../services/sessionService';
+import { signOut } from '../services/signInService';
 
 export function useSession() {
   const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +29,7 @@ export function useSession() {
 
   const logout = async () => {
     await sessionService.clearSession();
+    await signOut();
     setSession(null);
   };
 

@@ -80,7 +80,7 @@ export const accountService = {
     );
   },
 
-  // Guarda a conta neste aparelho com a senha confirmada pela API, para a
+  // Guarda a conta neste aparelho com a senha confirmada pelo Firebase, para a
   // pessoa conseguir reabrir o app sem internet. Cria ou atualiza a senha.
   async rememberAccount(usuario, password) {
     const account = await this.getAccount(usuario);

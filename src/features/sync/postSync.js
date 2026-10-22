@@ -1,63 +1,58 @@
-import { HttpError } from '../../shared/api/httpClient';
-import { isRemoteUri, uploadPhoto } from '../../shared/api/uploadsApi';
 import { inTransaction } from '../../shared/database/connection';
+import { isCloudPhoto, toCloudPhoto } from '../../shared/services/cloudPhoto';
 import { postsApi } from '../posts/api/postsApi';
 import { toApiPost } from '../posts/data/postMapper';
 import { postImageRepository } from '../posts/data/postImageRepository';
 import { postRepository } from '../posts/data/postRepository';
 import { syncCursor } from './syncCursor';
 
-// Endereço da foto no servidor; envia a foto só se ainda não foi enviada
-async function imageUrlOf(token, image) {
+// Foto no formato da nuvem; converte só se ainda não foi convertida
+async function cloudPhotoOf(image) {
   if (image.remote_url) return image.remote_url;
-  if (isRemoteUri(image.local_uri)) return image.local_uri;
+  if (isCloudPhoto(image.local_uri)) return image.local_uri;
 
-  const url = await uploadPhoto(token, image.local_uri);
-  await postImageRepository.setRemoteUrl(image.id, url);
-  return url;
+  const photo = await toCloudPhoto(image.local_uri);
+  await postImageRepository.setRemoteUrl(image.id, photo);
+  return photo;
 }
 
-async function uploadImages(token, postId) {
-  const urls = [];
+async function cloudPhotosOf(postId) {
+  const photos = [];
   for (const image of await postImageRepository.findActiveOfPost(postId)) {
-    urls.push(await imageUrlOf(token, image));
+    photos.push(await cloudPhotoOf(image));
   }
-  return urls;
+  return photos;
 }
 
 const saveSynced = (remote) =>
   inTransaction(() => postRepository.saveSynced(remote));
 
-async function pushPost(token, row) {
-  const urls = await uploadImages(token, row.id);
-  const remote = await postsApi.save(token, toApiPost(row, urls));
+async function pushPost(uid, row) {
+  const photos = await cloudPhotosOf(row.id);
+  const remote = await postsApi.save({
+    ...toApiPost(row, photos),
+    authorUid: uid,
+  });
   // Se o registro mudou durante o envio, a versão nova vai na próxima vez
   if ((await postRepository.findUpdatedAt(row.id)) === row.updated_at) {
     await saveSynced(remote);
   }
 }
 
-// O servidor recusou o registro (dados inválidos): os outros seguem sendo
-// enviados e ele continua pendente
-const isRejected = (error) =>
-  error instanceof HttpError && error.status !== 401 && error.status < 500;
-
-// Envia os registros alterados neste celular (inclusive exclusões)
-export async function pushPosts(token) {
-  for (const row of await postRepository.findPendingRows()) {
-    try {
-      await pushPost(token, row);
-    } catch (error) {
-      if (!isRejected(error)) throw error;
-    }
+// Envia os registros que a conta alterou neste celular (inclusive
+// exclusões). Os de outras contas do aparelho vão quando elas entrarem.
+export async function pushPosts(uid, usuario) {
+  const pending = await postRepository.findPendingRows();
+  for (const row of pending.filter((item) => item.author_id === usuario)) {
+    await pushPost(uid, row);
   }
 }
 
-// Baixa o que mudou no servidor: registros de todos os usuários e exclusões.
+// Baixa o que mudou na nuvem: registros de todos os usuários e exclusões.
 // Alterações locais ainda não enviadas têm prioridade.
-export async function pullPosts(token, usuario) {
+export async function pullPosts(usuario) {
   const since = await syncCursor.get(usuario);
-  const remotePosts = await postsApi.listChangedSince(token, since);
+  const remotePosts = await postsApi.listChangedSince(since);
   const pending = await postRepository.findPendingRows();
   const pendingIds = new Set(pending.map((row) => row.id));
 

@@ -61,8 +61,8 @@ export function fromPostRow(row, images = []) {
   return { ...fields, images, syncStatus: row.sync_status };
 }
 
-// Registro no formato da API, com as datas de controle e as fotos já
-// enviadas (endereços no servidor)
+// Registro no formato da nuvem, com as datas de controle e as fotos já
+// convertidas
 export function toApiPost(row, imageUrls) {
   return {
     ...fromPostRow(row, imageUrls),
@@ -72,13 +72,14 @@ export function toApiPost(row, imageUrls) {
   };
 }
 
-// Linha da tabela a partir do registro que veio da API (já sincronizado)
+// Linha da tabela a partir do registro que veio da nuvem (já sincronizado).
+// O banco da nuvem não guarda campos vazios, como a data de exclusão.
 export function fromApiPost(remote) {
   return {
     ...toPostRow(remote),
     created_at: remote.createdAt,
     updated_at: remote.updatedAt,
-    deleted_at: remote.deletedAt,
+    deleted_at: remote.deletedAt ?? null,
     sync_status: SYNC_STATUS.SYNCED,
   };
 }

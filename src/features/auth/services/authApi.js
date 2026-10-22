@@ -1,26 +1,44 @@
-import { request } from '../../../shared/api/httpClient';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updatePassword,
+} from 'firebase/auth';
+import { auth } from '../../../shared/firebase/firebaseApp';
+import { remoteCall } from '../../../shared/firebase/remoteCall';
+import { normalizeEmail } from '../../../shared/utils/validation';
 
-// Rotas de conta da API. Login e cadastro devolvem { token, email }.
+// Contas no Firebase Authentication. Cadastro e login devolvem o e-mail da
+// conta; o Firebase guarda o login no aparelho.
 export const authApi = {
-  register(email, password) {
-    return request('/auth/register', {
-      method: 'POST',
-      body: { email, password },
-    });
+  async register(email, password) {
+    const { user } = await remoteCall(() =>
+      createUserWithEmailAndPassword(auth, email, password)
+    );
+    return user.email;
   },
 
-  login(email, password) {
-    return request('/auth/login', {
-      method: 'POST',
-      body: { email, password },
-    });
+  async login(email, password) {
+    const { user } = await remoteCall(() =>
+      signInWithEmailAndPassword(auth, email, password)
+    );
+    return user.email;
   },
 
-  changePassword(token, newPassword) {
-    return request('/auth/password', {
-      method: 'PUT',
-      body: { newPassword },
-      token,
-    });
+  // Conta conectada no Firebase, se for a do `usuario`: { uid, email } ou null
+  async currentAccountOf(usuario) {
+    await auth.authStateReady();
+    const user = auth.currentUser;
+    const isSameUser =
+      Boolean(user) && normalizeEmail(user.email) === normalizeEmail(usuario);
+    return isSameUser ? { uid: user.uid, email: user.email } : null;
+  },
+
+  changePassword(newPassword) {
+    return remoteCall(() => updatePassword(auth.currentUser, newPassword));
+  },
+
+  signOut() {
+    return signOut(auth);
   },
 };

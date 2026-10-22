@@ -39,6 +39,7 @@ export function buildMapHtml(latitude, longitude, interactive) {
 </html>`;
 }
 
+// Mapa com o ponto de um registro (pequeno no card ou em tela cheia)
 export function LocationMap({
   latitude,
   longitude,

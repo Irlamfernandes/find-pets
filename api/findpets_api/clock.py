@@ -9,11 +9,13 @@ from datetime import UTC, datetime
 from .errors import ApiError
 
 
+# Data -> texto ISO em UTC com milissegundos ("2026-10-15T12:00:00.000Z")
 def to_iso(moment):
     utc = moment.astimezone(UTC)
     return utc.strftime("%Y-%m-%dT%H:%M:%S.") + f"{utc.microsecond // 1000:03d}Z"
 
 
+# Agora, no formato ISO
 def now_iso():
     return to_iso(datetime.now(UTC))
 

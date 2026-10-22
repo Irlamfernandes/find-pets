@@ -46,6 +46,7 @@ const SYNCED_UPSERT_OPTIONS = {
   ],
 };
 
+// Registro ativo pelo id, ou null
 async function findById(postId) {
   const database = await getDatabase();
   const row = await database.getFirstAsync(SELECT_ACTIVE_BY_ID, [postId]);
@@ -55,6 +56,7 @@ async function findById(postId) {
 // Acesso às tabelas posts e post_images. Quem chama decide se as operações
 // rodam numa transação.
 export const postRepository = {
+  // Registros ativos com as fotos, do mais novo para o mais antigo
   async findActive() {
     const database = await getDatabase();
     const [rows, imagesByPost] = await Promise.all([
@@ -64,6 +66,7 @@ export const postRepository = {
     return rows.map((row) => fromPostRow(row, imagesByPost[row.id] || []));
   },
 
+  // Grava um registro novo e as fotos dele (fica pendente de envio)
   async insert(post) {
     await runCommand(
       insertCommand(TABLE, { ...toPostRow(post), ...createdFields() })
@@ -85,11 +88,13 @@ export const postRepository = {
       await postImageRepository.replace(postId, changes.images);
   },
 
+  // Linhas pendentes de envio para a nuvem
   async findPendingRows() {
     const database = await getDatabase();
     return database.getAllAsync(SELECT_PENDING);
   },
 
+  // Data da última alteração do registro (para saber se mudou durante o envio)
   async findUpdatedAt(postId) {
     const database = await getDatabase();
     const row = await database.getFirstAsync(

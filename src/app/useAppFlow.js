@@ -7,6 +7,7 @@ import { syncService } from '../features/sync/syncService';
 import { useSyncLifecycle } from '../features/sync/useSyncLifecycle';
 import { navigationReducer, INITIAL_NAVIGATION } from './navigation';
 
+// Aviso exibido depois de entrar: conta criada, biometria ou boas-vindas
 const loginAlert = ({ type, usuario }) => {
   if (type === 'register') {
     return {
@@ -25,6 +26,7 @@ const loginAlert = ({ type, usuario }) => {
   };
 };
 
+// true se a conta já tem perfil salvo (senão, vai para o cadastro do perfil)
 async function hasSavedProfile() {
   try {
     return Boolean(await profileService.getProfile());
@@ -54,6 +56,7 @@ export function useAppFlow() {
     }
   }, [isLoading, session]);
 
+  // Entra no app: no feed, ou no cadastro do perfil se ainda não houver um
   const enter = async () => {
     dispatch({ type: 'authenticated', hasProfile: await hasSavedProfile() });
   };
@@ -88,7 +91,7 @@ export function useAppFlow() {
     }
   };
 
-  // O servidor recusou o token: os dados continuam no celular, mas para
+  // O Firebase recusou o login: os dados continuam no celular, mas para
   // voltar a sincronizar é preciso entrar com a senha
   useSyncLifecycle(async () => {
     showAlert({
@@ -100,6 +103,7 @@ export function useAppFlow() {
     await handleLogout();
   });
 
+  // Sai da conta e volta para o login; se falhar, avisa e continua na tela
   const handleLogout = async () => {
     try {
       await logout();

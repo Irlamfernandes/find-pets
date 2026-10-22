@@ -10,6 +10,7 @@ import { useAppFlow } from './src/app/useAppFlow';
 import { AppScreens } from './src/app/AppScreens';
 import { SCREENS } from './src/app/navigation';
 
+// Conteúdo do app: carregando, ou a tela atual com a janela de senha
 function AppContent() {
   const { isLoading, navigation, session, passwordPromptProps, actions } =
     useAppFlow();
@@ -31,6 +32,7 @@ function AppContent() {
   );
 }
 
+// Raiz do app: área segura da tela e o provedor de alertas
 export default function App() {
   return (
     <SafeAreaProvider>

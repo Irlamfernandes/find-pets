@@ -12,6 +12,8 @@ export const BIOMETRIC_STATUS = {
   TAKEN: 'taken', // já pertence a outra conta deste celular
 };
 
+// Situação da biometria para a conta: ativa, usada por outra conta,
+// disponível ou indisponível no aparelho
 export function getBiometricStatus({ currentUser, ownerUser, isAvailable }) {
   if (ownerUser) {
     return ownerUser === currentUser
@@ -23,6 +25,7 @@ export function getBiometricStatus({ currentUser, ownerUser, isAvailable }) {
     : BIOMETRIC_STATUS.UNAVAILABLE;
 }
 
+// Estado da biometria da conta conectada e as ações de ativar/desativar
 export function useBiometricSettings() {
   const [state, setState] = useState({
     usuario: null,
@@ -68,6 +71,7 @@ export function useBiometricSettings() {
     return 'activated';
   };
 
+  // Desativa a biometria da conta e atualiza a situação exibida
   const deactivate = async () => {
     await accountService.setBiometrics(state.usuario, false);
     await refresh();

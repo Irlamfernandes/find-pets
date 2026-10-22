@@ -20,6 +20,7 @@ import { ProfileDataFields } from '../components/ProfileDataFields';
 import { ProfilePhotoSection } from '../components/ProfilePhotoSection';
 import { PasswordChangeFields } from '../components/PasswordChangeFields';
 
+// Tela de perfil: foto, dados, senha, biometria e saída da conta
 export default function ProfileScreen({ onBack, onOpenReport, onLogout }) {
   const editor = useProfileEditor({ onSaved: onBack });
   const { values, isEditing } = editor;

@@ -1,39 +1,49 @@
-import { isUnauthorized, OfflineError } from '../../shared/api/httpClient';
+import {
+  isUnauthorized,
+  OfflineError,
+  SignInRequiredError,
+} from '../../shared/firebase/remoteCall';
+import { authApi } from '../auth/services/authApi';
 import { sessionService } from '../auth/services/sessionService';
-import { tokenStorage } from '../auth/services/tokenStorage';
 import { isOnline } from './connectivity';
 import { pullPosts, pushPosts } from './postSync';
 import { pullProfile, pushProfile } from './profileSync';
 
 export const SYNC_RESULT = {
   SYNCED: 'synced',
-  // Sem conta conectada, sem token (entrou offline) ou sem internet
+  // Sem conta conectada ou sem internet
   SKIPPED: 'skipped',
   OFFLINE: 'offline',
-  // O servidor recusou o token (expirou): é preciso entrar com a senha
+  // Sem login no Firebase, ou ele foi recusado: é preciso entrar com a senha
   UNAUTHORIZED: 'unauthorized',
   FAILED: 'failed',
 };
 
 const listeners = new Set();
 
+// Conta para sincronizar, ou null sem sessão ou sem internet. Com internet,
+// mas sem login no Firebase da mesma conta, pede para entrar com a senha
+// (senão os dados ficariam esperando para sempre).
 async function connectedAccount() {
   const usuario = await sessionService.getCurrentUser();
-  const token = usuario ? await tokenStorage.get(usuario) : null;
-  return token && (await isOnline()) ? { usuario, token } : null;
+  if (!usuario || !(await isOnline())) return null;
+  const account = await authApi.currentAccountOf(usuario);
+  if (!account) throw new SignInRequiredError();
+  return { usuario, uid: account.uid };
 }
 
-// Envia primeiro (o servidor decide conflitos) e depois baixa as novidades
-async function syncAccount({ usuario, token }) {
-  await pushProfile(token, usuario);
-  await pushPosts(token);
-  await pullProfile(token, usuario);
-  await pullPosts(token, usuario);
+// Envia primeiro (vale a alteração mais recente) e depois baixa as novidades
+async function syncAccount({ usuario, uid }) {
+  await pushProfile(uid, usuario);
+  await pushPosts(uid, usuario);
+  await pullProfile(uid, usuario);
+  await pullPosts(usuario);
 }
 
-async function resultOfFailure(error, account) {
+// Resultado de uma sincronização que falhou
+async function resultOfFailure(error) {
   if (isUnauthorized(error)) {
-    await tokenStorage.remove(account.usuario);
+    await authApi.signOut();
     return SYNC_RESULT.UNAUTHORIZED;
   }
   return error instanceof OfflineError
@@ -41,15 +51,15 @@ async function resultOfFailure(error, account) {
     : SYNC_RESULT.FAILED;
 }
 
+// Uma sincronização completa; devolve um SYNC_RESULT
 async function runSync() {
-  let account = null;
   try {
-    account = await connectedAccount();
+    const account = await connectedAccount();
     if (!account) return SYNC_RESULT.SKIPPED;
     await syncAccount(account);
     return SYNC_RESULT.SYNCED;
   } catch (error) {
-    return account ? resultOfFailure(error, account) : SYNC_RESULT.FAILED;
+    return resultOfFailure(error);
   }
 }
 
@@ -58,6 +68,7 @@ async function runSync() {
 let running = null;
 let requestedAgain = false;
 
+// Repete a sincronização enquanto houver pedidos feitos durante ela
 async function runUntilDone() {
   let result;
   do {

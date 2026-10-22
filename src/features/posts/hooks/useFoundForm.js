@@ -13,15 +13,18 @@ export function useFoundForm(onConfirm, lostAt) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  // Altera um campo do formulário
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  // Limpa o formulário e o erro
   const reset = () => {
     setForm(createFoundForm());
     setErrorMessage('');
   };
 
+  // Valida e, se estiver tudo certo, salva o reencontro
   const confirm = async () => {
     const invalid = validate({ ...form, lostAt }, foundFormRules);
     setErrorMessage(invalid || '');

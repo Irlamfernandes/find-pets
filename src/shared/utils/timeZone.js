@@ -6,6 +6,7 @@
 const ABBREVIATION = /^[A-Z]{2,5}$/;
 const ABBREVIATION_LOCALES = ['pt-BR', 'en-US'];
 
+// Sigla do fuso na data (ex.: "BRT") no idioma informado, ou null
 function getAbbreviation(date, locale) {
   try {
     const part = new Intl.DateTimeFormat(locale, { timeZoneName: 'short' })
@@ -43,10 +44,12 @@ export function formatTimeZone({ offsetMinutes, abbreviation }) {
   return abbreviation && abbreviation !== utc ? `${abbreviation}, ${utc}` : utc;
 }
 
+// Fuso gravado com o deslocamento em minutos
 function isValidZone(zone) {
   return Number.isFinite(zone?.offsetMinutes);
 }
 
+// Número com dois dígitos: 5 -> "05"
 const pad = (value) => String(value).padStart(2, '0');
 
 // Formata no fuso em que a data foi registrada: "25/09/2026 às 14:30 (BRT, UTC-3)".

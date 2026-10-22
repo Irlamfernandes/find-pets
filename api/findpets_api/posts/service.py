@@ -4,6 +4,7 @@ from ..errors import ApiError
 from . import repository
 
 
+# Só quem publicou pode alterar ou excluir o registro
 def ensure_owner(post, user):
     if post["author_id"] != user["id"]:
         raise ApiError(403, "Só quem publicou pode alterar este registro.")

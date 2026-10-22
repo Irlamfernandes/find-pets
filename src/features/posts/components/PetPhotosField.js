@@ -7,6 +7,7 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { formStyles } from '../../../shared/theme/formStyles';
 import { palette } from '../../../shared/theme/colors';
 
+// Botão para adicionar foto pela câmera ou pela galeria
 function AddPhotoButton({ testID, icon, label, onPress }) {
   return (
     <SafeTouchable

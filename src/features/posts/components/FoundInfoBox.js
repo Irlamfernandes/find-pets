@@ -5,9 +5,11 @@ import PropTypes from 'prop-types';
 import { formatDateTime } from '../../../shared/utils/timeZone';
 import { palette } from '../../../shared/theme/colors';
 
+// Quem recebeu o pet, com o vínculo entre parênteses quando informado
 const describeReceiver = ({ receiverName, receiverRelation }) =>
   receiverRelation ? `${receiverName} (${receiverRelation})` : receiverName;
 
+// Data e hora do reencontro no fuso em que aconteceu
 const describeFoundAt = ({ foundAt, foundZone }) =>
   formatDateTime(foundAt, foundZone) || 'data não informada';
 

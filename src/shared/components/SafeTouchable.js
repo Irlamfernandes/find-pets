@@ -17,6 +17,7 @@ export function SafeTouchable({ onPress, disabled, style, ...props }) {
     []
   );
 
+  // Executa a ação e, se ela for assíncrona, trava o botão até terminar
   const handlePress = async (event) => {
     if (lockedRef.current || !onPress) return;
 

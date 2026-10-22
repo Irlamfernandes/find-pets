@@ -2,7 +2,7 @@
 
 O **FindPets** é um aplicativo mobile para ajudar a encontrar animais de estimação perdidos: o tutor registra o desaparecimento com fotos e localização, a comunidade acompanha pelo feed ou pelo mapa e entra em contato pelo WhatsApp quando encontra o pet.
 
-O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com a API** quando a conexão volta. Ao trocar de celular, basta entrar na conta para recuperar o perfil e os registros.
+O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com o Firebase** quando a conexão volta. Ao trocar de celular, basta entrar na conta para recuperar o perfil e os registros.
 
 ---
 
@@ -17,7 +17,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 **Conta e acesso**
 
-- Cadastro e login com e-mail e senha, conferidos pela API (o token fica no SecureStore).
+- Cadastro e login com e-mail e senha pelo **Firebase Authentication** (o login fica guardado no aparelho).
 - Desbloqueio por biometria do aparelho (Expo Local Authentication), configurável no perfil.
 - Sessão persistente e opção de sair da conta.
 
@@ -38,9 +38,9 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 **Offline e nuvem**
 
-- Tudo funciona sem internet; as alterações ficam pendentes e são enviadas quando a conexão volta.
+- Tudo funciona sem internet; as alterações ficam pendentes e são enviadas ao **Firebase Realtime Database** quando a conexão volta.
 - Aviso de modo offline e indicação no card de registros ainda não enviados.
-- API própria em Flask + MySQL com Docker e documentação Swagger.
+- API própria em Flask + MySQL com Docker e Swagger (etapa anterior do projeto, mantida em `api/`).
 
 ---
 
@@ -49,7 +49,8 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 | Parte        | Ferramentas                                                                                                 |
 | ------------ | ----------------------------------------------------------------------------------------------------------- |
 | App          | React Native, Expo 57, JavaScript                                                                           |
-| Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (token e senha), NetInfo                     |
+| Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (senha), NetInfo                             |
+| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                  |
 | Recursos     | Image Picker (câmera e galeria), Location, Local Authentication, Sharing, View Shot, WebView (mapa Leaflet) |
 | API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                         |
 | Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                        |
@@ -67,12 +68,12 @@ src/
     profile/    cadastro e edição do perfil
     posts/      registros de pets: feed, registro, reencontro e compartilhamento
     map/        mapas (Leaflet + OpenStreetMap dentro do app)
-    sync/       sincronização com a API (envio, download e conexão)
+    sync/       sincronização com o Firebase (envio, download e conexão)
   shared/
-    api/        cliente HTTP, endereço da API e envio de fotos
+    firebase/   projeto do Firebase, leitura e gravação no Realtime Database
     database/   conexão SQLite, tabelas, migrações e comandos SQL
     ...         componentes, hooks, serviços, utilitários e tema comuns
-  testing/      utilitários dos testes (banco em memória)
+  testing/      utilitários dos testes (SQLite e Firebase em memória)
 api/            API em Python + Flask + MySQL (ver api/README.md)
 ```
 
@@ -80,7 +81,7 @@ Cada funcionalidade é dividida em camadas, do mais puro ao visual:
 
 - **`domain/`**: regras puras, sem tela nem armazenamento.
 - **`data/`**: repositórios com o SQL e mappers entre o registro do app e a linha da tabela.
-- **`api/`**: chamadas à API daquela funcionalidade.
+- **`api/`**: leitura e gravação daquela funcionalidade no Firebase.
 - **`services/`**: casos de uso usados pelos hooks.
 - **`hooks/`**: estado e lógica das telas.
 - **`components/`** e **`screens/`**: só apresentação.
@@ -100,15 +101,29 @@ Tabelas `profiles`, `posts` e `post_images` (1 registro : N fotos), criadas em `
 ### 🔄 Offline e sincronização
 
 1. Toda alteração é gravada primeiro no SQLite como `pending`; o card mostra "Aguardando internet para enviar ao servidor".
-2. Com internet, o app **envia** os pendentes (fotos, perfil e registros) e depois **baixa** o que mudou no servidor, inclusive registros de outros usuários e exclusões.
-3. Em conflito vale a alteração mais recente (`updatedAt`), decidida pela API.
+2. Com internet, o app **envia** os pendentes (fotos, perfil e registros) e depois **baixa** o que mudou no Firebase, inclusive registros de outros usuários e exclusões.
+3. Em conflito vale a alteração mais recente (`updatedAt`): uma versão mais nova já gravada por outro celular é mantida.
 4. A sincronização roda ao entrar, quando a internet volta e depois de cada alteração.
 
 O cadastro e o primeiro login num celular precisam de internet. Depois disso, o app reabre offline com a biometria ou a senha guardada no aparelho.
 
-### ☁️ API
+### ☁️ Firebase
 
-API REST em `api/`, com rotas de conta, perfil, registros e fotos. O banco é escolhido pela `DATABASE_URL`, então o MySQL do Docker pode ser trocado por um banco na nuvem (como o Postgres do Supabase) sem mudar o código. Rotas, decisões e como rodar estão em [api/README.md](api/README.md); com a API no ar, a documentação Swagger fica em `http://localhost:5001/apidocs`.
+Segue o modelo dos exemplos da disciplina ([LPAH-2024-Firebase](https://github.com/FUSVE/LPAH-2024-Firebase) e [LPAH-2026-SQLITE-FIREBASE](https://github.com/FUSVE/LPAH-2026-SQLITE-FIREBASE)): o app fala direto com o Firebase, sem servidor próprio.
+
+```
+profiles/<uid>   perfil de cada conta (nome, WhatsApp e foto)
+posts/<id>       registros de todos os usuários, com authorUid e serverUpdatedAt
+```
+
+- **Login**: Firebase Authentication com e-mail e senha.
+- **Fotos**: reduzidas para 800 px e gravadas no próprio registro como texto (base64), o que mantém o projeto no plano gratuito (o Firebase Storage exige o plano pago).
+- **Baixar só o que mudou**: cada gravação leva a hora do servidor (`serverUpdatedAt`), e o app pede só o que veio depois da última sincronização.
+- **Segurança**: as regras em [database.rules.json](database.rules.json) só deixam ler com login, cada conta ver o próprio perfil e só o autor alterar o próprio registro.
+
+### 🐍 API (etapa anterior)
+
+API REST em `api/` (Flask + MySQL + Docker + Swagger), usada pelo app antes do Firebase. Continua no repositório com testes e documentação: ver [api/README.md](api/README.md).
 
 ---
 
@@ -132,18 +147,14 @@ API REST em `api/`, com rotas de conta, perfil, registros e fotos. O banco é es
    cd find-pets
    npm install --legacy-peer-deps
    ```
-2. **Suba a API** (precisa do Docker):
+2. **Crie o projeto no [console do Firebase](https://console.firebase.google.com/):**
+   - adicione um app **Web** (`</>`) e copie a configuração;
+   - em **Authentication**, ative o login por **E-mail/senha**;
+   - crie o **Realtime Database** e, na aba **Regras**, cole o conteúdo de [database.rules.json](database.rules.json).
+3. **Configure o app:** copie `.env.example` para `.env` e preencha com a configuração do app Web.
+4. **Rode o app no celular** (pelo Expo Go, lendo o QR code):
    ```bash
-   cd api && cp .env.example .env   # preencha as senhas e a JWT_SECRET
-   docker compose up --build
-   ```
-3. **Aponte o app para a API:** copie `.env.example` para `.env` na raiz e use o IP do computador na rede (o celular não enxerga `localhost`):
-   ```bash
-   EXPO_PUBLIC_API_URL=http://192.168.0.10:5001
-   ```
-4. **Rode o app no celular:**
-   ```bash
-   npx expo run:android
+   npx expo start
    ```
 
 ### Testes

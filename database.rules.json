@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "profiles": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "posts": {
+      ".read": "auth != null",
+      ".indexOn": ["serverUpdatedAt"],
+      "$postId": {
+        ".write": "auth != null && newData.child('authorUid').val() === auth.uid && (!data.exists() || data.child('authorUid').val() === auth.uid)"
+      }
+    }
+  }
+}

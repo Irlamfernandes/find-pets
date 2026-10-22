@@ -10,6 +10,7 @@ from ..errors import ApiError
 ALGORITHM = "HS256"
 
 
+# Token JWT da conta, com a data de expiração
 def create_token(user):
     hours = current_app.config["JWT_EXPIRES_HOURS"]
     claims = {

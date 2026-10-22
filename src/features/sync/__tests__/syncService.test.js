@@ -3,20 +3,23 @@ import { pullPosts, pushPosts } from '../postSync';
 import { pullProfile, pushProfile } from '../profileSync';
 import { isOnline } from '../connectivity';
 import { sessionService } from '../../auth/services/sessionService';
-import { tokenStorage } from '../../auth/services/tokenStorage';
-import { HttpError, OfflineError } from '../../../shared/api/httpClient';
+import { authApi } from '../../auth/services/authApi';
+import { OfflineError } from '../../../shared/firebase/remoteCall';
 
 jest.mock('../postSync');
 jest.mock('../profileSync');
 jest.mock('../connectivity');
 jest.mock('../../auth/services/sessionService');
-jest.mock('../../auth/services/tokenStorage');
+jest.mock('../../auth/services/authApi');
 
 describe('syncService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionService.getCurrentUser.mockResolvedValue('ana@x.com');
-    tokenStorage.get.mockResolvedValue('token-ana');
+    authApi.currentAccountOf.mockResolvedValue({
+      uid: 'uid-ana',
+      email: 'ana@x.com',
+    });
     isOnline.mockResolvedValue(true);
     [pushProfile, pushPosts, pullProfile, pullPosts].forEach((step) =>
       step.mockResolvedValue()
@@ -38,18 +41,17 @@ describe('syncService', () => {
       'pullProfile',
       'pullPosts',
     ]);
-    expect(pushProfile).toHaveBeenCalledWith('token-ana', 'ana@x.com');
-    expect(pullPosts).toHaveBeenCalledWith('token-ana', 'ana@x.com');
+    expect(authApi.currentAccountOf).toHaveBeenCalledWith('ana@x.com');
+    expect(pushProfile).toHaveBeenCalledWith('uid-ana', 'ana@x.com');
+    expect(pushPosts).toHaveBeenCalledWith('uid-ana', 'ana@x.com');
+    expect(pullProfile).toHaveBeenCalledWith('uid-ana', 'ana@x.com');
+    expect(pullPosts).toHaveBeenCalledWith('ana@x.com');
   });
 
   it.each([
     [
       'sem conta conectada',
       () => sessionService.getCurrentUser.mockResolvedValue(null),
-    ],
-    [
-      'sem token (entrou offline)',
-      () => tokenStorage.get.mockResolvedValue(null),
     ],
     ['sem internet', () => isOnline.mockResolvedValue(false)],
   ])('não deve sincronizar %s', async (_case, arrange) => {
@@ -59,11 +61,18 @@ describe('syncService', () => {
     expect(pushProfile).not.toHaveBeenCalled();
   });
 
-  it('deve esquecer o token recusado pelo servidor', async () => {
-    pushPosts.mockRejectedValue(new HttpError(401, 'Expirou.'));
+  it('deve pedir a senha quando a conta não está conectada no Firebase', async () => {
+    authApi.currentAccountOf.mockResolvedValue(null);
 
     await expect(syncService.syncNow()).resolves.toBe(SYNC_RESULT.UNAUTHORIZED);
-    expect(tokenStorage.remove).toHaveBeenCalledWith('ana@x.com');
+    expect(pushProfile).not.toHaveBeenCalled();
+  });
+
+  it('deve sair do Firebase quando ele recusar o acesso', async () => {
+    pushPosts.mockRejectedValue(new Error('PERMISSION_DENIED'));
+
+    await expect(syncService.syncNow()).resolves.toBe(SYNC_RESULT.UNAUTHORIZED);
+    expect(authApi.signOut).toHaveBeenCalled();
   });
 
   it('deve informar falta de conexão e outras falhas sem lançar erro', async () => {
@@ -75,7 +84,7 @@ describe('syncService', () => {
 
     sessionService.getCurrentUser.mockRejectedValueOnce(new Error('x'));
     await expect(syncService.syncNow()).resolves.toBe(SYNC_RESULT.FAILED);
-    expect(tokenStorage.remove).not.toHaveBeenCalled();
+    expect(authApi.signOut).not.toHaveBeenCalled();
   });
 
   it('deve rodar uma por vez e repetir se houve pedido no meio', async () => {

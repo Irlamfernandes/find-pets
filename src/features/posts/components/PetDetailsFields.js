@@ -15,8 +15,10 @@ import {
 export function PetDetailsFields({ petData, onChange }) {
   const breedRef = useRef(null);
   const descriptionRef = useRef(null);
+  // Liga um campo do formulário ao valor e à função que o altera
   const bind = (field) => ({
     value: petData[field],
+    // Ao digitar, atualiza o campo correspondente
     onChangeText: (text) => onChange(field, text),
   });
 

@@ -26,6 +26,7 @@ export const externalLinkService = {
     Linking.openURL(`https://wa.me/${digits}?text=${message}`);
   },
 
+  // Abre o app de mapas com a rota até as coordenadas (ignora valores inválidos)
   openRoute(latitude, longitude) {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
       return;

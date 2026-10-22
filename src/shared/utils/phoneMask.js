@@ -2,6 +2,7 @@
 export const PHONE_MAX_DIGITS = 13;
 export const PHONE_MIN_DIGITS = 12;
 
+// Só os números do telefone, até o tamanho máximo
 export function onlyDigits(value) {
   return (value || '').replaceAll(/\D/g, '').slice(0, PHONE_MAX_DIGITS);
 }

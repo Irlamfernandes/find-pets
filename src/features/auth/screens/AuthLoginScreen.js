@@ -7,6 +7,7 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { palette } from '../../../shared/theme/colors';
 import { maskEmail } from '../../../shared/utils/maskEmail';
 
+// Tela de login: e-mail e senha, e o botão da biometria quando disponível
 export function AuthLoginScreen({
   hasHardwareBiometric,
   biometricOwner,

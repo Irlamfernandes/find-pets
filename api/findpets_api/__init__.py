@@ -40,6 +40,8 @@ def enable_cors(app):
         CORS(app, origins=origins)
 
 
+# Monta a API: configurações, CORS, CSRF, Swagger, erros, banco e rotas.
+# `overrides` troca configurações (usado nos testes).
 def create_app(overrides=None):
     app = Flask(__name__)
     app.config.update(load_settings())

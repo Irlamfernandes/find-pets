@@ -36,11 +36,13 @@ export function buildLostPetsMapHtml(posts) {
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
+  // Envia uma mensagem do mapa para o app
   function send(message) {
     window.ReactNativeWebView.postMessage(JSON.stringify(message));
   }
 
   var selected = null;
+  // Destaca o ponto tocado e volta o anterior ao normal
   function select(marker) {
     if (selected) {
       selected.setRadius(NORMAL.radius);
@@ -88,6 +90,7 @@ export function buildLostPetsMapHtml(posts) {
 </html>`;
 }
 
+// Mapa com todos os pets perdidos; tocar num ponto seleciona o registro
 export function LostPetsMap({ posts, selectedId, onSelect, onClear }) {
   const webViewRef = useRef(null);
   // Só remonta o mapa quando os pontos mudam (e não a cada seleção)
@@ -113,6 +116,7 @@ export function LostPetsMap({ posts, selectedId, onSelect, onClear }) {
     );
   }
 
+  // Mensagem vinda do mapa: ponto selecionado ou toque fora dos pontos
   const handleMessage = (event) => {
     const message = JSON.parse(event.nativeEvent.data);
     if (message.type === 'select') onSelect(message.id);

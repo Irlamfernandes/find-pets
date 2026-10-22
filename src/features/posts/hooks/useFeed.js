@@ -42,6 +42,7 @@ async function loadViewer() {
   };
 }
 
+// Estado e ações do feed: registros, usuário, exclusão e reencontro
 export function useFeed() {
   const showAlert = useAppAlert();
   const [posts, setPosts] = useState([]);
@@ -49,6 +50,7 @@ export function useFeed() {
   const [foundPostId, setFoundPostId] = useState(null);
 
   useEffect(() => {
+    // Carrega os registros e os dados de quem está usando o app
     const load = () => {
       orDefault(postService.getPosts(), []).then(setPosts);
       loadViewer().then(setViewer);
@@ -71,6 +73,7 @@ export function useFeed() {
     if (post && !isFound(post)) setFoundPostId(postId);
   };
 
+  // Salva o reencontro e avisa o resultado
   const confirmFound = async (foundInfo) => {
     try {
       setPosts(
@@ -83,6 +86,7 @@ export function useFeed() {
     }
   };
 
+  // Exclui o registro (exclusão lógica) e avisa se não conseguir
   const removePost = async (post) => {
     try {
       // Exclusão lógica: o registro e as fotos ficam guardados como histórico
@@ -117,6 +121,7 @@ export function useFeed() {
     // Registro que está sendo marcado como encontrado
     foundPost: posts.find((post) => post.id === foundPostId) || null,
     markPostAsFound,
+    // Fecha a janela de reencontro sem salvar
     cancelFound: () => setFoundPostId(null),
     confirmFound,
   };

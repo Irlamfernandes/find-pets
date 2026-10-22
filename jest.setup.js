@@ -32,3 +32,30 @@ jest.mock('expo-crypto', () => ({
 jest.mock('@react-native-community/netinfo', () =>
   require('@react-native-community/netinfo/jest/netinfo-mock.js')
 );
+
+// Firebase em memória: contas, login e Realtime Database
+jest.mock(
+  'firebase/app',
+  () => require('./src/testing/firebaseMock').appModule
+);
+jest.mock(
+  'firebase/auth',
+  () => require('./src/testing/firebaseMock').authModule
+);
+jest.mock(
+  'firebase/database',
+  () => require('./src/testing/firebaseMock').databaseModule
+);
+
+// Redução das fotos é nativa: nos testes, o "base64" mostra a foto de origem
+jest.mock('expo-image-manipulator', () => ({
+  SaveFormat: { JPEG: 'jpeg' },
+  ImageManipulator: {
+    manipulate: (uri) => ({
+      resize: jest.fn(),
+      renderAsync: async () => ({
+        saveAsync: async () => ({ base64: `foto(${uri})` }),
+      }),
+    }),
+  },
+}));

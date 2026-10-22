@@ -9,6 +9,7 @@ import { normalizeEmail } from '../../../shared/utils/validation';
 
 const BCRYPT_ROUNDS = 10;
 
+// Conta guardada com os campos esperados (ignora dados corrompidos)
 const isValidAccount = (account) =>
   typeof account?.usuario === 'string' &&
   typeof account.passwordHash === 'string';
@@ -18,15 +19,19 @@ const isValidAccount = (account) =>
 const accountsStore = createJsonStore(STORAGE_KEYS.CREDENTIALS, {
   adapter: secureStorageAdapter,
   fallback: [],
+  // Descarta contas corrompidas ao ler
   normalize: (accounts) => accounts.filter(isValidAccount),
 });
 
+// Mesma conta, sem diferenciar maiúsculas nem espaços
 const sameUser = (account, usuario) =>
   normalizeEmail(account.usuario) === normalizeEmail(usuario);
 
+// Conta do usuário na lista, ou null
 const findAccount = (accounts, usuario) =>
   accounts.find((account) => sameUser(account, usuario)) || null;
 
+// Hash da senha com bcrypt (a senha nunca é gravada como texto)
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
   return bcrypt.hash(password, salt);
@@ -44,6 +49,7 @@ function updateAccount(usuario, changes) {
   });
 }
 
+// Recusa usuário ou senha vazios
 function requireCredentials(usuario, password) {
   if (!usuario || !password) {
     throw new Error('Usuário e senha são obrigatórios.');
@@ -51,6 +57,7 @@ function requireCredentials(usuario, password) {
 }
 
 export const accountService = {
+  // Conta guardada neste aparelho, ou null
   getAccount(usuario) {
     return withErrorContext('Erro ao recuperar credenciais', async () =>
       findAccount(await accountsStore.read(), usuario)
@@ -80,7 +87,7 @@ export const accountService = {
     );
   },
 
-  // Guarda a conta neste aparelho com a senha confirmada pela API, para a
+  // Guarda a conta neste aparelho com a senha confirmada pelo Firebase, para a
   // pessoa conseguir reabrir o app sem internet. Cria ou atualiza a senha.
   async rememberAccount(usuario, password) {
     const account = await this.getAccount(usuario);
@@ -89,6 +96,7 @@ export const accountService = {
       : this.createAccount(usuario, password);
   },
 
+  // Troca a senha guardada neste aparelho
   async changePassword(usuario, newPassword) {
     requireCredentials(usuario, newPassword);
     return withErrorContext('Erro ao alterar a senha', async () =>
@@ -121,6 +129,7 @@ export const accountService = {
     });
   },
 
+  // Liga ou desliga a biometria da conta (só uma conta por aparelho)
   setBiometrics(usuario, enabled) {
     return withErrorContext('Erro ao atualizar a biometria', async () => {
       const owner = await this.getBiometricOwner();

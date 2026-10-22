@@ -4,8 +4,10 @@ import { getDatabase } from './connection';
 // colunas vêm sempre do código; os valores vão como parâmetros "?", o que
 // impede SQL injection.
 
+// "?, ?, ?": um marcador de parâmetro para cada valor
 const placeholders = (count) => new Array(count).fill('?').join(', ');
 
+// INSERT com as colunas e valores da linha
 export function insertCommand(table, row) {
   const columns = Object.keys(row);
   return {
@@ -37,6 +39,7 @@ export function upsertCommand(table, row, { conflictColumns, updateColumns }) {
   };
 }
 
+// Executa o comando montado ({ sql, params }) no banco do app
 export async function runCommand({ sql, params }) {
   const database = await getDatabase();
   return database.runAsync(sql, params);

@@ -17,6 +17,7 @@ const FormScrollContext = createContext(null);
 // Tempo para o layout aplicar o espaço extra / o novo foco antes de medir
 const SCROLL_DELAY_MS = 100;
 
+// Rolagem do formulário: acompanha o teclado e mantém visível o campo em foco
 export function FormScrollView({ children, bottomOffset = 24, ...props }) {
   const scrollRef = useRef(null);
   const scrollY = useRef(0);

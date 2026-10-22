@@ -1,6 +1,8 @@
 import * as Location from 'expo-location';
 
 export const locationService = {
+  // Localização atual do aparelho, pedindo permissão; sem permissão ou em
+  // caso de falha, devolve null
   async getCurrentLocation() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();

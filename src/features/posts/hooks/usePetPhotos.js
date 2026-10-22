@@ -33,6 +33,7 @@ export function usePetPhotos(initialPost) {
   );
   const remainingPhotos = MAX_PHOTOS - photos.length;
 
+  // Adiciona as fotos escolhidas, respeitando o limite e as permissões
   const addPhotos = async (pickPhotos, deniedMessage) => {
     if (remainingPhotos <= 0) {
       showAlert({
@@ -66,16 +67,19 @@ export function usePetPhotos(initialPost) {
   return {
     photos,
     remainingPhotos,
+    // Escolhe fotos da galeria (até completar o limite)
     pickFromGallery: () =>
       addPhotos(
         () => photoService.pickFromGallery(remainingPhotos),
         'Permita o acesso às fotos para anexar imagens do seu pet.'
       ),
+    // Tira uma foto com a câmera, guardando a localização
     takePhoto: () =>
       addPhotos(
         takePhotoWithLocation,
         'Permita o acesso à câmera para fotografar o seu pet.'
       ),
+    // Tira a foto da lista
     removePhoto: (uri) =>
       setPhotos((current) => current.filter((photo) => photo.uri !== uri)),
   };

@@ -7,8 +7,10 @@ export const POST_STATUS = { LOST: 'Perdido', FOUND: 'Encontrado' };
 // Sem status informado, o pet está perdido
 export const getPostStatus = (post) => post.status || POST_STATUS.LOST;
 
+// O pet já foi encontrado
 export const isFound = (post) => getPostStatus(post) === POST_STATUS.FOUND;
 
+// O registro foi feito pelo usuário
 export const isOwnedBy = (post, usuario) =>
   Boolean(usuario) && post.author === usuario;
 
@@ -17,6 +19,7 @@ export const isOwnedBy = (post, usuario) =>
 export const canManage = (post, usuario) =>
   isOwnedBy(post, usuario) && !isFound(post);
 
+// O registro tem latitude e longitude válidas (aparece no mapa)
 export const hasCoordinates = (post) =>
   Number.isFinite(post.latitude) && Number.isFinite(post.longitude);
 
@@ -32,6 +35,7 @@ export const markAsFound = (foundInfo) => ({
   foundInfo,
 });
 
+// Monta um registro de desaparecimento novo, já com status e data
 export function createLostPost({
   id,
   author,

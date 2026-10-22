@@ -13,6 +13,7 @@ from .payload import read_post
 blueprint = Blueprint("posts", __name__, url_prefix="/posts")
 
 
+# Registros ativos ou, com ?since=, o que mudou desde a data
 def list_posts():
     since = request.args.get("since")
     if since is None:

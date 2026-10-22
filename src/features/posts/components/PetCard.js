@@ -39,6 +39,8 @@ const OWNER_ACTIONS = [
   },
 ];
 
+// Botões do dono do registro (editar, marcar como encontrado, excluir);
+// só aparecem os que têm ação definida
 function OwnerActions({ handlers }) {
   const actions = OWNER_ACTIONS.filter((action) => handlers[action.prop]);
   if (actions.length === 0) return null;
@@ -56,6 +58,7 @@ OwnerActions.propTypes = {
   handlers: PropTypes.objectOf(PropTypes.func).isRequired,
 };
 
+// Cartão de um registro no feed: fotos, dados do pet, local e ações
 export function PetCard({
   item,
   onOpenPhoto,

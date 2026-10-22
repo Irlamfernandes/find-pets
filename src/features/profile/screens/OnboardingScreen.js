@@ -11,6 +11,7 @@ import {
 import { useOnboarding } from '../hooks/useOnboarding';
 import { palette } from '../../../shared/theme/colors';
 
+// Tela de completar o cadastro: nome e WhatsApp
 export default function OnboardingScreen({ onComplete }) {
   const {
     name,

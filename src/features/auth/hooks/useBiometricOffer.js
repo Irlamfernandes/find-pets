@@ -58,14 +58,17 @@ async function canOfferBiometrics() {
 export function useBiometricOffer() {
   const showAlert = useAppAlert();
   const prompt = usePasswordPrompt({
+    // Confere se a senha digitada é a da conta
     verify: (password, usuario) =>
       accountService.checkPassword(usuario, password),
+    // Senha certa: ativa a biometria e mostra o resultado
     onConfirmed: async (usuario) => {
       const alert = await activateBiometrics(usuario);
       if (alert) showAlert(alert);
     },
   });
 
+  // Convida a ativar a biometria, se o aparelho tiver e ela estiver livre
   const offerBiometrics = async (usuario, name) => {
     if (!(await canOfferBiometrics())) return false;
 

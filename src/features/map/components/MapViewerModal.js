@@ -7,6 +7,7 @@ import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { LocationMap } from './LocationMap';
 import { palette } from '../../../shared/theme/colors';
 
+// Mapa do registro em tela cheia, com o botão de rota
 export function MapViewerModal({ post, onClose }) {
   return (
     <Modal visible={!!post} animationType="slide" onRequestClose={onClose}>

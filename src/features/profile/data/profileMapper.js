@@ -1,6 +1,7 @@
 // Converte o perfil usado pelo app ({ name, whatsapp, photoUri }) na linha
 // da tabela profiles e vice-versa
 
+// Perfil do app -> linha da tabela profiles
 export const toProfileRow = (userId, profile) => ({
   user_id: userId,
   name: profile.name,

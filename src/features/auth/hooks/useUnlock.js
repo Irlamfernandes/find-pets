@@ -25,6 +25,7 @@ export function useUnlock(usuario, onUnlocked) {
   useEffect(() => {
     let active = true;
 
+    // Ao abrir, descobre se a conta pode desbloquear com a biometria
     const prepare = async () => {
       try {
         const [owner, isAvailable] = await Promise.all([
@@ -48,6 +49,7 @@ export function useUnlock(usuario, onUnlocked) {
     };
   }, [usuario, unlockWithBiometrics]);
 
+  // Desbloqueia conferindo a senha guardada no aparelho (funciona offline)
   const unlockWithPassword = async () => {
     setErrorMessage('');
     if (!password) {

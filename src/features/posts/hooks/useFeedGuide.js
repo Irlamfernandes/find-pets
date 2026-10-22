@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { guideService } from '../services/guideService';
 
+// Mostra o guia do feed na primeira vez de cada conta
 export function useFeedGuide(usuario) {
   const [isGuideVisible, setIsGuideVisible] = useState(false);
 
@@ -21,6 +22,7 @@ export function useFeedGuide(usuario) {
     };
   }, [usuario]);
 
+  // Fecha o guia e lembra que a conta já o viu
   const dismissGuide = async () => {
     setIsGuideVisible(false);
     try {
@@ -30,6 +32,7 @@ export function useFeedGuide(usuario) {
     }
   };
 
+  // Abre o guia de novo pelo botão de ajuda
   const showGuide = () => setIsGuideVisible(true);
 
   return { isGuideVisible, dismissGuide, showGuide };

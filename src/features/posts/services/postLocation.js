@@ -5,9 +5,11 @@ import { locationService } from '../../../shared/services/locationService';
 // Cada fonte devolve { latitude, longitude } ou null.
 const fromPhoto = async ({ photoCoords }) => photoCoords || null;
 
+// Coordenadas a partir do endereço digitado
 const fromAddress = ({ address }) =>
   locationService.getCoordsFromAddress(address);
 
+// Coordenadas atuais do aparelho, ou null
 const fromDevice = async () => {
   const { latitude, longitude } = await locationService.getCurrentLocation();
   return latitude !== null && longitude !== null
@@ -17,6 +19,7 @@ const fromDevice = async () => {
 
 export const COORDS_SOURCES = [fromPhoto, fromAddress, fromDevice];
 
+// Primeiras coordenadas encontradas, tentando as fontes em ordem
 export async function findFirstCoords(sources, context) {
   for (const source of sources) {
     const coords = await source(context);
@@ -25,6 +28,7 @@ export async function findFirstCoords(sources, context) {
   return null;
 }
 
+// Endereço legível das coordenadas
 async function describeCoords({ latitude, longitude }) {
   const address = await locationService.getAddressFromCoords(
     latitude,
@@ -33,6 +37,7 @@ async function describeCoords({ latitude, longitude }) {
   return address || `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}`;
 }
 
+// Campos de localização do registro
 const toLocation = (coords, location) => ({
   latitude: coords?.latitude ?? null,
   longitude: coords?.longitude ?? null,

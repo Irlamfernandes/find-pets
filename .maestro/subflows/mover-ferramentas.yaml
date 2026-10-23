@@ -1,0 +1,12 @@
+# O botão flutuante de ferramentas do Expo Go fica por cima do "Sair":
+# arrasta para a lateral esquerda (no app instalado, ele não existe)
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      visible: 'Tools'
+    commands:
+      - swipe:
+          start: 89%, 8%
+          end: 4%, 62%
+          duration: 1500

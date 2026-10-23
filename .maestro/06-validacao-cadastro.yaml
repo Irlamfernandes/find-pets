@@ -1,0 +1,41 @@
+# Classes inválidas do cadastro (recusadas pelo Firebase): senha com menos
+# de 6 caracteres e e-mail que já tem conta
+appId: host.exp.exponent
+---
+- runFlow: subflows/abrir-app.yaml
+# Senha curta
+- tapOn:
+    id: 'button-go-register'
+- tapOn:
+    id: 'input-email'
+- inputText: ${'curta' + Date.now() + '@teste.com'}
+- tapOn:
+    id: 'input-password'
+- inputText: '12345'
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'A senha precisa ter pelo menos 6 caracteres.'
+    timeout: 30000
+- tapOn: 'Voltar'
+# E-mail repetido: cria uma conta, sai e tenta cadastrar o mesmo e-mail
+- runFlow: subflows/criar-conta.yaml
+- tapOn:
+    id: 'tab-profile'
+- tapOn:
+    id: 'button-logout'
+- tapOn:
+    id: 'button-go-register'
+- tapOn:
+    id: 'input-email'
+- inputText: ${output.email}
+- tapOn:
+    id: 'input-password'
+- inputText: 'outrasenha'
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'Este e-mail já está cadastrado. Faça login.'
+    timeout: 30000

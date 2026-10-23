@@ -1,0 +1,29 @@
+# Preenche nome e WhatsApp na tela de completar o perfil e entra no feed
+appId: host.exp.exponent
+env:
+  NAME: Teste E2E
+---
+- tapOn:
+    id: 'input-name'
+- eraseText: 50
+- inputText: ${NAME}
+- tapOn:
+    id: 'input-whatsapp'
+- eraseText: 50
+- inputText: '5511999999999'
+- hideKeyboard
+- tapOn:
+    id: 'button-complete'
+# Com biometria no aparelho, o app convida a ativá-la; sem, avisa que o
+# perfil está completo
+- tapOn:
+    text: 'Depois'
+    optional: true
+- tapOn:
+    text: 'Entendi'
+    optional: true
+# Guia do feed, exibido no primeiro acesso da conta
+- tapOn:
+    id: 'button-dismiss-guide'
+    optional: true
+- assertVisible: 'Olá, ${NAME}'

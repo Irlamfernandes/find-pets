@@ -2,8 +2,7 @@
 # quando a conexão volta, o aviso some (Android: liga e desliga o modo avião)
 appId: host.exp.exponent
 ---
-- runFlow: subflows/abrir-app.yaml
-- runFlow: subflows/criar-conta.yaml
+- runFlow: subflows/entrar.yaml
 - assertNotVisible: 'Você está sem internet.*'
 - setAirplaneMode: enabled
 - extendedWaitUntil:

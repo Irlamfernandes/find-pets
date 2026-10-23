@@ -1,8 +1,7 @@
 # Classe inválida do registro: o desaparecimento não é salvo sem foto
 appId: host.exp.exponent
 ---
-- runFlow: subflows/abrir-app.yaml
-- runFlow: subflows/criar-conta.yaml
+- runFlow: subflows/entrar.yaml
 - tapOn:
     id: 'tab-report'
 - assertVisible: 'Sobre o pet'
@@ -14,4 +13,6 @@ appId: host.exp.exponent
     id: 'button-submit-report'
 - assertVisible: 'Adicione uma foto'
 - tapOn: 'Entendi'
-- assertVisible: 'Sobre o pet'
+# Continua no formulário (nada foi salvo)
+- assertVisible:
+    id: 'button-submit-report'

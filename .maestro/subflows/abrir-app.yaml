@@ -15,3 +15,4 @@ appId: host.exp.exponent
     visible:
       id: 'button-go-login'
     timeout: 60000
+- runFlow: mover-ferramentas.yaml

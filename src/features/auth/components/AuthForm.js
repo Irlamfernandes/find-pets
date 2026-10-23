@@ -50,6 +50,7 @@ export function AuthForm({
       ) : null}
 
       <FormTextInput
+        testID="input-email"
         style={inputStyle}
         placeholder="E-mail"
         placeholderTextColor="#888"
@@ -66,6 +67,7 @@ export function AuthForm({
 
       <FormTextInput
         ref={passwordRef}
+        testID="input-password"
         style={inputStyle}
         placeholder="Senha"
         placeholderTextColor="#888"
@@ -77,7 +79,11 @@ export function AuthForm({
         onSubmitEditing={submit}
       />
 
-      <SafeTouchable style={styles.button} onPress={submit}>
+      <SafeTouchable
+        testID="button-submit-auth"
+        style={styles.button}
+        onPress={submit}
+      >
         <Text style={styles.buttonText}>{submitLabel}</Text>
       </SafeTouchable>
 

@@ -1,0 +1,46 @@
+# Cria uma conta nova no Firebase (e-mail único a cada execução) e completa
+# o perfil. Termina no feed. O e-mail fica em ${output.email}.
+appId: host.exp.exponent
+env:
+  NAME: Teste E2E
+  PASSWORD: senha123
+---
+- evalScript: ${output.email = 'e2e' + Date.now() + '@teste.com'}
+- tapOn:
+    id: 'button-go-register'
+- tapOn:
+    id: 'input-email'
+- inputText: ${output.email}
+- tapOn:
+    id: 'input-password'
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'Conta criada'
+    timeout: 30000
+- tapOn: 'Entendi'
+- assertVisible: 'Complete seu Perfil'
+- tapOn:
+    id: 'input-name'
+- inputText: ${NAME}
+- tapOn:
+    id: 'input-whatsapp'
+- inputText: '5511999999999'
+- hideKeyboard
+- tapOn:
+    id: 'button-complete'
+# Com biometria no aparelho, o app convida a ativá-la; sem, avisa que o
+# perfil está completo
+- tapOn:
+    text: 'Depois'
+    optional: true
+- tapOn:
+    text: 'Entendi'
+    optional: true
+# Guia do feed, exibido no primeiro acesso da conta
+- tapOn:
+    id: 'button-dismiss-guide'
+    optional: true
+- assertVisible: 'Olá, ${NAME}'

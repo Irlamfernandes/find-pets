@@ -1,0 +1,21 @@
+# Teste de recuperação: sem internet o app avisa e continua funcionando;
+# quando a conexão volta, o aviso some (Android: liga e desliga o modo avião)
+appId: host.exp.exponent
+---
+- runFlow: subflows/abrir-app.yaml
+- runFlow: subflows/criar-conta.yaml
+- assertNotVisible: 'Você está sem internet.*'
+- setAirplaneMode: enabled
+- extendedWaitUntil:
+    visible: 'Você está sem internet.*'
+    timeout: 20000
+# Sem internet, o app continua navegando com os dados do celular
+- tapOn:
+    id: 'tab-profile'
+- assertVisible: 'Meus dados'
+- tapOn:
+    id: 'tab-feed'
+- setAirplaneMode: disabled
+- extendedWaitUntil:
+    notVisible: 'Você está sem internet.*'
+    timeout: 30000

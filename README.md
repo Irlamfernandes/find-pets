@@ -46,15 +46,15 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 ## 🛠️ Tecnologias
 
-| Parte        | Ferramentas                                                                                                 |
-| ------------ | ----------------------------------------------------------------------------------------------------------- |
-| App          | React Native, Expo 57, JavaScript                                                                           |
-| Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (senha), NetInfo                             |
-| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                  |
-| Recursos     | Image Picker (câmera e galeria), Location, Local Authentication, Sharing, View Shot, WebView (mapa Leaflet) |
-| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                         |
-| Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                        |
-| CI           | GitHub Actions                                                                                              |
+| Parte        | Ferramentas                                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| App          | React Native, Expo 57, JavaScript                                                                              |
+| Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (senha), NetInfo                                |
+| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                     |
+| Recursos     | Image Picker (câmera e galeria), Location, Local Authentication, Sharing, View Shot, WebView (mapa Leaflet)    |
+| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                            |
+| Qualidade    | Jest + Testing Library, pytest, Maestro (E2E), ESLint, Prettier, Ruff, SonarQube, Husky + Commitlint, Gitleaks |
+| CI           | GitHub Actions                                                                                                 |
 
 ---
 
@@ -129,7 +129,8 @@ API REST em `api/` (Flask + MySQL + Docker + Swagger), usada pelo app antes do F
 
 ## ✅ Qualidade
 
-- **100% de cobertura de testes** no app (Jest) e na API (pytest).
+- **100% de cobertura de testes** (linhas e ramos) no app (Jest) e na API (pytest com `--cov-branch`).
+- **Testes de ponta a ponta no celular** com [Maestro](https://maestro.mobile.dev), em `.maestro/`.
 - ESLint com limites obrigatórios: complexidade ciclomática até 6, no máximo 3 níveis de aninhamento, funções de até 80 linhas e arquivos de até 300.
 - Prettier (app) e Ruff (API) para formatação.
 - Husky + Commitlint: commits no padrão _Conventional Commits_ e bloqueio de commit direto na `main`.
@@ -164,3 +165,29 @@ npm test                 # app (Jest + cobertura)
 npm run lint             # ESLint
 cd api && pytest         # API (depois de: pip install -r requirements-dev.txt)
 ```
+
+### Testes de ponta a ponta (Maestro)
+
+Os fluxos em [.maestro/](.maestro) usam o app de verdade no celular, como um usuário: tocam nos botões, digitam e conferem o que aparece na tela.
+
+| Fluxo                           | O que testa                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `01-tela-inicial.yaml`          | O app abre e navega entre a tela inicial, o login e o cadastro (smoke test)                            |
+| `02-validacao-login.yaml`       | Entradas inválidas do login: campos vazios, e-mail sem formato válido e conta inexistente              |
+| `03-cadastro-login-logout.yaml` | Cria a conta no Firebase, completa o perfil, sai e entra de novo                                       |
+| `04-registro-sem-foto.yaml`     | O registro de desaparecimento não é salvo sem foto                                                     |
+| `05-offline.yaml`               | Com o modo avião, o app avisa que está sem internet e continua funcionando; o aviso some ao reconectar |
+
+Cada fluxo começa do zero (apaga os dados do app) e cria uma conta de teste com e-mail único (`e2e<número>@teste.com`).
+
+1. Instale o `adb` e o Maestro:
+   ```bash
+   sudo apt install adb
+   curl -Ls "https://get.maestro.mobile.dev" | bash
+   ```
+2. No celular, ative as **Opções do desenvolvedor** e a **Depuração USB**, conecte no cabo e confira com `adb devices`.
+3. Com o `npx expo start` rodando, use o endereço `exp://` que ele mostra:
+   ```bash
+   npm run test:e2e -- -e EXPO_URL=exp://192.168.1.55:8081
+   ```
+   Para rodar um fluxo só: `maestro test -e EXPO_URL=exp://... .maestro/05-offline.yaml`.

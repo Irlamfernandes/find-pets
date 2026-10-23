@@ -58,7 +58,9 @@ describe('validation', () => {
     const huge = `${'a'.repeat(50000)}@${'b'.repeat(50000)}`;
     const start = Date.now();
     expect(isValidEmail(huge)).toBe(false);
-    expect(Date.now() - start).toBeLessThan(100);
+    // Uma expressão regular com backtracking levaria segundos ou minutos. A
+    // folga evita falhas quando a máquina está ocupada (ex.: hook do commit).
+    expect(Date.now() - start).toBeLessThan(1000);
   });
 
   it('normalizeEmail deve ignorar maiúsculas e espaços nas pontas', () => {

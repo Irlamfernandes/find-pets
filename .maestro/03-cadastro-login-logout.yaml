@@ -1,0 +1,33 @@
+# Fluxo principal: cria a conta, completa o perfil, sai e entra de novo
+# com a mesma conta (o login é conferido pelo Firebase)
+appId: host.exp.exponent
+env:
+  NAME: Teste E2E
+  PASSWORD: senha123
+---
+- runFlow: subflows/abrir-app.yaml
+- runFlow: subflows/criar-conta.yaml
+# Perfil mostra os dados cadastrados
+- tapOn:
+    id: 'tab-profile'
+- assertVisible: 'Meus dados'
+- tapOn:
+    id: 'button-logout'
+- assertVisible: 'Escolha uma opção'
+# Entra de novo
+- tapOn:
+    id: 'button-go-login'
+- tapOn:
+    id: 'input-email'
+- inputText: ${output.email}
+- tapOn:
+    id: 'input-password'
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'Login realizado'
+    timeout: 30000
+- tapOn: 'Entendi'
+- assertVisible: 'Olá, ${NAME}'

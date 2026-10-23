@@ -1,0 +1,17 @@
+# Abre o FindPets no Expo Go do zero: apaga os dados, libera as permissões
+# (câmera, fotos, localização) e carrega o app pelo endereço do Metro
+appId: host.exp.exponent
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- openLink: ${EXPO_URL}
+# Na primeira vez, o Expo Go apresenta o menu de desenvolvedor
+- tapOn:
+    text: 'Continue'
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: 'button-go-login'
+    timeout: 60000

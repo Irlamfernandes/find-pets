@@ -1,0 +1,54 @@
+# Troca de senha (logo depois do login: o Firebase exige login recente).
+# Começa e termina no feed, com a senha original de volta.
+# Verificação: troca para uma senha nova; a antiga deixa de entrar e a nova
+# entra; depois volta para a original.
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      # Troca para a nova
+      - runFlow: ../subflows/editar-perfil.yaml
+      - runFlow:
+          file: ../subflows/trocar-senha.yaml
+          env:
+            NOVA: ${NOVA_SENHA}
+      # A antiga não entra mais; a nova entra
+      - tapOn:
+          id: 'tab-profile'
+      - tapOn:
+          id: 'button-logout'
+      - tapOn:
+          id: 'button-go-login'
+      - tapOn:
+          id: 'input-email'
+      - eraseText: 50
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: 'input-password'
+      - eraseText: 50
+      - inputText: ${SENHA}
+      - hideKeyboard
+      - tapOn:
+          id: 'button-submit-auth'
+      - extendedWaitUntil:
+          visible: 'Usuário não existe ou senha errada.'
+          timeout: 30000
+      - tapOn: 'Voltar'
+      - runFlow:
+          file: ../subflows/entrar.yaml
+          env:
+            SENHA: ${NOVA_SENHA}
+      # Volta para a senha original
+      - runFlow:
+          file: ../subflows/editar-perfil.yaml
+          env:
+            SENHA: ${NOVA_SENHA}
+      - runFlow:
+          file: ../subflows/trocar-senha.yaml
+          env:
+            NOVA: ${SENHA}
+
+- assertVisible:
+    id: 'tab-feed'

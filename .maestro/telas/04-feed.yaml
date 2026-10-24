@@ -1,5 +1,6 @@
 # Feed. Começa no feed (primeiro acesso, com o guia) e termina no feed.
-# Verificação: guia de uso, lista e mapa, e o botão de ajuda que reabre o guia.
+# Verificação: guia de uso, lista e mapa, botão de ajuda e a foto do usuário
+# abrindo o perfil.
 appId: host.exp.exponent
 ---
 - runFlow:
@@ -18,6 +19,12 @@ appId: host.exp.exponent
           id: 'lost-pets-map-area'
       - tapOn: 'Como funciona o app'
       - assertVisible: 'Como funciona o FindPets'
+      - tapOn:
+          id: 'button-dismiss-guide'
+      - tapOn: 'Abrir meu perfil'
+      - assertVisible: 'Meus dados'
+      - tapOn:
+          id: 'tab-feed'
 
 # Caminho feliz: fecha o guia, se estiver aberto
 - tapOn:

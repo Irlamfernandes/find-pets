@@ -1,5 +1,6 @@
 # Tela inicial. Começa do zero (apaga os dados do app) e termina no cadastro.
-# Verificação: textos da tela e navegação para o login e de volta.
+# Verificação: textos da tela, ida ao login e ao cadastro e volta pelo botão
+# "Voltar" e pelo voltar do Android.
 appId: host.exp.exponent
 ---
 - runFlow: ../subflows/abrir-app.yaml
@@ -14,6 +15,11 @@ appId: host.exp.exponent
           id: 'button-go-login'
       - assertVisible: 'Entre com sua conta'
       - tapOn: 'Voltar'
+      - assertVisible: 'Escolha uma opção'
+      - tapOn:
+          id: 'button-go-register'
+      - assertVisible: 'Crie seus dados de acesso'
+      - back
       - assertVisible: 'Escolha uma opção'
 
 # Caminho feliz: vai para o cadastro

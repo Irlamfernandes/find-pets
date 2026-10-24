@@ -1,4 +1,4 @@
-# Sem internet (Android: modo avião). Começa no Perfil e termina no feed.
+# Sem internet (modo avião). Começa no Perfil e termina no feed.
 # Verificação (recuperação): o app avisa que está sem internet, continua
 # navegando e o aviso some quando a conexão volta.
 appId: host.exp.exponent
@@ -25,6 +25,5 @@ appId: host.exp.exponent
           notVisible: 'Você está sem internet.*'
           timeout: 30000
 
-# Caminho feliz: segue no feed
 - assertVisible:
     id: 'tab-feed'

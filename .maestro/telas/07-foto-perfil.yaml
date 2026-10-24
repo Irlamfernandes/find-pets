@@ -1,0 +1,17 @@
+# Foto do perfil (sem escolher foto). Começa e termina no Perfil.
+# Verificação: as opções de foto aparecem e "Cancelar" fecha.
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - tapOn:
+          id: 'button-change-photo'
+      - assertVisible: 'Foto do perfil'
+      - assertVisible: 'Tirar foto'
+      - assertVisible: 'Escolher da galeria'
+      - tapOn: 'Cancelar'
+      - assertNotVisible: 'Escolher da galeria'
+
+- assertVisible: 'Meus dados'

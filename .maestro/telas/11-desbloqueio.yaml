@@ -1,0 +1,34 @@
+# Desbloqueio ao reabrir o app (a sessão continua salva). Começa no feed e
+# termina no feed. Verificação: senha vazia e errada são recusadas e "Trocar
+# de conta" volta para a tela inicial.
+appId: host.exp.exponent
+---
+- runFlow: ../subflows/reabrir-app.yaml
+
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - tapOn:
+          id: 'button-unlock-password'
+      - assertVisible: 'Digite sua senha.'
+      - tapOn:
+          id: 'input-unlock-password'
+      - inputText: 'senhaerrada'
+      - tapOn:
+          id: 'button-unlock-password'
+      - assertVisible: 'Senha incorreta.'
+      - tapOn: 'Trocar de conta'
+      - assertVisible: 'Escolha uma opção'
+      - runFlow: ../subflows/entrar.yaml
+      - runFlow: ../subflows/reabrir-app.yaml
+
+# Caminho feliz: desbloqueia com a senha certa
+- tapOn:
+    id: 'input-unlock-password'
+- eraseText: 50
+- inputText: ${SENHA}
+- tapOn:
+    id: 'button-unlock-password'
+- assertVisible:
+    id: 'tab-feed'

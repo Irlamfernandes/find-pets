@@ -1,25 +1,50 @@
-# Cadastro. Começa na tela de cadastro e termina em "Complete seu Perfil".
-# Verificação: classes inválidas (campos vazios, e-mail sem formato válido e
-# senha com menos de 6 caracteres, recusada pelo Firebase).
+# Cadastro. Começa no cadastro e termina em "Complete seu Perfil".
+# Verificação: sem internet não cria a conta; campos vazios, e-mail sem
+# formato válido e senha curta (recusada pelo Firebase).
 appId: host.exp.exponent
 ---
 - runFlow:
     when:
       true: "${VERIFICAR == 'true'}"
     commands:
+      # Sem internet
+      - setAirplaneMode: enabled
+      - tapOn:
+          id: 'input-email'
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: 'input-password'
+      - inputText: ${SENHA}
+      - hideKeyboard
+      - tapOn:
+          id: 'button-submit-auth'
+      - extendedWaitUntil:
+          visible: '.*Conecte-se à internet para criar a conta.*'
+          timeout: 30000
+      - setAirplaneMode: disabled
+      # Campos vazios
+      - tapOn:
+          id: 'input-email'
+      - eraseText: 50
+      - tapOn:
+          id: 'input-password'
+      - eraseText: 50
+      - hideKeyboard
       - tapOn:
           id: 'button-submit-auth'
       - assertVisible: 'Preencha usuário e senha.'
+      # E-mail sem formato válido
       - tapOn:
           id: 'input-email'
       - inputText: 'semarroba.com'
       - tapOn:
           id: 'input-password'
-      - inputText: 'senha123'
+      - inputText: ${SENHA}
       - hideKeyboard
       - tapOn:
           id: 'button-submit-auth'
       - assertVisible: 'Insira um formato de e-mail válido.'
+      # Senha curta (a internet pode levar alguns segundos para voltar)
       - tapOn:
           id: 'input-email'
       - eraseText: 50
@@ -29,11 +54,14 @@ appId: host.exp.exponent
       - eraseText: 50
       - inputText: '12345'
       - hideKeyboard
-      - tapOn:
-          id: 'button-submit-auth'
-      - extendedWaitUntil:
-          visible: 'A senha precisa ter pelo menos 6 caracteres.'
-          timeout: 30000
+      - retry:
+          maxRetries: 3
+          commands:
+            - tapOn:
+                id: 'button-submit-auth'
+            - extendedWaitUntil:
+                visible: 'A senha precisa ter pelo menos 6 caracteres.'
+                timeout: 15000
 
 # Caminho feliz: cria a conta (e-mail único desta execução)
 - tapOn:
@@ -43,7 +71,7 @@ appId: host.exp.exponent
 - tapOn:
     id: 'input-password'
 - eraseText: 50
-- inputText: ${PASSWORD}
+- inputText: ${SENHA}
 - hideKeyboard
 - tapOn:
     id: 'button-submit-auth'

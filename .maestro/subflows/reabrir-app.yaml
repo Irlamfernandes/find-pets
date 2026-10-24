@@ -1,0 +1,16 @@
+# Fecha e abre o FindPets de novo, sem apagar os dados (a sessão continua
+# salva). Termina no desbloqueio.
+appId: host.exp.exponent
+---
+- stopApp
+- launchApp:
+    permissions:
+      all: allow
+- openLink: ${EXPO_URL}
+- tapOn:
+    text: 'Continue'
+    optional: true
+- extendedWaitUntil:
+    visible: 'Bem-vindo de volta'
+    timeout: 60000
+- runFlow: mover-ferramentas.yaml

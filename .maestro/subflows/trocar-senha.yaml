@@ -1,0 +1,32 @@
+# Com a edição do perfil liberada, troca a senha para ${NOVA} e salva.
+# Termina no feed.
+appId: host.exp.exponent
+---
+- scrollUntilVisible:
+    element:
+      id: 'input-new-password'
+    direction: DOWN
+- tapOn:
+    id: 'input-new-password'
+- inputText: ${NOVA}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'input-confirm-password'
+    direction: DOWN
+- tapOn:
+    id: 'input-confirm-password'
+- inputText: ${NOVA}
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'button-save-profile'
+    direction: DOWN
+- tapOn:
+    id: 'button-save-profile'
+- extendedWaitUntil:
+    visible: 'Perfil atualizado'
+    timeout: 30000
+- tapOn: 'Entendi'
+- assertVisible:
+    id: 'tab-feed'

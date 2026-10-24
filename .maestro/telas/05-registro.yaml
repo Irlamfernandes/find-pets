@@ -1,15 +1,14 @@
-# Registro de desaparecimento. Começa no feed e termina no feed.
-# Verificação: sem foto, o registro não é salvo (classe inválida).
+# Registro de desaparecimento (sem registrar: exige foto). Começa e termina
+# no feed. Verificação: sem foto o registro não é salvo; voltar do Android.
 appId: host.exp.exponent
 ---
-- tapOn:
-    id: 'tab-report'
-- assertVisible: 'Sobre o pet'
-
 - runFlow:
     when:
       true: "${VERIFICAR == 'true'}"
     commands:
+      - tapOn:
+          id: 'tab-report'
+      - assertVisible: 'Sobre o pet'
       - scrollUntilVisible:
           element:
             id: 'button-submit-report'
@@ -20,8 +19,14 @@ appId: host.exp.exponent
       - tapOn: 'Entendi'
       - assertVisible:
           id: 'button-submit-report'
+      - back
+      - assertVisible:
+          id: 'tab-feed'
 
-# Caminho feliz: volta para o feed
+# Caminho feliz: abre o registro e volta pelo botão da tela
+- tapOn:
+    id: 'tab-report'
+- assertVisible: 'Sobre o pet'
 - tapOn:
     id: 'button-back'
 - assertVisible:

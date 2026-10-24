@@ -15,7 +15,9 @@ PASTA="$(cd "$(dirname "$0")" && pwd)"
 APROVADAS="$PASTA/.aprovadas"
 EXPO_URL="${EXPO_URL:-exp://127.0.0.1:8081}"
 EMAIL="e2e$(date +%s)@teste.com"
-PASSWORD="senha123"
+SENHA="senha123"
+# Usada na tela de troca de senha (que depois volta para a original)
+NOVA_SENHA="novasenha123"
 export PATH="$PATH:$HOME/.maestro/bin:$HOME/Android/platform-tools"
 
 if [ "${1:-}" = "--tudo" ]; then
@@ -37,7 +39,8 @@ for tela in "$PASTA"/telas/*.yaml; do
   fi
 
   if ! maestro test \
-    -e EXPO_URL="$EXPO_URL" -e EMAIL="$EMAIL" -e PASSWORD="$PASSWORD" \
+    -e EXPO_URL="$EXPO_URL" -e EMAIL="$EMAIL" -e SENHA="$SENHA" \
+    -e NOVA_SENHA="$NOVA_SENHA" \
     -e VERIFICAR="$verificar" "$tela"; then
     echo "✖ $nome falhou. Corrija e rode de novo: as telas aprovadas serão rápidas."
     exit 1

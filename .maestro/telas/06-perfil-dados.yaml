@@ -1,18 +1,18 @@
-# Perfil. Começa no feed e termina no Perfil.
-# Verificação: a edição só é liberada com a senha certa (vazia e errada são
-# recusadas), senhas diferentes impedem salvar e a troca do nome é salva.
+# Dados do perfil. Começa no feed e termina no Perfil.
+# Verificação: a edição só é liberada com a senha certa; ao salvar, nome
+# vazio, WhatsApp inválido e senhas diferentes são recusados; nome e WhatsApp
+# novos são salvos.
 appId: host.exp.exponent
 ---
-- tapOn:
-    id: 'tab-profile'
-- assertVisible: 'Meus dados'
-
 - runFlow:
     when:
       true: "${VERIFICAR == 'true'}"
     commands:
       - tapOn:
+          id: 'tab-profile'
+      - tapOn:
           id: 'button-edit-profile'
+      # Senha vazia e errada
       - tapOn: 'Confirmar'
       - assertVisible: 'Digite sua senha.'
       - tapOn:
@@ -20,13 +20,41 @@ appId: host.exp.exponent
       - inputText: 'senhaerrada'
       - tapOn: 'Confirmar'
       - assertVisible: 'Senha incorreta. Tente novamente.'
+      # Senha certa
       - tapOn:
           id: 'input-current-password'
       - eraseText: 50
-      - inputText: ${PASSWORD}
+      - inputText: ${SENHA}
       - tapOn: 'Confirmar'
       - assertVisible:
           id: 'button-save-profile'
+      # Nome vazio
+      - tapOn:
+          id: 'input-profile-name'
+      - eraseText: 50
+      - hideKeyboard
+      - tapOn:
+          id: 'button-save-profile'
+      - assertVisible: 'Confira seus dados'
+      - tapOn: 'Entendi'
+      # WhatsApp inválido
+      - tapOn:
+          id: 'input-profile-name'
+      - inputText: 'Nome Editado'
+      - tapOn:
+          id: 'input-profile-whatsapp'
+      - eraseText: 50
+      - inputText: '119999'
+      - hideKeyboard
+      - tapOn:
+          id: 'button-save-profile'
+      - assertVisible: 'WhatsApp inválido'
+      - tapOn: 'Entendi'
+      - tapOn:
+          id: 'input-profile-whatsapp'
+      - eraseText: 50
+      - inputText: '5521988887777'
+      - hideKeyboard
       # Senhas diferentes
       - scrollUntilVisible:
           element:
@@ -53,20 +81,10 @@ appId: host.exp.exponent
           id: 'button-save-profile'
       - assertVisible: 'Senhas diferentes'
       - tapOn: 'Entendi'
-      # Apagar a nova senha limpa também a confirmação
+      # Apagar a nova senha limpa também a confirmação; salva nome e WhatsApp
       - tapOn:
           id: 'input-new-password'
       - eraseText: 50
-      - hideKeyboard
-      # Troca o nome e salva (o app volta para o feed)
-      - scrollUntilVisible:
-          element:
-            id: 'input-profile-name'
-          direction: UP
-      - tapOn:
-          id: 'input-profile-name'
-      - eraseText: 50
-      - inputText: 'Nome Editado'
       - hideKeyboard
       - scrollUntilVisible:
           element:
@@ -77,6 +95,8 @@ appId: host.exp.exponent
       - assertVisible: 'Perfil atualizado'
       - tapOn: 'Entendi'
       - assertVisible: 'Olá, Nome Editado'
-      - tapOn:
-          id: 'tab-profile'
-      - assertVisible: 'Meus dados'
+
+# Caminho feliz: abre o Perfil
+- tapOn:
+    id: 'tab-profile'
+- assertVisible: 'Meus dados'

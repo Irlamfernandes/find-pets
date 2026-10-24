@@ -1,0 +1,27 @@
+# Login sem internet. Começa e termina no feed.
+# Verificação: sem internet, entra com a senha guardada no celular; quando a
+# internet volta, como não há login no Firebase, o app pede para entrar de
+# novo (e a conta volta a sincronizar).
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - tapOn:
+          id: 'tab-profile'
+      - tapOn:
+          id: 'button-logout'
+      - setAirplaneMode: enabled
+      - runFlow: ../subflows/entrar.yaml
+      - assertVisible: 'Você está sem internet.*'
+      - setAirplaneMode: disabled
+      - extendedWaitUntil:
+          visible: 'Entre novamente'
+          timeout: 60000
+      - tapOn: 'Entendi'
+      - assertVisible: 'Escolha uma opção'
+      - runFlow: ../subflows/entrar.yaml
+
+- assertVisible:
+    id: 'tab-feed'

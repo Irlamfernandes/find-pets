@@ -1,5 +1,5 @@
 # Completar o perfil. Começa em "Complete seu Perfil" e termina no feed.
-# Verificação: campos vazios e WhatsApp curto (valor abaixo do limite).
+# Verificação: campos vazios e WhatsApp curto (abaixo do limite).
 appId: host.exp.exponent
 ---
 - runFlow:
@@ -32,8 +32,8 @@ appId: host.exp.exponent
 - hideKeyboard
 - tapOn:
     id: 'button-complete'
-# Com biometria no aparelho, o app convida a ativá-la; sem, avisa que o
-# perfil está completo
+# Com biometria no aparelho, o app convida a ativá-la ("Depois" recusa); sem,
+# avisa que o perfil está completo
 - tapOn:
     text: 'Depois'
     optional: true

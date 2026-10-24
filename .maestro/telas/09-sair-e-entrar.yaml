@@ -1,6 +1,6 @@
-# Sair e entrar de novo. Começa no feed e termina no feed.
-# Verificação: senha errada é recusada pelo Firebase e o e-mail já cadastrado
-# não pode criar outra conta.
+# Sair e entrar. Começa no feed e termina no feed (login recente).
+# Verificação: e-mail já cadastrado não cria outra conta; no login, campos
+# vazios, e-mail inválido e senha errada são recusados.
 appId: host.exp.exponent
 ---
 - tapOn:
@@ -31,9 +31,29 @@ appId: host.exp.exponent
           visible: 'Este e-mail já está cadastrado. Faça login.'
           timeout: 30000
       - tapOn: 'Voltar'
-      # Senha errada
+      # Login: vazio, e-mail inválido e senha errada
       - tapOn:
           id: 'button-go-login'
+      - tapOn:
+          id: 'input-email'
+      - eraseText: 50
+      - tapOn:
+          id: 'input-password'
+      - eraseText: 50
+      - hideKeyboard
+      - tapOn:
+          id: 'button-submit-auth'
+      - assertVisible: 'Preencha usuário e senha.'
+      - tapOn:
+          id: 'input-email'
+      - inputText: 'semarroba.com'
+      - tapOn:
+          id: 'input-password'
+      - inputText: ${SENHA}
+      - hideKeyboard
+      - tapOn:
+          id: 'button-submit-auth'
+      - assertVisible: 'Insira um formato de e-mail válido.'
       - tapOn:
           id: 'input-email'
       - eraseText: 50
@@ -51,22 +71,4 @@ appId: host.exp.exponent
       - tapOn: 'Voltar'
 
 # Caminho feliz: entra com a senha certa
-- tapOn:
-    id: 'button-go-login'
-- tapOn:
-    id: 'input-email'
-- eraseText: 50
-- inputText: ${EMAIL}
-- tapOn:
-    id: 'input-password'
-- eraseText: 50
-- inputText: ${PASSWORD}
-- hideKeyboard
-- tapOn:
-    id: 'button-submit-auth'
-- extendedWaitUntil:
-    visible: 'Login realizado'
-    timeout: 30000
-- tapOn: 'Entendi'
-- assertVisible:
-    id: 'tab-feed'
+- runFlow: ../subflows/entrar.yaml

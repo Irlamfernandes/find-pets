@@ -170,16 +170,22 @@ cd api && pytest         # API (depois de: pip install -r requirements-dev.txt)
 
 Os fluxos em [.maestro/telas/](.maestro/telas) usam o app de verdade no celular, como um usuário. Eles percorrem o app **uma tela por vez, em ordem**, numa conta nova criada no começo:
 
-| Tela                | Verificação completa                                                             |
-| ------------------- | -------------------------------------------------------------------------------- |
-| `01-tela-inicial`   | Textos da tela e navegação para o login e de volta                               |
-| `02-cadastro`       | Campos vazios, e-mail sem formato válido e senha curta (recusada pelo Firebase)  |
-| `03-perfil-inicial` | Campos vazios e WhatsApp curto                                                   |
-| `04-feed`           | Guia de uso, lista e mapa, e o botão de ajuda                                    |
-| `05-registro`       | Registro sem foto não é salvo                                                    |
-| `06-perfil`         | Senha vazia e errada para editar, senhas diferentes e troca do nome              |
-| `07-offline`        | Com o modo avião, o app avisa e continua funcionando; o aviso some ao reconectar |
-| `08-sair-e-entrar`  | E-mail já cadastrado, senha errada e login com a senha certa                     |
+| Tela                | Verificação completa                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `01-tela-inicial`   | Textos, ida ao login e ao cadastro, volta pelo botão e pelo voltar do Android                        |
+| `02-cadastro`       | Sem internet, campos vazios, e-mail sem formato válido e senha curta (recusada pelo Firebase)        |
+| `03-perfil-inicial` | Campos vazios e WhatsApp curto                                                                       |
+| `04-feed`           | Guia de uso, lista e mapa, botão de ajuda e foto do usuário abrindo o perfil                         |
+| `05-registro`       | Registro sem foto não é salvo; voltar do Android                                                     |
+| `06-perfil-dados`   | Senha vazia e errada para editar; nome vazio, WhatsApp inválido e senhas diferentes; salvar os dados |
+| `07-foto-perfil`    | Opções da foto aparecem e "Cancelar" fecha                                                           |
+| `08-offline`        | Com o modo avião, o app avisa e continua funcionando; o aviso some ao reconectar                     |
+| `09-sair-e-entrar`  | E-mail já cadastrado; no login, campos vazios, e-mail inválido e senha errada                        |
+| `10-trocar-senha`   | Troca a senha: a antiga deixa de entrar e a nova entra; depois volta para a original                 |
+| `11-desbloqueio`    | Reabre o app: senha vazia e errada no desbloqueio e "Trocar de conta"                                |
+| `12-login-offline`  | Entra sem internet com a senha guardada; ao reconectar, o app pede para entrar de novo               |
+
+Ficam para teste manual: registrar um pet e trocar a foto do perfil (dependem da câmera ou da galeria do celular), a biometria (precisa da digital de verdade) e as ações do card de um registro (reencontro, editar, excluir, compartilhar, WhatsApp, rota e marcadores do mapa).
 
 Cada tela tem duas partes: a **verificação completa** e o **caminho feliz** (o mínimo para chegar à próxima tela). Na primeira vez, cada tela faz a verificação completa; depois de aprovada, faz só o caminho feliz, o que deixa as execuções seguintes bem mais rápidas. As telas aprovadas ficam anotadas em `.maestro/.aprovadas`, só no seu computador. Se uma tela falhar, a execução para nela.
 

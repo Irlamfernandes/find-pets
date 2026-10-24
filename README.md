@@ -48,7 +48,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 | Parte        | Ferramentas                                                                                                 |
 | ------------ | ----------------------------------------------------------------------------------------------------------- |
-| App          | React Native, Expo 57, JavaScript                                                                           |
+| App          | React Native 0.88, Expo SDK 58, JavaScript (Node.js 22.13 ou mais novo)                                     |
 | Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (senha), NetInfo                             |
 | Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                  |
 | Recursos     | Image Picker (câmera e galeria), Location, Local Authentication, Sharing, View Shot, WebView (mapa Leaflet) |

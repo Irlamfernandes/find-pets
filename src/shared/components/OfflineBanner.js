@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNetInfo } from '@react-native-community/netinfo';
+import { useNetworkState } from 'expo-network';
 import { palette } from '../theme/colors';
 
 // Aviso exibido só quando o celular está sem internet: o app continua
 // funcionando e envia as alterações quando a conexão voltar
 export function OfflineBanner() {
-  const { isConnected } = useNetInfo();
+  const { isConnected } = useNetworkState();
   if (isConnected !== false) return null;
 
   return (

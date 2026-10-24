@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';

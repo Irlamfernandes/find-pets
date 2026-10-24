@@ -46,15 +46,15 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 ## 🛠️ Tecnologias
 
-| Parte        | Ferramentas                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------- |
-| App          | React Native 0.88, Expo SDK 58, JavaScript (Node.js 22.13 ou mais novo)                                       |
-| Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (senha), NetInfo                               |
-| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                    |
-| Recursos     | Image Picker (câmera e galeria), Location, Local Authentication, Sharing, View Shot, Maps (react-native-maps) |
-| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                           |
-| Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                          |
-| CI           | GitHub Actions                                                                                                |
+| Parte        | Ferramentas                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| App          | React Native 0.88, Expo SDK 58, JavaScript (Node.js 22.13 ou mais novo)                                             |
+| Dados no app | expo-sqlite (banco e kv-store para sessão e preferências), expo-secure-store (senha), expo-network                  |
+| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                          |
+| Recursos     | expo-image-picker, expo-image, expo-location, expo-local-authentication, expo-sharing, View Shot, react-native-maps |
+| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                                 |
+| Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                                |
+| CI           | GitHub Actions                                                                                                      |
 
 ---
 

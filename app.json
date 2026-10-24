@@ -34,7 +34,9 @@
       "expo-sharing",
       "expo-sqlite",
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-status-bar",
+      "expo-image"
     ]
   }
 }

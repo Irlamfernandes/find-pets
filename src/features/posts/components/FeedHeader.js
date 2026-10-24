@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
@@ -18,7 +19,7 @@ export function FeedHeader({
       <Image
         source={require('../../../../assets/adaptive-icon.png')}
         style={styles.logo}
-        resizeMode="contain"
+        contentFit="contain"
       />
       <View style={styles.titleContainer}>
         <Text style={styles.title}>FindPets</Text>

@@ -59,3 +59,17 @@ jest.mock('expo-image-manipulator', () => ({
     }),
   },
 }));
+
+// Mapa nativo (react-native-maps): nos testes, o mapa e os marcadores viram
+// componentes simples que expõem as mesmas props
+jest.mock('react-native-maps', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  const MapView = (props) => React.createElement(View, props);
+  MapView.displayName = 'MapView';
+  const Marker = (props) => React.createElement(View, props);
+  Marker.displayName = 'Marker';
+
+  return { __esModule: true, default: MapView, Marker };
+});

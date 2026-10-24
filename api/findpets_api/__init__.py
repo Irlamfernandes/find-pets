@@ -40,6 +40,12 @@ def enable_cors(app):
         CORS(app, origins=origins)
 
 
+def no_sniff(response):
+    """Impede o navegador de adivinhar o tipo da resposta (pedido do OWASP ZAP)."""
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 # Monta a API: configurações, CORS, CSRF, Swagger, erros, banco e rotas.
 # `overrides` troca configurações (usado nos testes).
 def create_app(overrides=None):
@@ -52,6 +58,7 @@ def create_app(overrides=None):
     csrf.init_app(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     register_error_handlers(app)
+    app.after_request(no_sniff)
     init_database(app)
     for blueprint in BLUEPRINTS:
         app.register_blueprint(blueprint)

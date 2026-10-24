@@ -13,7 +13,7 @@ COPY findpets_api ./findpets_api
 RUN useradd --create-home --uid 10001 findpets \
     && mkdir -p /data/uploads \
     && chown findpets /data/uploads
-USER findpets
+USER 10001
 
 EXPOSE 5000
 

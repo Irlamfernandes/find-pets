@@ -54,3 +54,6 @@ LICENSE
 
 # Telas do Maestro já aprovadas neste computador
 .maestro/.aprovadas
+
+# Configuração local do Qlty (análise de qualidade)
+.qlty/

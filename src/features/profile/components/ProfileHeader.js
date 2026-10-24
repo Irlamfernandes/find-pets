@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
@@ -20,7 +21,7 @@ export function ProfileHeader({ onBack, onLogout }) {
         <Image
           source={require('../../../../assets/adaptive-icon.png')}
           style={styles.logo}
-          resizeMode="contain"
+          contentFit="contain"
         />
         <Text style={styles.title}>Editar Perfil</Text>
       </View>

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import {
   Modal,
   View,
-  Image,
   FlatList,
   Text,
   StyleSheet,
   useWindowDimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
@@ -65,7 +65,7 @@ export function PhotoViewerModal({ images, initialIndex = 0, onClose }) {
               testID="photo-viewer-image"
               source={{ uri: item }}
               style={[styles.image, { width }]}
-              resizeMode="contain"
+              contentFit="contain"
             />
           )}
         />

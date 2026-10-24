@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, StyleSheet, Image } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
@@ -35,7 +36,7 @@ export default function UnlockScreen({ usuario, onUnlocked, onSwitchAccount }) {
       <Image
         source={require('../../../../assets/adaptive-icon.png')}
         style={styles.logo}
-        resizeMode="contain"
+        contentFit="contain"
       />
       <Text style={styles.title}>Bem-vindo de volta</Text>
       <Text style={styles.subtitle}>

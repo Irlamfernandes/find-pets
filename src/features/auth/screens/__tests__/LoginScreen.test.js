@@ -5,10 +5,6 @@ import LoginScreen from '../LoginScreen';
 import { useLogin } from '../../hooks/useLogin';
 
 // MOCK DO ASYNC STORAGE NECESSÁRIO PARA A ÁRVORE DE IMPORTAÇÃO
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
-);
-
 jest.mock('../../hooks/useLogin');
 
 describe('LoginScreen Component', () => {

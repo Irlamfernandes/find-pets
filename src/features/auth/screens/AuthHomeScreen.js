@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { palette } from '../../../shared/theme/colors';
@@ -11,7 +12,7 @@ export function AuthHomeScreen({ onNavigate }) {
       <Image
         source={require('../../../../assets/adaptive-icon.png')}
         style={styles.logo}
-        resizeMode="contain"
+        contentFit="contain"
       />
       <Text style={styles.title}>FindPets</Text>
       <Text style={styles.subtitle}>Escolha uma opção</Text>

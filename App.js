@@ -1,7 +1,8 @@
 // App.js
-import 'react-native-get-random-values';
+import './src/shared/polyfills/randomValues';
 import React from 'react';
-import { StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
+import { StyleSheet, ActivityIndicator } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { palette } from './src/shared/theme/colors';
 import { AppAlertProvider } from './src/shared/components/AppAlert';
@@ -25,7 +26,7 @@ function AppContent() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={palette.background} />
+      <StatusBar style="dark" />
       <PasswordPromptModal {...passwordPromptProps} />
       <AppScreens navigation={navigation} session={session} actions={actions} />
     </SafeAreaView>

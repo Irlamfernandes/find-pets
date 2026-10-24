@@ -1,109 +1,22 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
+import MapView, { Marker } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { palette } from '../../../shared/theme/colors';
+import { regionForPoints } from '../utils/mapRegion';
 
-// Mapa (Leaflet + OpenStreetMap) com um ponto por pet perdido. Tocar num
-// ponto avisa o app ({ type: 'select', id }); tocar fora avisa 'clear'.
-export function buildLostPetsMapHtml(posts) {
-  const points = posts.map(({ id, latitude, longitude }) => ({
-    id,
-    latitude,
-    longitude,
-  }));
-  // Evita que algum valor feche a tag <script> antes da hora
-  const pointsJson = JSON.stringify(points).replaceAll('<', String.raw`\u003c`);
+// Cor do marcador do pet selecionado (os demais usam a cor de alerta)
+const SELECTED_COLOR = '#991B1B';
 
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>html, body, #map { margin: 0; padding: 0; height: 100%; }</style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-  var points = ${pointsJson};
-  var NORMAL = { radius: 10, fillColor: '${palette.error}' };
-  var SELECTED = { radius: 15, fillColor: '#991B1B' };
-  var map = L.map('map');
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap'
-  }).addTo(map);
-
-  // Envia uma mensagem do mapa para o app
-  function send(message) {
-    window.ReactNativeWebView.postMessage(JSON.stringify(message));
-  }
-
-  var selected = null;
-  // Destaca o ponto tocado e volta o anterior ao normal
-  function select(marker) {
-    if (selected) {
-      selected.setRadius(NORMAL.radius);
-      selected.setStyle({ fillColor: NORMAL.fillColor });
-    }
-    selected = marker;
-    if (marker) {
-      marker.setRadius(SELECTED.radius);
-      marker.setStyle({ fillColor: SELECTED.fillColor });
-      marker.bringToFront();
-    }
-  }
-  window.clearSelection = function () { select(null); };
-
-  points.forEach(function (point) {
-    var marker = L.circleMarker([point.latitude, point.longitude], {
-      radius: NORMAL.radius,
-      color: '#FFFFFF',
-      weight: 3,
-      fillColor: NORMAL.fillColor,
-      fillOpacity: 1
-    }).addTo(map);
-    marker.on('click', function (event) {
-      L.DomEvent.stopPropagation(event);
-      select(marker);
-      send({ type: 'select', id: point.id });
-    });
-  });
-
-  map.on('click', function () {
-    select(null);
-    send({ type: 'clear' });
-  });
-
-  if (points.length === 1) {
-    map.setView([points[0].latitude, points[0].longitude], 15);
-  } else {
-    map.fitBounds(
-      points.map(function (point) { return [point.latitude, point.longitude]; }),
-      { padding: [40, 40], maxZoom: 16 }
-    );
-  }
-</script>
-</body>
-</html>`;
-}
-
-// Mapa com todos os pets perdidos; tocar num ponto seleciona o registro
+// Mapa com todos os pets perdidos; tocar num marcador seleciona o registro e
+// tocar fora dos marcadores tira a seleção
 export function LostPetsMap({ posts, selectedId, onSelect, onClear }) {
-  const webViewRef = useRef(null);
-  // Só remonta o mapa quando os pontos mudam (e não a cada seleção)
-  const html = useMemo(() => buildLostPetsMapHtml(posts), [posts]);
-
-  // Ao fechar o resumo pelo app, tira o destaque do ponto no mapa
-  useEffect(() => {
-    if (selectedId === null) {
-      webViewRef.current?.injectJavaScript(
-        'window.clearSelection && window.clearSelection(); true;'
-      );
-    }
-  }, [selectedId]);
+  // A área inicial só é recalculada quando os pontos mudam
+  const initialRegion = useMemo(
+    () => (posts.length > 0 ? regionForPoints(posts) : null),
+    [posts]
+  );
 
   if (posts.length === 0) {
     return (
@@ -116,26 +29,34 @@ export function LostPetsMap({ posts, selectedId, onSelect, onClear }) {
     );
   }
 
-  // Mensagem vinda do mapa: ponto selecionado ou toque fora dos pontos
-  const handleMessage = (event) => {
-    const message = JSON.parse(event.nativeEvent.data);
-    if (message.type === 'select') onSelect(message.id);
-    else onClear();
+  // O toque num marcador também chega ao mapa: só limpa fora deles
+  const handleMapPress = (event) => {
+    if (event.nativeEvent.action !== 'marker-press') onClear();
   };
 
   return (
-    <WebView
-      ref={webViewRef}
+    <MapView
       testID="lost-pets-map"
-      originWhitelist={['*']}
-      source={{
-        html,
-        baseUrl: 'https://findpets.app/',
-      }}
-      applicationNameForUserAgent="FindPets/1.0"
-      onMessage={handleMessage}
       style={styles.map}
-    />
+      initialRegion={initialRegion}
+      onPress={handleMapPress}
+      toolbarEnabled={false}
+    >
+      {posts.map((post) => {
+        const isSelected = post.id === selectedId;
+        return (
+          <Marker
+            // A chave muda com a seleção para o Android redesenhar a cor
+            key={`${post.id}-${isSelected}`}
+            testID={`map-marker-${post.id}`}
+            coordinate={{ latitude: post.latitude, longitude: post.longitude }}
+            pinColor={isSelected ? SELECTED_COLOR : palette.error}
+            tracksViewChanges={false}
+            onPress={() => onSelect(post.id)}
+          />
+        );
+      })}
+    </MapView>
   );
 }
 

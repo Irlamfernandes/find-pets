@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { Text, StyleSheet, Image } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
@@ -33,7 +34,7 @@ export default function OnboardingScreen({ onComplete }) {
       <Image
         source={require('../../../../assets/adaptive-icon.png')}
         style={styles.logo}
-        resizeMode="contain"
+        contentFit="contain"
       />
       <Text style={styles.title}>Complete seu Perfil</Text>
       <Text style={styles.subtitle}>

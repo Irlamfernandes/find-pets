@@ -1,45 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { WebView } from 'react-native-webview';
+import MapView, { Marker } from 'react-native-maps';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { palette } from '../../../shared/theme/colors';
+import { regionAround } from '../utils/mapRegion';
 
-// Mapa gratuito (Leaflet + OpenStreetMap) renderizado dentro do app,
-// sem chave de API. O OSM exige atribuição visível e identificação do app.
-export function buildMapHtml(latitude, longitude, interactive) {
-  const flag = interactive ? 'true' : 'false';
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<style>html, body, #map { margin: 0; padding: 0; height: 100%; }</style>
-</head>
-<body>
-<div id="map"></div>
-<script>
-  var map = L.map('map', {
-    zoomControl: ${flag},
-    dragging: ${flag},
-    touchZoom: ${flag},
-    doubleClickZoom: ${flag},
-    scrollWheelZoom: false,
-    boxZoom: false,
-    keyboard: false
-  }).setView([${latitude}, ${longitude}], 16);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; OpenStreetMap'
-  }).addTo(map);
-  L.marker([${latitude}, ${longitude}]).addTo(map);
-</script>
-</body>
-</html>`;
-}
+// Área mostrada em volta do ponto do registro (aproximação de rua)
+const DETAIL_DELTA = 0.005;
 
-// Mapa com o ponto de um registro (pequeno no card ou em tela cheia)
+// Mapa com o ponto de um registro: pequeno e estático no card (modo leve,
+// que no Android vira uma imagem do mapa) ou interativo em tela cheia
 export function LocationMap({
   latitude,
   longitude,
@@ -57,19 +28,22 @@ export function LocationMap({
     );
   }
 
+  const coordinate = { latitude, longitude };
   return (
     <View style={[styles.container, style, !interactive && styles.static]}>
-      <WebView
+      <MapView
         testID="location-map"
-        originWhitelist={['*']}
-        source={{
-          html: buildMapHtml(latitude, longitude, interactive),
-          baseUrl: 'https://findpets.app/',
-        }}
-        applicationNameForUserAgent="FindPets/1.0"
-        scrollEnabled={false}
-        style={styles.webview}
-      />
+        style={styles.map}
+        initialRegion={regionAround(coordinate, DETAIL_DELTA)}
+        liteMode={!interactive}
+        scrollEnabled={interactive}
+        zoomEnabled={interactive}
+        rotateEnabled={false}
+        pitchEnabled={false}
+        toolbarEnabled={false}
+      >
+        <Marker coordinate={coordinate} pinColor={palette.error} />
+      </MapView>
     </View>
   );
 }
@@ -88,7 +62,7 @@ const styles = StyleSheet.create({
   },
   // Prévia estática: toques passam para o card (que abre o mapa em tela cheia)
   static: { pointerEvents: 'none' },
-  webview: { flex: 1, backgroundColor: 'transparent' },
+  map: { flex: 1 },
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',

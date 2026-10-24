@@ -168,17 +168,20 @@ cd api && pytest         # API (depois de: pip install -r requirements-dev.txt)
 
 ### Testes de ponta a ponta (Maestro)
 
-Os fluxos em [.maestro/](.maestro) usam o app de verdade no celular, como um usuário: tocam nos botões, digitam e conferem o que aparece na tela.
+Os fluxos em [.maestro/telas/](.maestro/telas) usam o app de verdade no celular, como um usuário. Eles percorrem o app **uma tela por vez, em ordem**, numa conta nova criada no começo:
 
-| Fluxo                           | O que testa                                                                                            |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `01-tela-inicial.yaml`          | O app abre e navega entre a tela inicial, o login e o cadastro (smoke test)                            |
-| `02-validacao-login.yaml`       | Entradas inválidas do login: campos vazios, e-mail sem formato válido e conta inexistente              |
-| `03-cadastro-login-logout.yaml` | Cria a conta no Firebase, completa o perfil, sai e entra de novo                                       |
-| `04-registro-sem-foto.yaml`     | O registro de desaparecimento não é salvo sem foto                                                     |
-| `05-offline.yaml`               | Com o modo avião, o app avisa que está sem internet e continua funcionando; o aviso some ao reconectar |
+| Tela                | Verificação completa                                                             |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `01-tela-inicial`   | Textos da tela e navegação para o login e de volta                               |
+| `02-cadastro`       | Campos vazios, e-mail sem formato válido e senha curta (recusada pelo Firebase)  |
+| `03-perfil-inicial` | Campos vazios e WhatsApp curto                                                   |
+| `04-feed`           | Guia de uso, lista e mapa, e o botão de ajuda                                    |
+| `05-registro`       | Registro sem foto não é salvo                                                    |
+| `06-perfil`         | Senha vazia e errada para editar, senhas diferentes e troca do nome              |
+| `07-offline`        | Com o modo avião, o app avisa e continua funcionando; o aviso some ao reconectar |
+| `08-sair-e-entrar`  | E-mail já cadastrado, senha errada e login com a senha certa                     |
 
-Cada fluxo começa do zero (apaga os dados do app) e cria uma conta de teste com e-mail único (`e2e<número>@teste.com`).
+Cada tela tem duas partes: a **verificação completa** e o **caminho feliz** (o mínimo para chegar à próxima tela). Na primeira vez, cada tela faz a verificação completa; depois de aprovada, faz só o caminho feliz, o que deixa as execuções seguintes bem mais rápidas. As telas aprovadas ficam anotadas em `.maestro/.aprovadas`, só no seu computador. Se uma tela falhar, a execução para nela.
 
 1. Instale o `adb` e o Maestro:
    ```bash
@@ -186,8 +189,8 @@ Cada fluxo começa do zero (apaga os dados do app) e cria uma conta de teste com
    curl -Ls "https://get.maestro.mobile.dev" | bash
    ```
 2. No celular, ative as **Opções do desenvolvedor** e a **Depuração USB**, conecte no cabo e confira com `adb devices`.
-3. Com o `npx expo start` rodando, use o endereço `exp://` que ele mostra:
+3. Com o `npx expo start` rodando:
    ```bash
-   npm run test:e2e -- -e EXPO_URL=exp://192.168.1.55:8081
+   npm run test:e2e              # verifica as telas ainda não aprovadas
+   npm run test:e2e -- --tudo    # esquece as aprovações e verifica tudo
    ```
-   Para rodar um fluxo só: `maestro test -e EXPO_URL=exp://... .maestro/05-offline.yaml`.

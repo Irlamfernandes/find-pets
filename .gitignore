@@ -51,3 +51,6 @@ LICENSE
 # SonarQube
 .scannerwork/
 .sonar/
+
+# Telas do Maestro já aprovadas neste computador
+.maestro/.aprovadas

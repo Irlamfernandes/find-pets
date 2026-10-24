@@ -1,0 +1,82 @@
+# Perfil. Começa no feed e termina no Perfil.
+# Verificação: a edição só é liberada com a senha certa (vazia e errada são
+# recusadas), senhas diferentes impedem salvar e a troca do nome é salva.
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'tab-profile'
+- assertVisible: 'Meus dados'
+
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - tapOn:
+          id: 'button-edit-profile'
+      - tapOn: 'Confirmar'
+      - assertVisible: 'Digite sua senha.'
+      - tapOn:
+          id: 'input-current-password'
+      - inputText: 'senhaerrada'
+      - tapOn: 'Confirmar'
+      - assertVisible: 'Senha incorreta. Tente novamente.'
+      - tapOn:
+          id: 'input-current-password'
+      - eraseText: 50
+      - inputText: ${PASSWORD}
+      - tapOn: 'Confirmar'
+      - assertVisible:
+          id: 'button-save-profile'
+      # Senhas diferentes
+      - scrollUntilVisible:
+          element:
+            id: 'input-new-password'
+          direction: DOWN
+      - tapOn:
+          id: 'input-new-password'
+      - inputText: 'novasenha1'
+      - hideKeyboard
+      - scrollUntilVisible:
+          element:
+            id: 'input-confirm-password'
+          direction: DOWN
+      - tapOn:
+          id: 'input-confirm-password'
+      - inputText: 'outrasenha2'
+      - hideKeyboard
+      - assertVisible: 'As senhas não conferem.'
+      - scrollUntilVisible:
+          element:
+            id: 'button-save-profile'
+          direction: DOWN
+      - tapOn:
+          id: 'button-save-profile'
+      - assertVisible: 'Senhas diferentes'
+      - tapOn: 'Entendi'
+      # Apagar a nova senha limpa também a confirmação
+      - tapOn:
+          id: 'input-new-password'
+      - eraseText: 50
+      - hideKeyboard
+      # Troca o nome e salva (o app volta para o feed)
+      - scrollUntilVisible:
+          element:
+            id: 'input-profile-name'
+          direction: UP
+      - tapOn:
+          id: 'input-profile-name'
+      - eraseText: 50
+      - inputText: 'Nome Editado'
+      - hideKeyboard
+      - scrollUntilVisible:
+          element:
+            id: 'button-save-profile'
+          direction: DOWN
+      - tapOn:
+          id: 'button-save-profile'
+      - assertVisible: 'Perfil atualizado'
+      - tapOn: 'Entendi'
+      - assertVisible: 'Olá, Nome Editado'
+      - tapOn:
+          id: 'tab-profile'
+      - assertVisible: 'Meus dados'

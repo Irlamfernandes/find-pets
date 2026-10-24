@@ -1,6 +1,0 @@
-# Cria uma conta nova (e-mail em ${output.email}) e completa o perfil.
-# Termina no feed.
-appId: host.exp.exponent
----
-- runFlow: cadastrar.yaml
-- runFlow: completar-perfil.yaml

@@ -1,0 +1,22 @@
+# Tela inicial. Começa do zero (apaga os dados do app) e termina no cadastro.
+# Verificação: textos da tela e navegação para o login e de volta.
+appId: host.exp.exponent
+---
+- runFlow: ../subflows/abrir-app.yaml
+
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - assertVisible: 'FindPets'
+      - assertVisible: 'Escolha uma opção'
+      - tapOn:
+          id: 'button-go-login'
+      - assertVisible: 'Entre com sua conta'
+      - tapOn: 'Voltar'
+      - assertVisible: 'Escolha uma opção'
+
+# Caminho feliz: vai para o cadastro
+- tapOn:
+    id: 'button-go-register'
+- assertVisible: 'Crie seus dados de acesso'

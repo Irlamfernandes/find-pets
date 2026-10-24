@@ -1,0 +1,43 @@
+# Completar o perfil. Começa em "Complete seu Perfil" e termina no feed.
+# Verificação: campos vazios e WhatsApp curto (valor abaixo do limite).
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - tapOn:
+          id: 'button-complete'
+      - assertVisible: 'Preencha todos os campos.'
+      - tapOn:
+          id: 'input-name'
+      - inputText: 'Teste E2E'
+      - tapOn:
+          id: 'input-whatsapp'
+      - inputText: '119999'
+      - hideKeyboard
+      - tapOn:
+          id: 'button-complete'
+      - assertVisible: 'Insira um número de WhatsApp válido com código do país e DDD.'
+
+# Caminho feliz: nome e WhatsApp válidos
+- tapOn:
+    id: 'input-name'
+- eraseText: 50
+- inputText: 'Teste E2E'
+- tapOn:
+    id: 'input-whatsapp'
+- eraseText: 50
+- inputText: '5511999999999'
+- hideKeyboard
+- tapOn:
+    id: 'button-complete'
+# Com biometria no aparelho, o app convida a ativá-la; sem, avisa que o
+# perfil está completo
+- tapOn:
+    text: 'Depois'
+    optional: true
+- tapOn:
+    text: 'Entendi'
+    optional: true
+- assertVisible: 'Olá, Teste E2E'

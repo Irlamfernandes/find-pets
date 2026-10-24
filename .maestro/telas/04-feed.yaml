@@ -1,0 +1,27 @@
+# Feed. Começa no feed (primeiro acesso, com o guia) e termina no feed.
+# Verificação: guia de uso, lista e mapa, e o botão de ajuda que reabre o guia.
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - assertVisible: 'Como funciona o FindPets'
+      - tapOn:
+          id: 'button-dismiss-guide'
+      - assertNotVisible: 'Como funciona o FindPets'
+      - tapOn: 'Mapa'
+      - assertVisible:
+          id: 'lost-pets-map-area'
+      - tapOn: 'Lista'
+      - assertNotVisible:
+          id: 'lost-pets-map-area'
+      - tapOn: 'Como funciona o app'
+      - assertVisible: 'Como funciona o FindPets'
+
+# Caminho feliz: fecha o guia, se estiver aberto
+- tapOn:
+    id: 'button-dismiss-guide'
+    optional: true
+- assertVisible:
+    id: 'tab-feed'

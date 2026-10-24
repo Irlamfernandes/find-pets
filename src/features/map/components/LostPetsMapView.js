@@ -20,7 +20,7 @@ export function LostPetsMapView({
   const clearSelection = () => setSelectedId(null);
 
   return (
-    <View style={styles.area}>
+    <View testID="lost-pets-map-area" collapsable={false} style={styles.area}>
       <LostPetsMap
         posts={mappablePosts}
         selectedId={selectedId}

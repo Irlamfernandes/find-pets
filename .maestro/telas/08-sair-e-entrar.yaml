@@ -1,0 +1,72 @@
+# Sair e entrar de novo. Começa no feed e termina no feed.
+# Verificação: senha errada é recusada pelo Firebase e o e-mail já cadastrado
+# não pode criar outra conta.
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'tab-profile'
+- tapOn:
+    id: 'button-logout'
+- assertVisible: 'Escolha uma opção'
+
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      # E-mail já cadastrado
+      - tapOn:
+          id: 'button-go-register'
+      - tapOn:
+          id: 'input-email'
+      - eraseText: 50
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: 'input-password'
+      - eraseText: 50
+      - inputText: 'outrasenha'
+      - hideKeyboard
+      - tapOn:
+          id: 'button-submit-auth'
+      - extendedWaitUntil:
+          visible: 'Este e-mail já está cadastrado. Faça login.'
+          timeout: 30000
+      - tapOn: 'Voltar'
+      # Senha errada
+      - tapOn:
+          id: 'button-go-login'
+      - tapOn:
+          id: 'input-email'
+      - eraseText: 50
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: 'input-password'
+      - eraseText: 50
+      - inputText: 'senhaerrada'
+      - hideKeyboard
+      - tapOn:
+          id: 'button-submit-auth'
+      - extendedWaitUntil:
+          visible: 'Usuário não existe ou senha errada.'
+          timeout: 30000
+      - tapOn: 'Voltar'
+
+# Caminho feliz: entra com a senha certa
+- tapOn:
+    id: 'button-go-login'
+- tapOn:
+    id: 'input-email'
+- eraseText: 50
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'input-password'
+- eraseText: 50
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'Login realizado'
+    timeout: 30000
+- tapOn: 'Entendi'
+- assertVisible:
+    id: 'tab-feed'

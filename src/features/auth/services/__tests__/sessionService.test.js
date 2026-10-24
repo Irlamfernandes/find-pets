@@ -1,9 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from 'expo-sqlite/kv-store';
 import { sessionService } from '../sessionService';
-
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('../../../../testing/memoryStorage').createAsyncStorageMock()
-);
 
 describe('sessionService', () => {
   beforeEach(() => {

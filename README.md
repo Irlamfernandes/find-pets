@@ -30,7 +30,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 - Registro de pet desaparecido com várias fotos (câmera ou galeria) e dados completos do animal.
 - Localização capturada automaticamente (Expo Location) e exibida em mapa.
-- Feed em lista ou em mapa geral com todos os pets perdidos (Leaflet + OpenStreetMap).
+- Feed em lista ou em mapa geral com todos os pets perdidos (mapa nativo do Expo, `react-native-maps`).
 - Edição e exclusão do próprio registro (exclusão lógica).
 - Marcar o pet como **reencontrado**, informando onde e quando.
 - Contato direto com o tutor pelo WhatsApp.
@@ -46,15 +46,15 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 ## 🛠️ Tecnologias
 
-| Parte        | Ferramentas                                                                                                 |
-| ------------ | ----------------------------------------------------------------------------------------------------------- |
-| App          | React Native, Expo 57, JavaScript                                                                           |
-| Dados no app | expo-sqlite, AsyncStorage (sessão e preferências), SecureStore (senha), NetInfo                             |
-| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                  |
-| Recursos     | Image Picker (câmera e galeria), Location, Local Authentication, Sharing, View Shot, WebView (mapa Leaflet) |
-| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                         |
-| Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                        |
-| CI           | GitHub Actions                                                                                              |
+| Parte        | Ferramentas                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| App          | React Native 0.88, Expo SDK 58, JavaScript (Node.js 22.13 ou mais novo)                                             |
+| Dados no app | expo-sqlite (banco e kv-store para sessão e preferências), expo-secure-store (senha), expo-network                  |
+| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                          |
+| Recursos     | expo-image-picker, expo-image, expo-location, expo-local-authentication, expo-sharing, View Shot, react-native-maps |
+| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                                 |
+| Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                                |
+| CI           | GitHub Actions                                                                                                      |
 
 ---
 
@@ -67,7 +67,7 @@ src/
     auth/       conta, sessão, biometria, login e desbloqueio
     profile/    cadastro e edição do perfil
     posts/      registros de pets: feed, registro, reencontro e compartilhamento
-    map/        mapas (Leaflet + OpenStreetMap dentro do app)
+    map/        mapas nativos (react-native-maps): ponto do registro e mapa geral
     sync/       sincronização com o Firebase (envio, download e conexão)
   shared/
     firebase/   projeto do Firebase, leitura e gravação no Realtime Database

@@ -1,8 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from 'expo-sqlite/kv-store';
 import * as SecureStore from 'expo-secure-store';
 
 // Onde os dados ficam gravados. Dados sensíveis (senhas) vão para o
-// armazenamento criptografado do sistema; o restante, para o AsyncStorage.
+// armazenamento criptografado do sistema; o restante, para o armazenamento
+// chave-valor do expo-sqlite (mesma interface do AsyncStorage).
 export const asyncStorageAdapter = {
   // Lê o valor guardado na chave (null se não houver)
   getItem: (key) => AsyncStorage.getItem(key),

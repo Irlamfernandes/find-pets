@@ -1,97 +1,58 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import { LostPetsMap, buildLostPetsMapHtml } from '../LostPetsMap';
-
-const mockInjectJavaScript = jest.fn();
-
-jest.mock('react-native-webview', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  const WebView = React.forwardRef((props, ref) => {
-    React.useImperativeHandle(ref, () => ({
-      injectJavaScript: mockInjectJavaScript,
-    }));
-    return <View {...props} />;
-  });
-  WebView.displayName = 'WebView';
-  return { WebView };
-});
+import { LostPetsMap } from '../LostPetsMap';
 
 describe('LostPetsMap', () => {
   const posts = [
-    { id: '1', latitude: -23.5, longitude: -46.6, petName: 'Rex' },
-    { id: '2', latitude: -23.6, longitude: -46.7 },
+    { id: '1', latitude: -22, longitude: -44, petName: 'Rex' },
+    { id: '2', latitude: -23, longitude: -43 },
   ];
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('deve gerar o mapa só com id e coordenadas de cada pet', () => {
-    const html = buildLostPetsMapHtml(posts);
-
-    expect(html).toContain(
-      'var points = [{"id":"1","latitude":-23.5,"longitude":-46.6},{"id":"2","latitude":-23.6,"longitude":-46.7}];'
+  const renderMap = (props = {}) => {
+    const callbacks = { onSelect: jest.fn(), onClear: jest.fn() };
+    const screen = render(
+      <LostPetsMap posts={posts} selectedId={null} {...callbacks} {...props} />
     );
-    expect(html).not.toContain('Rex');
-    expect(html).toContain('map.fitBounds');
-    expect(html).toContain('tile.openstreetmap.org');
-  });
+    return { ...screen, ...callbacks };
+  };
 
-  it('deve impedir que dados fechem a tag de script', () => {
-    const html = buildLostPetsMapHtml([
-      { id: '</script><b>', latitude: 1, longitude: 2 },
-    ]);
-
-    expect(html).not.toContain('</script><b>');
-    expect(html).toContain('\\u003c/script>\\u003cb>');
-  });
-
-  it('deve avisar o ponto tocado e o toque fora dos pontos', () => {
-    const onSelect = jest.fn();
-    const onClear = jest.fn();
-    const { getByTestId } = render(
-      <LostPetsMap
-        posts={posts}
-        selectedId={null}
-        onSelect={onSelect}
-        onClear={onClear}
-      />
-    );
+  it('deve enquadrar todos os pets e mostrar um marcador para cada um', () => {
+    const { getByTestId } = renderMap();
 
     const map = getByTestId('lost-pets-map');
-    expect(map.props.source.baseUrl).toBe('https://findpets.app/');
-    fireEvent(map, 'message', {
-      nativeEvent: { data: JSON.stringify({ type: 'select', id: '2' }) },
+    expect(map.props.initialRegion.latitude).toBeCloseTo(-22.5);
+    expect(getByTestId('map-marker-2').props.coordinate).toEqual({
+      latitude: -23,
+      longitude: -43,
     });
-    fireEvent(map, 'message', {
-      nativeEvent: { data: JSON.stringify({ type: 'clear' }) },
-    });
+  });
 
+  it('deve avisar o marcador tocado e o toque fora dos marcadores', () => {
+    const { getByTestId, onSelect, onClear } = renderMap();
+
+    fireEvent.press(getByTestId('map-marker-2'));
+    // O toque no marcador também chega ao mapa, mas não limpa a seleção
+    fireEvent(getByTestId('lost-pets-map'), 'press', {
+      nativeEvent: { action: 'marker-press' },
+    });
     expect(onSelect).toHaveBeenCalledWith('2');
+    expect(onClear).not.toHaveBeenCalled();
+
+    fireEvent(getByTestId('lost-pets-map'), 'press', {
+      nativeEvent: { action: 'press' },
+    });
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
-  it('deve tirar o destaque do ponto quando o resumo for fechado no app', () => {
-    const props = { posts, onSelect: jest.fn(), onClear: jest.fn() };
-    const { rerender } = render(<LostPetsMap {...props} selectedId="1" />);
-    expect(mockInjectJavaScript).not.toHaveBeenCalled();
+  it('deve destacar o marcador do pet selecionado', () => {
+    const { getByTestId } = renderMap({ selectedId: '1' });
 
-    rerender(<LostPetsMap {...props} selectedId={null} />);
-    expect(mockInjectJavaScript).toHaveBeenCalledWith(
-      'window.clearSelection && window.clearSelection(); true;'
-    );
+    expect(getByTestId('map-marker-1').props.pinColor).toBe('#991B1B');
+    expect(getByTestId('map-marker-2').props.pinColor).not.toBe('#991B1B');
   });
 
   it('deve mostrar aviso quando não houver pets com localização', () => {
-    const { getByText, queryByTestId } = render(
-      <LostPetsMap
-        posts={[]}
-        selectedId={null}
-        onSelect={jest.fn()}
-        onClear={jest.fn()}
-      />
-    );
+    const { getByText, queryByTestId } = renderMap({ posts: [] });
 
     expect(
       getByText('Nenhum pet perdido com localização registrada.')

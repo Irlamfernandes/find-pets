@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from 'expo-sqlite/kv-store';
 import { set } from 'firebase/database';
 import { pullPosts, pushPosts } from '../postSync';
 import { postRepository } from '../../posts/data/postRepository';

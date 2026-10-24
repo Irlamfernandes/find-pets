@@ -1,14 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from 'expo-sqlite/kv-store';
 import { guideService } from '../guideService';
 import { STORAGE_KEYS } from '../../../../shared/constants/storageKeys';
 
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
-);
-
 describe('guideService', () => {
   beforeEach(async () => {
-    await AsyncStorage.clear();
+    AsyncStorage.__backend.reset();
     jest.clearAllMocks();
   });
 

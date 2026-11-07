@@ -28,6 +28,10 @@ touch "$APROVADAS"
 # O celular acessa o Metro do computador pelo próprio localhost
 adb reverse tcp:8081 tcp:8081 >/dev/null
 
+# O app auxiliar do Maestro é instalado no celular só na primeira tela; nas
+# outras ele é reaproveitado (na MIUI, cada instalação pede confirmação)
+driver="--reinstall-driver"
+
 for tela in "$PASTA"/telas/*.yaml; do
   nome="$(basename "$tela" .yaml)"
   if grep -qx "$nome" "$APROVADAS"; then
@@ -38,13 +42,14 @@ for tela in "$PASTA"/telas/*.yaml; do
     echo "▶ $nome (verificação completa)"
   fi
 
-  if ! maestro test \
+  if ! maestro test "$driver" \
     -e EXPO_URL="$EXPO_URL" -e EMAIL="$EMAIL" -e SENHA="$SENHA" \
     -e NOVA_SENHA="$NOVA_SENHA" \
     -e VERIFICAR="$verificar" "$tela"; then
     echo "✖ $nome falhou. Corrija e rode de novo: as telas aprovadas serão rápidas."
     exit 1
   fi
+  driver="--no-reinstall-driver"
 
   if [ "$verificar" = true ]; then
     echo "$nome" >> "$APROVADAS"

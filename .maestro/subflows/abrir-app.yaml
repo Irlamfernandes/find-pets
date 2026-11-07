@@ -7,12 +7,13 @@ appId: host.exp.exponent
     permissions:
       all: allow
 - openLink: ${EXPO_URL}
-# Na primeira vez, o Expo Go apresenta o menu de desenvolvedor
-- tapOn:
-    text: 'Continue'
-    optional: true
+# Espera o app carregar (ou o menu do Expo Go aparecer por cima dele)
+- extendedWaitUntil:
+    visible: 'SDK version.*|Escolha uma opção'
+    timeout: 60000
+- runFlow: fechar-menu-expo.yaml
 - extendedWaitUntil:
     visible:
       id: 'button-go-login'
-    timeout: 60000
+    timeout: 10000
 - runFlow: mover-ferramentas.yaml

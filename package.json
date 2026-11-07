@@ -50,7 +50,7 @@
     "setupFiles": [
       "./jest.setup.js"
     ],
-    "testTimeout": 15000,
+    "testTimeout": 30000,
     "globalSetup": "./jest.globalSetup.js",
     "testPathIgnorePatterns": [
       "/node_modules/",

@@ -1,0 +1,11 @@
+# O Expo Go pode abrir o menu de desenvolvedor por cima do app (sempre na
+# primeira vez). Fecha o menu pelo "X", sem tocar em "Continue".
+appId: host.exp.exponent
+---
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: 'SDK version.*'
+    commands:
+      - tapOn: 'Close'
+      - waitForAnimationToEnd

@@ -34,10 +34,14 @@ appId: host.exp.exponent
     id: 'button-complete'
 # Com biometria no aparelho, o app convida a ativá-la ("Depois" recusa); sem,
 # avisa que o perfil está completo
+# (o "Entendi" só é tocado no aviso, para não fechar o guia do feed)
+- waitForAnimationToEnd
 - tapOn:
     text: 'Depois'
     optional: true
-- tapOn:
-    text: 'Entendi'
-    optional: true
+- runFlow:
+    when:
+      visible: 'Perfil completo'
+    commands:
+      - tapOn: 'Entendi'
 - assertVisible: 'Olá, Teste E2E'

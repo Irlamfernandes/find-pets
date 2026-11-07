@@ -17,5 +17,11 @@ appId: host.exp.exponent
     visible: 'Login realizado'
     timeout: 30000
 - tapOn: 'Entendi'
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: 'Entre mais rápido'
+    commands:
+      - tapOn: 'Depois'
 - assertVisible:
     id: 'tab-feed'

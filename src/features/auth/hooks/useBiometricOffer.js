@@ -2,6 +2,8 @@ import { biometricService } from '../services/biometrics';
 import { accountService } from '../services/accountService';
 import { useAppAlert } from '../../../shared/components/AppAlert';
 import { usePasswordPrompt } from './usePasswordPrompt';
+import { maskEmail } from '../../../shared/utils/maskEmail';
+import { normalizeEmail } from '../../../shared/utils/validation';
 
 const ALERTS = {
   activated: {
@@ -36,16 +38,30 @@ async function activateBiometrics(usuario) {
   }
 }
 
-async function canOfferBiometrics() {
+const isSameAccount = (owner, usuario) =>
+  owner !== null && normalizeEmail(owner) === normalizeEmail(usuario);
+
+async function findOffer(usuario) {
   try {
     const [isAvailable, owner] = await Promise.all([
       biometricService.checkAvailability(),
       accountService.getBiometricOwner(),
     ]);
-    return isAvailable && !owner;
+    const ownerUser = owner?.usuario || null;
+    const canOffer = isAvailable && !isSameAccount(ownerUser, usuario);
+    return canOffer ? { previousOwner: ownerUser } : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+function offerMessage(previousOwner) {
+  const message =
+    'Quer entrar mais rápido nas próximas vezes? Ative a biometria. Atenção: qualquer digital ou rosto cadastrado neste celular poderá entrar nesta conta.';
+  if (!previousOwner) return message;
+  return `${message} A biometria deixará de entrar na conta ${maskEmail(
+    previousOwner
+  )}.`;
 }
 
 export function useBiometricOffer() {
@@ -59,14 +75,14 @@ export function useBiometricOffer() {
     },
   });
 
-  const offerBiometrics = async (usuario, name) => {
-    if (!(await canOfferBiometrics())) return false;
+  const offerBiometrics = async (usuario, title) => {
+    const offer = await findOffer(usuario);
+    if (!offer) return false;
 
     showAlert({
       type: 'info',
-      title: `Tudo pronto, ${name}!`,
-      message:
-        'Quer entrar mais rápido nas próximas vezes? Ative a biometria. Atenção: qualquer digital ou rosto cadastrado neste celular poderá entrar nesta conta.',
+      title,
+      message: offerMessage(offer.previousOwner),
       confirmText: 'Ativar agora',
       cancelText: 'Depois',
       onConfirm: () => prompt.open(usuario),

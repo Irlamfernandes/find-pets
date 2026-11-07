@@ -25,6 +25,12 @@ const loginAlert = ({ type, usuario }) => {
   };
 };
 
+const profileCompleteAlert = (name) => ({
+  type: 'success',
+  title: 'Perfil completo',
+  message: `Seja bem-vindo, ${name}! Seu cadastro foi salvo com sucesso.`,
+});
+
 async function hasSavedProfile() {
   try {
     return Boolean(await profileService.getProfile());
@@ -52,7 +58,9 @@ export function useAppFlow() {
   }, [isLoading, session]);
 
   const enter = async () => {
-    dispatch({ type: 'authenticated', hasProfile: await hasSavedProfile() });
+    const hasProfile = await hasSavedProfile();
+    dispatch({ type: 'authenticated', hasProfile });
+    return hasProfile;
   };
 
   const unlock = () => {
@@ -64,20 +72,20 @@ export function useAppFlow() {
     showAlert(loginAlert(data));
     await saveUserSession(data);
     await syncService.syncNow();
-    await enter();
+    const hasProfile = await enter();
+    if (data.type === 'credentials' && hasProfile) {
+      await offerBiometrics(data.usuario, 'Entre mais rápido');
+    }
   };
 
   const handleOnboardingComplete = async (profile) => {
     dispatch({ type: 'onboardingCompleted' });
 
-    const offered = await offerBiometrics(session?.usuario, profile.name);
-    if (!offered) {
-      showAlert({
-        type: 'success',
-        title: 'Perfil completo',
-        message: `Seja bem-vindo, ${profile.name}! Seu cadastro foi salvo com sucesso.`,
-      });
-    }
+    const offered = await offerBiometrics(
+      session?.usuario,
+      `Tudo pronto, ${profile.name}!`
+    );
+    if (!offered) showAlert(profileCompleteAlert(profile.name));
   };
 
   useSyncLifecycle(async () => {

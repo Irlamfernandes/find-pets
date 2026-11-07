@@ -63,10 +63,10 @@ describe('BiometricSettingsCard', () => {
     utils.rerender(<BiometricSettingsCard />);
     expect(
       utils.getByText(
-        'A biometria deste celular já está em uso pela conta ir***@gmail.com. Só uma conta por celular pode usar a biometria.'
+        'A biometria deste celular está na conta ir***@gmail.com. Ao ativar aqui, ela passa para esta conta e deixa de entrar na outra.'
       )
     ).toBeTruthy();
-    expect(utils.queryByTestId('button-activate-biometrics')).toBeNull();
+    expect(utils.getByText('Usar biometria nesta conta')).toBeTruthy();
     expect(utils.queryByTestId('button-deactivate-biometrics')).toBeNull();
 
     useBiometricSettings.mockReturnValue({

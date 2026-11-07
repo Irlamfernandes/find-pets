@@ -22,7 +22,14 @@ export default function LoginScreen({ onLoginSuccess }) {
   } = useLogin(onLoginSuccess);
 
   if (authMode === 'home') {
-    return <AuthHomeScreen onNavigate={setAuthMode} />;
+    return (
+      <AuthHomeScreen
+        onNavigate={setAuthMode}
+        biometricOwner={hasHardwareBiometric ? biometricOwner : null}
+        onBiometricLogin={triggerBiometricAuth}
+        errorMessage={errorMessage}
+      />
+    );
   }
 
   if (authMode === 'cadastro') {

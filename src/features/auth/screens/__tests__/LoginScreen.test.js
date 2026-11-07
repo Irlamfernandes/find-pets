@@ -46,6 +46,22 @@ describe('LoginScreen Component', () => {
     expect(mockSetAuthMode).toHaveBeenCalledWith('cadastro');
   });
 
+  it('deve mostrar a biometria na tela inicial só com o leitor disponível', () => {
+    const { getByTestId, queryByTestId, rerender } = render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
+
+    fireEvent.press(getByTestId('button-home-biometrics'));
+    expect(mockTriggerBiometricAuth).toHaveBeenCalledTimes(1);
+
+    useLogin.mockReturnValue({
+      ...baseHookValues,
+      hasHardwareBiometric: false,
+    });
+    rerender(<LoginScreen onLoginSuccess={jest.fn()} />);
+    expect(queryByTestId('button-home-biometrics')).toBeNull();
+  });
+
   it('deve renderizar a tela de Cadastro e disparar as ações corretamente', () => {
     useLogin.mockReturnValue({
       ...baseHookValues,

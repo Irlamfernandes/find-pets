@@ -41,6 +41,18 @@ function updateAccount(usuario, changes) {
   });
 }
 
+function transferBiometrics(usuario) {
+  return accountsStore.update((accounts) => {
+    if (!findAccount(accounts, usuario)) {
+      throw new Error('Conta não encontrada.');
+    }
+    return accounts.map((account) => ({
+      ...account,
+      hasBiometrics: sameUser(account, usuario),
+    }));
+  });
+}
+
 function requireCredentials(usuario, password) {
   if (!usuario || !password) {
     throw new Error('Usuário e senha são obrigatórios.');
@@ -109,12 +121,10 @@ export const accountService = {
   },
 
   setBiometrics(usuario, enabled) {
-    return withErrorContext('Erro ao atualizar a biometria', async () => {
-      const owner = await this.getBiometricOwner();
-      if (enabled && owner && !sameUser(owner, usuario)) {
-        throw new Error('A biometria deste aparelho já está em uso.');
-      }
-      await updateAccount(usuario, { hasBiometrics: enabled });
-    });
+    return withErrorContext('Erro ao atualizar a biometria', () =>
+      enabled
+        ? transferBiometrics(usuario)
+        : updateAccount(usuario, { hasBiometrics: false })
+    );
   },
 };

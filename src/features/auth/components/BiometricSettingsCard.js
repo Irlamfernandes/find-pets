@@ -39,6 +39,11 @@ const STATUS_ACTION = {
     label: 'Ativar biometria',
     testID: 'button-activate-biometrics',
   },
+  [BIOMETRIC_STATUS.TAKEN]: {
+    action: 'activate',
+    label: 'Usar biometria nesta conta',
+    testID: 'button-activate-biometrics',
+  },
   [BIOMETRIC_STATUS.ACTIVE]: {
     action: 'deactivate',
     label: 'Desativar biometria',
@@ -69,9 +74,9 @@ const DEACTIVATED_ALERT = {
 
 function getStatusText(status, owner) {
   if (status !== BIOMETRIC_STATUS.TAKEN) return STATUS_TEXT[status];
-  return `A biometria deste celular já está em uso pela conta ${maskEmail(
+  return `A biometria deste celular está na conta ${maskEmail(
     owner
-  )}. Só uma conta por celular pode usar a biometria.`;
+  )}. Ao ativar aqui, ela passa para esta conta e deixa de entrar na outra.`;
 }
 
 export function BiometricSettingsCard() {

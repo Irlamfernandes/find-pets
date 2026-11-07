@@ -165,9 +165,10 @@ describe('accountService', () => {
       await expect(accountService.getBiometricOwner()).resolves.toEqual(
         expect.objectContaining({ usuario: 'Ana@X.com' })
       );
-      await expect(
-        accountService.setBiometrics('ANA@x.com', true)
-      ).resolves.toBeUndefined();
+      await accountService.setBiometrics('ANA@x.com', true);
+      await expect(accountService.getBiometricOwner()).resolves.toEqual(
+        expect.objectContaining({ usuario: 'Ana@X.com' })
+      );
     });
 
     it('deve comparar a senha exatamente como foi digitada', async () => {
@@ -239,13 +240,20 @@ describe('accountService', () => {
       );
     });
 
-    it('deve impedir que outra conta ative a biometria já em uso', async () => {
+    it('deve passar a biometria para a última conta que a ativar', async () => {
       await accountService.setBiometrics('ana@x.com', true);
+      await accountService.setBiometrics('bia@x.com', true);
 
-      await expect(
-        accountService.setBiometrics('bia@x.com', true)
-      ).rejects.toThrow(
-        'Erro ao atualizar a biometria: A biometria deste aparelho já está em uso.'
+      await expect(accountService.getBiometricOwner()).resolves.toEqual(
+        expect.objectContaining({ usuario: 'bia@x.com' })
+      );
+      await expect(accountService.getAccount('ana@x.com')).resolves.toEqual(
+        expect.objectContaining({ hasBiometrics: false })
+      );
+
+      await accountService.setBiometrics('ana@x.com', true);
+      await expect(accountService.getBiometricOwner()).resolves.toEqual(
+        expect.objectContaining({ usuario: 'ana@x.com' })
       );
     });
 

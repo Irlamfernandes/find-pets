@@ -6,11 +6,8 @@ import PropTypes from 'prop-types';
 import { palette } from '../../../shared/theme/colors';
 import { regionAround } from '../utils/mapRegion';
 
-// Área mostrada em volta do ponto do registro (aproximação de rua)
 const DETAIL_DELTA = 0.005;
 
-// Mapa com o ponto de um registro: pequeno e estático no card (modo leve,
-// que no Android vira uma imagem do mapa) ou interativo em tela cheia
 export function LocationMap({
   latitude,
   longitude,
@@ -60,7 +57,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: palette.neutral,
   },
-  // Prévia estática: toques passam para o card (que abre o mapa em tela cheia)
   static: { pointerEvents: 'none' },
   map: { flex: 1 },
   placeholder: {

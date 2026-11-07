@@ -48,7 +48,6 @@ describe('usePasswordPrompt', () => {
     );
     expect(onConfirmed).toHaveBeenCalledWith('activate');
     expect(result.current.promptProps.visible).toBe(false);
-    // O pedido continua disponível enquanto o modal fecha
     expect(result.current.payload).toBe('activate');
   });
 

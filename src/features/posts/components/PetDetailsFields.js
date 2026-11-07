@@ -12,16 +12,12 @@ import {
   SEX_OPTIONS,
 } from '../constants/petOptions';
 
-// Seção "Sobre o pet": espécie (obrigatória), nome, porte, sexo, cor, raça e
-// detalhes. A raça tem sugestões vindas de APIs públicas (cachorro e gato).
 export function PetDetailsFields({ petData, onChange }) {
   const breedRef = useRef(null);
   const descriptionRef = useRef(null);
   const breedSuggestions = useBreedSuggestions(petData.species, petData.breed);
-  // Liga um campo do formulário ao valor e à função que o altera
   const bind = (field) => ({
     value: petData[field],
-    // Ao digitar, atualiza o campo correspondente
     onChangeText: (text) => onChange(field, text),
   });
 

@@ -15,7 +15,6 @@ def test_envia_e_devolve_a_foto(client, sign_up):
     url = response.get_json()["url"]
     assert url.startswith("http://localhost/uploads/")
     assert url.endswith(".jpg")
-    # A foto é pública: aparece no feed de todos
     photo = client.get(url.removeprefix("http://localhost"))
     assert photo.status_code == 200
     assert photo.data == b"imagem"

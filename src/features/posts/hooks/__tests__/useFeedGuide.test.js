@@ -59,7 +59,6 @@ describe('useFeedGuide', () => {
   });
 
   it('deve ignorar a resposta se o componente desmontar antes', async () => {
-    // Atualizar estado de um componente desmontado gera erro no console
     const consoleError = jest.spyOn(console, 'error').mockImplementation();
     let finish;
     guideService.hasSeenFeedGuide.mockReturnValueOnce(

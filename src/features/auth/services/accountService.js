@@ -9,35 +9,27 @@ import { normalizeEmail } from '../../../shared/utils/validation';
 
 const BCRYPT_ROUNDS = 10;
 
-// Conta guardada com os campos esperados (ignora dados corrompidos)
 const isValidAccount = (account) =>
   typeof account?.usuario === 'string' &&
   typeof account.passwordHash === 'string';
 
-// Contas deste aparelho: [{ usuario, passwordHash, hasBiometrics }].
-// Ficam no armazenamento criptografado do sistema.
 const accountsStore = createJsonStore(STORAGE_KEYS.CREDENTIALS, {
   adapter: secureStorageAdapter,
   fallback: [],
-  // Descarta contas corrompidas ao ler
   normalize: (accounts) => accounts.filter(isValidAccount),
 });
 
-// Mesma conta, sem diferenciar maiúsculas nem espaços
 const sameUser = (account, usuario) =>
   normalizeEmail(account.usuario) === normalizeEmail(usuario);
 
-// Conta do usuário na lista, ou null
 const findAccount = (accounts, usuario) =>
   accounts.find((account) => sameUser(account, usuario)) || null;
 
-// Hash da senha com bcrypt (a senha nunca é gravada como texto)
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
   return bcrypt.hash(password, salt);
 }
 
-// Aplica `changes` à conta, que precisa existir
 function updateAccount(usuario, changes) {
   return accountsStore.update((accounts) => {
     if (!findAccount(accounts, usuario)) {
@@ -49,7 +41,6 @@ function updateAccount(usuario, changes) {
   });
 }
 
-// Recusa usuário ou senha vazios
 function requireCredentials(usuario, password) {
   if (!usuario || !password) {
     throw new Error('Usuário e senha são obrigatórios.');
@@ -57,15 +48,12 @@ function requireCredentials(usuario, password) {
 }
 
 export const accountService = {
-  // Conta guardada neste aparelho, ou null
   getAccount(usuario) {
     return withErrorContext('Erro ao recuperar credenciais', async () =>
       findAccount(await accountsStore.read(), usuario)
     );
   },
 
-  // Cria a conta sem biometria (ela é ativada depois, no fim do cadastro ou
-  // no Perfil). Recusa e-mails já cadastrados, o que trocaria a senha.
   async createAccount(usuario, password) {
     requireCredentials(usuario, password);
     if (await this.getAccount(usuario)) {
@@ -87,8 +75,6 @@ export const accountService = {
     );
   },
 
-  // Guarda a conta neste aparelho com a senha confirmada pelo Firebase, para a
-  // pessoa conseguir reabrir o app sem internet. Cria ou atualiza a senha.
   async rememberAccount(usuario, password) {
     const account = await this.getAccount(usuario);
     return account
@@ -96,7 +82,6 @@ export const accountService = {
       : this.createAccount(usuario, password);
   },
 
-  // Troca a senha guardada neste aparelho
   async changePassword(usuario, newPassword) {
     requireCredentials(usuario, newPassword);
     return withErrorContext('Erro ao alterar a senha', async () =>
@@ -104,8 +89,6 @@ export const accountService = {
     );
   },
 
-  // Devolve o e-mail da conta, como foi cadastrado, quando a senha confere;
-  // senão, null. A senha é comparada exatamente como foi digitada.
   async authenticate(usuario, password) {
     if (!usuario || !password) return null;
     const account = await this.getAccount(usuario);
@@ -114,14 +97,10 @@ export const accountService = {
     return isValid ? account.usuario : null;
   },
 
-  // true quando a senha confere com a da conta
   async checkPassword(usuario, password) {
     return (await this.authenticate(usuario, password)) !== null;
   },
 
-  // A biometria do aparelho fica vinculada a uma única conta: o sistema não
-  // informa ao app qual digital/rosto foi usado, então não há como separar
-  // biometrias de pessoas diferentes no mesmo celular.
   getBiometricOwner() {
     return withErrorContext('Erro ao verificar a biometria', async () => {
       const accounts = await accountsStore.read();
@@ -129,7 +108,6 @@ export const accountService = {
     });
   },
 
-  // Liga ou desliga a biometria da conta (só uma conta por aparelho)
   setBiometrics(usuario, enabled) {
     return withErrorContext('Erro ao atualizar a biometria', async () => {
       const owner = await this.getBiometricOwner();

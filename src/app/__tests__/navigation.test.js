@@ -65,7 +65,6 @@ describe('navigationReducer', () => {
 
   it('deve ignorar transições inválidas ou desconhecidas', () => {
     const login = at(SCREENS.LOGIN);
-    // Ex.: o desbloqueio não pode reaparecer depois de entrar
     expect(
       navigationReducer(at(SCREENS.HOME), {
         type: 'sessionRestored',

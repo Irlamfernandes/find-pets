@@ -3,8 +3,6 @@ import { render } from '@testing-library/react-native';
 import { AppScreens } from '../AppScreens';
 import { SCREENS } from '../navigation';
 
-// Cada tela vira um componente simples que guarda as props recebidas.
-// Declarações de função são içadas junto com os jest.mock.
 const received = {};
 function mockScreen(name) {
   const Screen = (props) => {

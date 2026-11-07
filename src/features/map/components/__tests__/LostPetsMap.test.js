@@ -31,7 +31,6 @@ describe('LostPetsMap', () => {
     const { getByTestId, onSelect, onClear } = renderMap();
 
     fireEvent.press(getByTestId('map-marker-2'));
-    // O toque no marcador também chega ao mapa, mas não limpa a seleção
     fireEvent(getByTestId('lost-pets-map'), 'press', {
       nativeEvent: { action: 'marker-press' },
     });

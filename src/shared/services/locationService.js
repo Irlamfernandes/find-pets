@@ -1,8 +1,6 @@
 import * as Location from 'expo-location';
 
 export const locationService = {
-  // Localização atual do aparelho, pedindo permissão; sem permissão ou em
-  // caso de falha, devolve null
   async getCurrentLocation() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -14,7 +12,6 @@ export const locationService = {
         };
       }
 
-      // Alta precisão: a localização baixa pode errar por centenas de metros
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
@@ -33,7 +30,6 @@ export const locationService = {
       };
     }
   },
-  // Converte coordenadas em um endereço legível (ex.: "Rua X, 10 - Bairro, Cidade")
   async getAddressFromCoords(latitude, longitude) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -58,7 +54,6 @@ export const locationService = {
     }
   },
 
-  // Converte um endereço digitado em coordenadas
   async getCoordsFromAddress(address) {
     if (!address?.trim()) return null;
 

@@ -4,8 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNetworkState } from 'expo-network';
 import { palette } from '../theme/colors';
 
-// Aviso exibido só quando o celular está sem internet: o app continua
-// funcionando e envia as alterações quando a conexão voltar
 export function OfflineBanner() {
   const { isConnected } = useNetworkState();
   if (isConnected !== false) return null;

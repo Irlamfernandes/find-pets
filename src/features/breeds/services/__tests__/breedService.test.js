@@ -9,7 +9,6 @@ jest.mock('../../api/breedsApi', () => ({
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Grava no aparelho a lista de uma espécie, salva há `daysAgo` dias
 const saveCache = (species, breeds, daysAgo) =>
   AsyncStorage.setItem(
     STORAGE_KEYS.BREEDS,

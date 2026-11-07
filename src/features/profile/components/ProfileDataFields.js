@@ -8,7 +8,6 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { formStyles } from '../../../shared/theme/formStyles';
 import { palette } from '../../../shared/theme/colors';
 
-// "Meus dados": nome e WhatsApp, travados até a pessoa tocar no lápis
 export function ProfileDataFields({
   values,
   isEditing,

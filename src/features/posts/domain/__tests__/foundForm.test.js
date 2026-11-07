@@ -45,7 +45,6 @@ describe('foundForm', () => {
     expect(validate({ ...valid, time: '09:29', lostAt }, foundFormRules)).toBe(
       'A data do reencontro não pode ser anterior ao desaparecimento.'
     );
-    // O mesmo minuto do sumiço é aceito, mesmo com os segundos
     expect(validate({ ...valid, lostAt }, foundFormRules)).toBeNull();
     expect(
       validate({ ...valid, lostAt: undefined }, foundFormRules)

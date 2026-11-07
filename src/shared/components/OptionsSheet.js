@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from './SafeTouchable';
 import { palette } from '../theme/colors';
 
-// Lista de ações que sobe da parte de baixo da tela
 export function OptionsSheet({ visible, title, options, onClose }) {
   return (
     <Modal

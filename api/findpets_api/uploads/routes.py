@@ -1,5 +1,3 @@
-"""Envio e leitura das fotos (dos registros e dos perfis)."""
-
 from pathlib import Path
 
 from flask import Blueprint, current_app, jsonify, request, send_from_directory, url_for
@@ -13,12 +11,10 @@ blueprint = Blueprint("uploads", __name__, url_prefix="/uploads")
 EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 
 
-# Pasta onde as fotos ficam guardadas
 def upload_dir():
     return Path(current_app.config["UPLOAD_DIR"])
 
 
-# Extensão da foto enviada (só imagens são aceitas)
 def extension_of(file):
     extension = Path(file.filename or "").suffix.lower().lstrip(".")
     if extension not in EXTENSIONS:
@@ -45,7 +41,6 @@ def upload():
     file = request.files.get("file")
     if file is None:
         raise ApiError(400, "Envie a foto no campo 'file'.")
-    # Nome gerado pelo servidor: o nome original nunca vira caminho de arquivo
     name = f"{new_id()}.{extension_of(file)}"
     upload_dir().mkdir(parents=True, exist_ok=True)
     file.save(upload_dir() / name)
@@ -65,5 +60,4 @@ def get_upload(name):
       200: {description: A imagem}
       404: {description: Foto não encontrada}
     """
-    # send_from_directory recusa caminhos que saiam da pasta (ex.: ../)
     return send_from_directory(upload_dir().resolve(), name)

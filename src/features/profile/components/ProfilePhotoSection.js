@@ -13,8 +13,6 @@ import {
   useProfilePhotoPicker,
 } from '../hooks/useProfilePhotoPicker';
 
-// Foto do perfil: tocar abre em tela cheia; no modo de edição, o botão da
-// câmera permite trocar ou remover
 export function ProfilePhotoSection({ photoUri, isEditing, onChange }) {
   const [isOptionsVisible, setIsOptionsVisible] = useState(false);
   const [isViewerVisible, setIsViewerVisible] = useState(false);
@@ -23,7 +21,6 @@ export function ProfilePhotoSection({ photoUri, isEditing, onChange }) {
   const options = getPhotoOptions({
     hasPhoto: Boolean(photoUri),
     onChoose: choosePhoto,
-    // Remove a foto do perfil
     onRemove: () => onChange(null),
   });
 

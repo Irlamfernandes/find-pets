@@ -8,7 +8,6 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { formStyles } from '../../../shared/theme/formStyles';
 import { palette } from '../../../shared/theme/colors';
 
-// Botão para adicionar foto pela câmera ou pela galeria
 function AddPhotoButton({ testID, icon, label, onPress }) {
   return (
     <SafeTouchable
@@ -29,8 +28,6 @@ AddPhotoButton.propTypes = {
   onPress: PropTypes.func.isRequired,
 };
 
-// Fotos do registro em linha, com botões para fotografar ou escolher da
-// galeria enquanto houver espaço
 export function PetPhotosField({
   photos,
   maxPhotos,

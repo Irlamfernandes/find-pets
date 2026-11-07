@@ -46,7 +46,6 @@ describe('profileService', () => {
       ...PROFILE,
       name: 'Ana B',
     });
-    // Continua uma linha só
     await expect(selectRows('SELECT * FROM profiles')).resolves.toHaveLength(1);
   });
 

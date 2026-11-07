@@ -1,9 +1,3 @@
-"""Tabelas do banco. As mesmas do app (SQLite), mais a de usuários.
-
-Escritas com o SQLAlchemy, viram o CREATE TABLE certo para MySQL,
-Postgres (Supabase) ou SQLite.
-"""
-
 from sqlalchemy import (
     Column,
     Float,
@@ -20,13 +14,6 @@ metadata = MetaData()
 
 
 def control_columns():
-    """Colunas presentes em todas as tabelas.
-
-    - created_at / updated_at: quando foi criado e alterado (no celular);
-    - deleted_at: exclusão lógica, nada é apagado de verdade;
-    - server_updated_at: quando o servidor gravou; a sincronização busca
-      "o que mudou desde" esta data, que não depende do relógio do celular.
-    """
     return [
         Column("created_at", String(30), nullable=False),
         Column("updated_at", String(30), nullable=False),
@@ -70,7 +57,6 @@ posts = Table(
     Column("longitude", Float),
     Column("location", String(255)),
     Column("occurred_at", String(30)),
-    # Objetos (fuso e dados do reencontro) gravados como texto JSON
     Column("occurred_zone", Text),
     Column("status", String(20), nullable=False),
     Column("contact_phone", String(20)),
@@ -78,7 +64,6 @@ posts = Table(
     *control_columns(),
 )
 
-# Fotos de cada registro (1 registro : N fotos)
 post_images = Table(
     "post_images",
     metadata,

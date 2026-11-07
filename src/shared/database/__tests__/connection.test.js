@@ -8,7 +8,6 @@ const tableNames = async (database) =>
     )
   ).map((row) => row.name);
 
-// A conexão fica guardada entre os testes deste arquivo: a ordem importa
 describe('connection', () => {
   it('deve tentar abrir de novo depois de uma falha', async () => {
     SQLite.openDatabaseAsync.mockRejectedValueOnce(new Error('sem espaço'));

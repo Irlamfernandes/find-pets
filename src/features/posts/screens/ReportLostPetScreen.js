@@ -14,7 +14,6 @@ import { useReportLostPet, MAX_PHOTOS } from '../hooks/useReportLostPet';
 import { PetPhotosField } from '../components/PetPhotosField';
 import { PetDetailsFields } from '../components/PetDetailsFields';
 
-// Textos que mudam entre criar um registro e editar um existente
 const CREATE_COPY = {
   title: 'Registrar desaparecimento',
   photosHint:
@@ -33,7 +32,6 @@ const EDIT_COPY = {
   submit: 'Salvar alterações',
 };
 
-// Tela de registrar (ou editar) o desaparecimento de um pet
 export default function ReportLostPetScreen({
   onBack,
   onSaved,

@@ -52,7 +52,6 @@ const emptyPetData = {
   description: '',
 };
 
-// Renderiza o formulário já com fotos e espécie escolhidas
 async function setupWithPhotos(photos, onSaved = jest.fn()) {
   photoService.pickFromGallery.mockResolvedValueOnce({
     photos,
@@ -72,7 +71,6 @@ describe('useReportLostPet', () => {
     jest.useFakeTimers({ now: NOW });
     postService.savePost.mockResolvedValue([]);
     postService.updatePost.mockResolvedValue([]);
-    // Simula a cópia para a pasta permanente
     postPhotoStorage.persistAll.mockImplementation(async (uris) =>
       uris.map((uri) => (uri.startsWith('stored:') ? uri : `stored:${uri}`))
     );
@@ -213,8 +211,6 @@ describe('useReportLostPet', () => {
     });
 
     act(() => result.current.setPetField('species', 'Cachorro'));
-    // Ao salvar mais tarde (em outro lugar), vale o local da foto e a
-    // localização do momento do salvamento nem é consultada
     await act(async () => {
       await result.current.submit();
     });
@@ -318,7 +314,6 @@ describe('useReportLostPet', () => {
       'b.jpg',
     ]);
     expect(postService.savePost).toHaveBeenCalledWith({
-      // UUID: não se repete entre aparelhos
       id: expect.stringMatching(/^[0-9a-f-]{36}$/),
       author: 'user@test.com',
       images: ['stored:a.jpg', 'stored:b.jpg'],
@@ -431,7 +426,6 @@ describe('useReportLostPet', () => {
     });
     expect(result.current.isSaving).toBe(true);
 
-    // A segunda chamada recebe o mesmo salvamento em andamento
     let secondSubmit;
     act(() => {
       secondSubmit = result.current.submit();

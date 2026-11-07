@@ -129,7 +129,6 @@ describe('useAppFlow', () => {
       offerBiometrics.mockResolvedValueOnce(true);
       const hook = await completeOnboarding();
 
-      // O perfil fica só no banco: a sessão guarda apenas quem está logado
       expect(sessionState.saveUserSession).not.toHaveBeenCalledWith(
         expect.objectContaining({ profile: expect.anything() })
       );

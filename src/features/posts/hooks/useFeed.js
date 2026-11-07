@@ -26,10 +26,8 @@ const ALERTS = {
 
 const EMPTY_VIEWER = { usuario: null, name: '', photoUri: null };
 
-// Falhas na leitura não impedem o feed de abrir
 const orDefault = (promise, fallback) => promise.catch(() => fallback);
 
-// Quem está usando o app: conta conectada, nome e foto do perfil
 async function loadViewer() {
   const [usuario, profile] = await Promise.all([
     orDefault(sessionService.getCurrentUser(), null),
@@ -42,7 +40,6 @@ async function loadViewer() {
   };
 }
 
-// Estado e ações do feed: registros, usuário, exclusão e reencontro
 export function useFeed() {
   const showAlert = useAppAlert();
   const [posts, setPosts] = useState([]);
@@ -50,30 +47,24 @@ export function useFeed() {
   const [foundPostId, setFoundPostId] = useState(null);
 
   useEffect(() => {
-    // Carrega os registros e os dados de quem está usando o app
     const load = () => {
       orDefault(postService.getPosts(), []).then(setPosts);
       loadViewer().then(setViewer);
     };
     load();
-    // Recarrega quando a sincronização traz novidades (ex.: posts de outros
-    // usuários ou o envio dos registros feitos offline)
     return syncService.subscribe((result) => {
       if (result === SYNC_RESULT.SYNCED) load();
     });
   }, []);
 
-  // Só o autor pode alterar o próprio registro
   const findOwnPost = (postId) =>
     posts.find((post) => post.id === postId && isOwnedBy(post, viewer.usuario));
 
-  // Abre o formulário do reencontro
   const markPostAsFound = (postId) => {
     const post = findOwnPost(postId);
     if (post && !isFound(post)) setFoundPostId(postId);
   };
 
-  // Salva o reencontro e avisa o resultado
   const confirmFound = async (foundInfo) => {
     try {
       setPosts(
@@ -86,17 +77,14 @@ export function useFeed() {
     }
   };
 
-  // Exclui o registro (exclusão lógica) e avisa se não conseguir
   const removePost = async (post) => {
     try {
-      // Exclusão lógica: o registro e as fotos ficam guardados como histórico
       setPosts(await postService.deletePost(post.id));
     } catch {
       showAlert(ALERTS.deleteFailed);
     }
   };
 
-  // Pede confirmação antes de excluir
   const deletePost = (postId) => {
     const post = findOwnPost(postId);
     if (!post) return;
@@ -118,10 +106,8 @@ export function useFeed() {
     currentUser: viewer.usuario,
     deletePost,
     isFoundFormOpen: foundPostId !== null,
-    // Registro que está sendo marcado como encontrado
     foundPost: posts.find((post) => post.id === foundPostId) || null,
     markPostAsFound,
-    // Fecha a janela de reencontro sem salvar
     cancelFound: () => setFoundPostId(null),
     confirmFound,
   };

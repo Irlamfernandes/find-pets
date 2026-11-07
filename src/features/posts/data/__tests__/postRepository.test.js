@@ -109,7 +109,6 @@ describe('postRepository', () => {
       '1',
     ]);
     expect(deleted.deleted_at).toEqual(expect.any(String));
-    // As fotos continuam ligadas ao registro excluído, como histórico
     await expect(activeImages('1')).resolves.toHaveLength(2);
   });
 

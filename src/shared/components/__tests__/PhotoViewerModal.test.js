@@ -6,8 +6,6 @@ import { PhotoViewerModal } from '../PhotoViewerModal';
 describe('PhotoViewerModal', () => {
   const images = ['a.jpg', 'b.jpg', 'c.jpg'];
 
-  // A FlatList agenda atualizações internas com timers; com timers simulados
-  // elas rodam dentro do act(...) ao fim de cada teste
   beforeEach(() => {
     jest.useFakeTimers();
   });

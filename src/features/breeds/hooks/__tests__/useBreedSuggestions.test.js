@@ -6,7 +6,6 @@ jest.mock('../../services/breedService', () => ({
   breedService: { getBreeds: jest.fn() },
 }));
 
-// Renderiza o hook com a espécie e o texto informados
 const renderSuggestions = (species, text) =>
   renderHook((props) => useBreedSuggestions(props.species, props.text), {
     initialProps: { species, text },
@@ -31,7 +30,6 @@ describe('useBreedSuggestions', () => {
     expect(breedService.getBreeds).toHaveBeenCalledWith('Cachorro');
     expect(result.current).toEqual(['Pug', 'Puli']);
 
-    // Continuar digitando só filtra a lista já carregada
     rerender({ species: 'Cachorro', text: 'pug' });
     await act(async () => {});
     expect(breedService.getBreeds).toHaveBeenCalledTimes(1);

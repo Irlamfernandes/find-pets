@@ -1,5 +1,3 @@
-"""Rotas de cadastro e login."""
-
 from flask import Blueprint, g, jsonify
 
 from ..errors import ApiError
@@ -12,7 +10,6 @@ from .tokens import create_token
 blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
 
-# E-mail (em minúsculas) e senha enviados no cadastro ou no login
 def read_credentials():
     data = json_body()
     email = required_text(data, "email").lower()
@@ -21,7 +18,6 @@ def read_credentials():
     return email, required_password(data, "password")
 
 
-# Resposta de cadastro e login: o token de acesso e o e-mail da conta
 def session_response(user, status):
     return jsonify({"token": create_token(user), "email": user["email"]}), status
 

@@ -12,13 +12,10 @@ import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { SharePoster } from './SharePoster';
 import { palette } from '../../../shared/theme/colors';
 
-// Mostra o cartaz antes de enviar; o botão só libera depois que a foto
-// carregou, para a imagem compartilhada não sair sem ela
 export function SharePreviewModal({ post, onShare, onClose }) {
   const posterRef = useRef(null);
   const [isImageReady, setIsImageReady] = useState(false);
 
-  // Fecha a prévia e volta a esperar a imagem na próxima abertura
   const handleClose = () => {
     setIsImageReady(false);
     onClose();

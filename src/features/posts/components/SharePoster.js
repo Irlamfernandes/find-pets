@@ -7,7 +7,6 @@ import { getPosterContent, getPosterInfoLines } from '../utils/posterContent';
 import { PetInfoGrid } from './PetInfoGrid';
 import { palette } from '../../../shared/theme/colors';
 
-// Cartaz do pet ("Procura-se"/"Encontrado") que vira a imagem compartilhada
 export function SharePoster({ post, viewRef, onImageLoadEnd }) {
   const content = getPosterContent(post);
 

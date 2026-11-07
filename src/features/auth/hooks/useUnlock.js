@@ -3,8 +3,6 @@ import { useLatestCallback } from '../../../shared/hooks/useLatestCallback';
 import { biometricService } from '../services/biometrics';
 import { accountService } from '../services/accountService';
 
-// Confirma a identidade de quem reabre o app com uma sessão salva:
-// o dono da biometria usa digital/rosto; as demais contas usam a senha.
 export function useUnlock(usuario, onUnlocked) {
   const [canUseBiometrics, setCanUseBiometrics] = useState(false);
   const [password, setPassword] = useState('');
@@ -25,31 +23,24 @@ export function useUnlock(usuario, onUnlocked) {
   useEffect(() => {
     let active = true;
 
-    // Ao abrir, descobre se a conta pode desbloquear com a biometria
     const prepare = async () => {
-      try {
-        const [owner, isAvailable] = await Promise.all([
-          accountService.getBiometricOwner(),
-          biometricService.checkAvailability(),
-        ]);
-        const isOwner = isAvailable && owner?.usuario === usuario;
-        if (!active || !isOwner) return;
+      const [owner, isAvailable] = await Promise.all([
+        accountService.getBiometricOwner(),
+        biometricService.checkAvailability(),
+      ]);
+      const isOwner = isAvailable && owner?.usuario === usuario;
+      if (!active || !isOwner) return;
 
-        setCanUseBiometrics(true);
-        // Já abre o pedido de biometria ao entrar na tela
-        await unlockWithBiometrics();
-      } catch {
-        // Sem biometria disponível: a pessoa entra com a senha
-      }
+      setCanUseBiometrics(true);
+      await unlockWithBiometrics();
     };
-    prepare();
+    prepare().catch(() => undefined);
 
     return () => {
       active = false;
     };
   }, [usuario, unlockWithBiometrics]);
 
-  // Desbloqueia conferindo a senha guardada no aparelho (funciona offline)
   const unlockWithPassword = async () => {
     setErrorMessage('');
     if (!password) {

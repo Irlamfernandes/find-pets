@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { ChipSelector } from '../../../shared/components/ChipSelector';
 import { formStyles } from '../../../shared/theme/formStyles';
 
-// Raças sugeridas abaixo do campo "Raça"; tocar em uma preenche o campo
 export function BreedSuggestions({ suggestions, onSelect }) {
   if (suggestions.length === 0) return null;
 

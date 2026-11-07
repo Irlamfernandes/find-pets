@@ -45,7 +45,6 @@ describe('postSync', () => {
         images: [cloudPhoto('file:///1.jpg')],
       });
       await expect(syncStatusOf('1')).resolves.toBe('synced');
-      // A foto continua sendo o arquivo do celular (abre offline)
       expect((await postRepository.findActive())[0].images).toEqual([
         'file:///1.jpg',
       ]);
@@ -150,7 +149,6 @@ describe('postSync', () => {
       expect(posts.map((post) => post.id).sort()).toEqual(['r1', 'r2']);
       expect(posts.find((post) => post.id === 'r2').images).toEqual([]);
 
-      // Na próxima vez, só o que mudou depois do último baixado
       await writeValue('posts/r1', remote('r1', { petName: 'Achado' }));
       await pullPosts(USER);
       const updated = await postRepository.findActive();

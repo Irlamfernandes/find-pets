@@ -5,8 +5,6 @@ import { FormTextInput } from './FormScrollView';
 import { formStyles } from '../theme/formStyles';
 import { palette } from '../theme/colors';
 
-// Campo de formulário com rótulo. `onSubmit` avança para o próximo campo
-// sem fechar o teclado; sem ele, o teclado mostra "concluir".
 export function LabeledInput({ label, style, onSubmit, ...inputProps }) {
   const submitProps = onSubmit
     ? {

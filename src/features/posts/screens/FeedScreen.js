@@ -19,13 +19,10 @@ import { BottomTabBar } from '../../../shared/components/BottomTabBar';
 import { externalLinkService } from '../../../shared/services/externalLinkService';
 import { palette } from '../../../shared/theme/colors';
 
-// Abre o WhatsApp e a rota no app de mapas do celular
 const openWhatsApp = (phone) => externalLinkService.openWhatsApp(phone);
-// Abre a rota até o local do desaparecimento
 const openRoute = (post) =>
   externalLinkService.openRoute(post.latitude, post.longitude);
 
-// Feed: registros em lista ou no mapa, com as ações de cada um
 export default function FeedScreen({
   onOpenProfile,
   onOpenReport,
@@ -37,10 +34,8 @@ export default function FeedScreen({
   const [mapPost, setMapPost] = useState(null);
   const guide = useFeedGuide(currentUser);
   const { sharingPost, openShare, closeShare, sharePoster } = useSharePost();
-  // 'list' mostra os cards; 'map' mostra todos os pets perdidos no mapa
   const [viewMode, setViewMode] = useState('list');
 
-  // Abre as fotos do registro em tela cheia, a partir da foto tocada
   const openPhotos = (post, index = 0) =>
     setPhotoViewer({ images: post.images, index });
 

@@ -17,7 +17,6 @@ describe('connectivity', () => {
     getNetworkStateAsync.mockResolvedValueOnce(state(false));
     await expect(isOnline()).resolves.toBe(false);
 
-    // Ainda sem saber se há acesso: tenta (a requisição confirma)
     getNetworkStateAsync.mockResolvedValueOnce(state(true, undefined));
     await expect(isOnline()).resolves.toBe(true);
   });

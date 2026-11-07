@@ -7,7 +7,6 @@ import { syncService } from '../features/sync/syncService';
 import { useSyncLifecycle } from '../features/sync/useSyncLifecycle';
 import { navigationReducer, INITIAL_NAVIGATION } from './navigation';
 
-// Aviso exibido depois de entrar: conta criada, biometria ou boas-vindas
 const loginAlert = ({ type, usuario }) => {
   if (type === 'register') {
     return {
@@ -26,7 +25,6 @@ const loginAlert = ({ type, usuario }) => {
   };
 };
 
-// true se a conta já tem perfil salvo (senão, vai para o cadastro do perfil)
 async function hasSavedProfile() {
   try {
     return Boolean(await profileService.getProfile());
@@ -35,7 +33,6 @@ async function hasSavedProfile() {
   }
 }
 
-// Fluxo principal do app: sessão, entrada, cadastro do perfil e navegação
 export function useAppFlow() {
   const { isLoading, session, saveUserSession, logout } = useSession();
   const showAlert = useAppAlert();
@@ -45,8 +42,6 @@ export function useAppFlow() {
     INITIAL_NAVIGATION
   );
 
-  // A tela inicial é decidida só ao abrir o app (a transição é ignorada
-  // depois), senão o desbloqueio reapareceria a cada mudança de sessão
   useEffect(() => {
     if (!isLoading) {
       dispatch({
@@ -56,19 +51,15 @@ export function useAppFlow() {
     }
   }, [isLoading, session]);
 
-  // Entra no app: no feed, ou no cadastro do perfil se ainda não houver um
   const enter = async () => {
     dispatch({ type: 'authenticated', hasProfile: await hasSavedProfile() });
   };
 
-  // Reabriu o app: entra na hora e sincroniza em segundo plano
   const unlock = () => {
     syncService.syncNow();
     return enter();
   };
 
-  // Sincroniza antes de entrar: num celular novo, traz o perfil e os
-  // registros da conta (sem internet, entra com o que houver no aparelho)
   const handleLoginSuccess = async (data) => {
     showAlert(loginAlert(data));
     await saveUserSession(data);
@@ -76,11 +67,9 @@ export function useAppFlow() {
     await enter();
   };
 
-  // O perfil já foi gravado no banco pela tela de cadastro
   const handleOnboardingComplete = async (profile) => {
     dispatch({ type: 'onboardingCompleted' });
 
-    // Fim do cadastro: convida a ativar a biometria, se estiver disponível
     const offered = await offerBiometrics(session?.usuario, profile.name);
     if (!offered) {
       showAlert({
@@ -91,8 +80,6 @@ export function useAppFlow() {
     }
   };
 
-  // O Firebase recusou o login: os dados continuam no celular, mas para
-  // voltar a sincronizar é preciso entrar com a senha
   useSyncLifecycle(async () => {
     showAlert({
       type: 'warning',
@@ -103,7 +90,6 @@ export function useAppFlow() {
     await handleLogout();
   });
 
-  // Sai da conta e volta para o login; se falhar, avisa e continua na tela
   const handleLogout = async () => {
     try {
       await logout();

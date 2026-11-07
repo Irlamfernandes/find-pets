@@ -7,7 +7,6 @@ jest.mock('expo-secure-store', () =>
   require('../../../../testing/memoryStorage').createSecureStoreMock()
 );
 
-// Hash previsível: "hash:<senha>"
 jest.mock('bcryptjs', () => ({
   genSalt: jest.fn().mockResolvedValue('salt'),
   hash: jest.fn(async (password) => `hash:${password}`),

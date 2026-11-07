@@ -51,7 +51,6 @@ describe('postService', () => {
   });
 
   it('não deve gravar nada se o registro falhar no meio do salvamento', async () => {
-    // O id repetido faz o INSERT falhar dentro da transação
     await postService.savePost(post('1', { images: ['a.jpg'] }));
 
     await expect(

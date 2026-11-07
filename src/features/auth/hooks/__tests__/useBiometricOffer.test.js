@@ -21,7 +21,6 @@ describe('useBiometricOffer', () => {
     accountService.checkPassword.mockResolvedValue(true);
   });
 
-  // Exibe o convite e escolhe uma das opções
   const offerAndChoose = async (choice) => {
     const hook = renderHook(() => useBiometricOffer());
     let offered;
@@ -64,7 +63,6 @@ describe('useBiometricOffer', () => {
         errorMessage: '',
       })
     );
-    // A biometria só é pedida depois da senha
     expect(biometricService.authenticate).not.toHaveBeenCalled();
 
     expect(await confirm(hook, 'senha123')).toBe(true);

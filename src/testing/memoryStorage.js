@@ -1,6 +1,3 @@
-// Armazenamento em memória para testes de serviços. Substitui o AsyncStorage
-// e o SecureStore com o mesmo contrato, permitindo testar o comportamento
-// (o que foi gravado e lido) sem depender do formato exato das chamadas.
 function createMemoryBackend() {
   const data = new Map();
   return {
@@ -12,14 +9,12 @@ function createMemoryBackend() {
     remove: jest.fn(async (key) => {
       data.delete(key);
     }),
-    // Apaga tudo (cada teste começa do zero)
     reset() {
       data.clear();
     },
   };
 }
 
-// AsyncStorage em memória
 export function createAsyncStorageMock() {
   const backend = createMemoryBackend();
   return {
@@ -30,7 +25,6 @@ export function createAsyncStorageMock() {
   };
 }
 
-// SecureStore em memória
 export function createSecureStoreMock() {
   const backend = createMemoryBackend();
   return {

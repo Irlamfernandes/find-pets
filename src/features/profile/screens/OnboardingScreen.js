@@ -12,7 +12,6 @@ import {
 import { useOnboarding } from '../hooks/useOnboarding';
 import { palette } from '../../../shared/theme/colors';
 
-// Tela de completar o cadastro: nome e WhatsApp
 export default function OnboardingScreen({ onComplete }) {
   const {
     name,
@@ -23,7 +22,6 @@ export default function OnboardingScreen({ onComplete }) {
     handleSaveProfile,
   } = useOnboarding(onComplete);
   const whatsappRef = useRef(null);
-  // Botão e tecla "concluir" compartilham a mesma trava
   const saveProfile = useSingleFlight(dismissKeyboardAnd(handleSaveProfile));
 
   return (

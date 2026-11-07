@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useLogin } from '../hooks/useLogin';
@@ -6,7 +5,6 @@ import { AuthHomeScreen } from './AuthHomeScreen';
 import { AuthLoginScreen } from './AuthLoginScreen';
 import { AuthRegisterScreen } from './AuthRegisterScreen';
 
-// Alterna entre a tela inicial, o login e o cadastro
 export default function LoginScreen({ onLoginSuccess }) {
   const {
     usuario,

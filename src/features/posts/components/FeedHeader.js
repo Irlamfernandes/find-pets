@@ -7,7 +7,6 @@ import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { UserAvatar } from '../../../shared/components/UserAvatar';
 import { palette } from '../../../shared/theme/colors';
 
-// Topo do feed: saudação, foto do usuário e botões de ajuda e de perfil
 export function FeedHeader({
   userName,
   userPhoto,
@@ -51,7 +50,6 @@ export function FeedHeader({
 FeedHeader.propTypes = {
   userName: PropTypes.string,
   userPhoto: PropTypes.string,
-  // Sem a função, o botão de ajuda fica escondido
   onShowGuide: PropTypes.func,
   onOpenProfile: PropTypes.func,
 };

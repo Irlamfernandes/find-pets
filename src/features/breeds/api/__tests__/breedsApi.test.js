@@ -1,6 +1,5 @@
 import { breedsApi } from '../breedsApi';
 
-// Resposta de sucesso com o JSON informado
 const okResponse = (body) => ({ ok: true, json: async () => body });
 
 describe('breedsApi (APIs públicas de raças)', () => {
@@ -53,7 +52,6 @@ describe('breedsApi (APIs públicas de raças)', () => {
 
   it('deve desistir quando a API demora demais', async () => {
     jest.useFakeTimers();
-    // A busca só termina quando é cancelada
     fetch.mockImplementationOnce(
       (_url, { signal }) =>
         new Promise((_resolve, reject) => {

@@ -158,8 +158,6 @@ describe('FeedScreen', () => {
     confirmFound: jest.fn(),
   };
 
-  // A FlatList agenda atualizações internas com timers; com timers simulados
-  // elas rodam dentro do act(...) ao fim de cada teste
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
@@ -356,11 +354,9 @@ describe('FeedScreen', () => {
       render(<FeedScreen onOpenReport={mockOnOpenReport} />);
 
     expect(useFeedGuide).toHaveBeenCalledWith('ana@test.com');
-    // O aviso é o cabeçalho da lista, ou seja, fica antes das postagens
     const header = UNSAFE_getByType(FlatList).props.ListHeaderComponent;
     expect(header.type).toBe(FeedGuideCard);
     expect(getByTestId('pet-card-1')).toBeTruthy();
-    // Com o aviso aberto, o botão de ajuda fica escondido
     expect(queryByLabelText('Como funciona o app')).toBeNull();
 
     fireEvent.press(getByText('Entendi'));
@@ -425,7 +421,6 @@ describe('FeedScreen', () => {
     expect(queryByTestId('edit-2')).toBeNull();
     expect(queryByTestId('edit-3')).toBeNull();
 
-    // Sem a ação de edição, o botão não aparece
     rerender(<FeedScreen onOpenReport={mockOnOpenReport} />);
     expect(queryByTestId('edit-1')).toBeNull();
   });

@@ -21,8 +21,6 @@ const ALERTS = {
   },
 };
 
-// Confirma a biometria e ativa na conta; devolve o aviso a exibir, ou null
-// quando a pessoa cancelou
 async function activateBiometrics(usuario) {
   try {
     const result = await biometricService.authenticate(
@@ -38,7 +36,6 @@ async function activateBiometrics(usuario) {
   }
 }
 
-// Só oferece quando o celular tem biometria e nenhuma conta a usa
 async function canOfferBiometrics() {
   try {
     const [isAvailable, owner] = await Promise.all([
@@ -51,24 +48,17 @@ async function canOfferBiometrics() {
   }
 }
 
-// Ao terminar o cadastro, convida a pessoa a ativar a biometria. Antes de
-// ativar, pede a senha da conta. `offerBiometrics` retorna se o convite foi
-// exibido, para quem chama não sobrepor outro aviso; `passwordPromptProps`
-// vai para um PasswordPromptModal.
 export function useBiometricOffer() {
   const showAlert = useAppAlert();
   const prompt = usePasswordPrompt({
-    // Confere se a senha digitada é a da conta
     verify: (password, usuario) =>
       accountService.checkPassword(usuario, password),
-    // Senha certa: ativa a biometria e mostra o resultado
     onConfirmed: async (usuario) => {
       const alert = await activateBiometrics(usuario);
       if (alert) showAlert(alert);
     },
   });
 
-  // Convida a ativar a biometria, se o aparelho tiver e ela estiver livre
   const offerBiometrics = async (usuario, name) => {
     if (!(await canOfferBiometrics())) return false;
 

@@ -12,8 +12,6 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 import { palette } from '../../../shared/theme/colors';
 
-// Formulário de e-mail e senha comum ao login e ao cadastro. Ações extras
-// (como a biometria) entram como `children`, entre o botão e o "Voltar".
 export function AuthForm({
   title,
   subtitle,
@@ -29,7 +27,6 @@ export function AuthForm({
 }) {
   const passwordRef = useRef(null);
   useBackHandler(dismissKeyboardAnd(onBack));
-  // Botão e tecla "concluir" compartilham a mesma trava
   const submit = useSingleFlight(dismissKeyboardAnd(onSubmit));
   const inputStyle = [styles.input, !!errorMessage && styles.inputError];
 

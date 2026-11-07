@@ -6,13 +6,9 @@ import PropTypes from 'prop-types';
 import { palette } from '../../../shared/theme/colors';
 import { regionForPoints } from '../utils/mapRegion';
 
-// Cor do marcador do pet selecionado (os demais usam a cor de alerta)
 const SELECTED_COLOR = '#991B1B';
 
-// Mapa com todos os pets perdidos; tocar num marcador seleciona o registro e
-// tocar fora dos marcadores tira a seleção
 export function LostPetsMap({ posts, selectedId, onSelect, onClear }) {
-  // A área inicial só é recalculada quando os pontos mudam
   const initialRegion = useMemo(
     () => (posts.length > 0 ? regionForPoints(posts) : null),
     [posts]
@@ -29,7 +25,6 @@ export function LostPetsMap({ posts, selectedId, onSelect, onClear }) {
     );
   }
 
-  // O toque num marcador também chega ao mapa: só limpa fora deles
   const handleMapPress = (event) => {
     if (event.nativeEvent.action !== 'marker-press') onClear();
   };
@@ -46,7 +41,6 @@ export function LostPetsMap({ posts, selectedId, onSelect, onClear }) {
         const isSelected = post.id === selectedId;
         return (
           <Marker
-            // A chave muda com a seleção para o Android redesenhar a cor
             key={`${post.id}-${isSelected}`}
             testID={`map-marker-${post.id}`}
             coordinate={{ latitude: post.latitude, longitude: post.longitude }}

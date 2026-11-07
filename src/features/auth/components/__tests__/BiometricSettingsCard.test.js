@@ -66,7 +66,6 @@ describe('BiometricSettingsCard', () => {
         'A biometria deste celular já está em uso pela conta ir***@gmail.com. Só uma conta por celular pode usar a biometria.'
       )
     ).toBeTruthy();
-    // Bloqueada para esta conta: sem botões
     expect(utils.queryByTestId('button-activate-biometrics')).toBeNull();
     expect(utils.queryByTestId('button-deactivate-biometrics')).toBeNull();
 
@@ -191,7 +190,6 @@ describe('BiometricSettingsCard', () => {
       });
     };
 
-    // Senha errada: não desativa
     accountService.checkPassword.mockResolvedValueOnce(false);
     await deactivateWithPassword('errada');
     expect(settings.deactivate).not.toHaveBeenCalled();

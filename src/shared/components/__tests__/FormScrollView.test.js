@@ -58,7 +58,6 @@ describe('FormScrollView', () => {
     });
     act(() => jest.runAllTimers());
 
-    // 700 + 40 + 24 (margem) - 600 = 164 de sobreposição
     expect(scrollToSpy).toHaveBeenCalledWith({ y: 214, animated: true });
     expect(getByPlaceholderText('Campo')).toBeTruthy();
   });
@@ -86,7 +85,6 @@ describe('FormScrollView', () => {
     );
     mockFocusedInput(800);
 
-    // Sem teclado aberto, o foco não rola (o evento do teclado cuidará disso)
     fireEvent(getByTestId('field'), 'focus', { nativeEvent: {} });
     act(() => jest.runAllTimers());
     expect(scrollToSpy).not.toHaveBeenCalled();

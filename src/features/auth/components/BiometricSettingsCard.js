@@ -33,7 +33,6 @@ const PROMPT_TEXT = {
   },
 };
 
-// Botão exibido em cada situação (as demais só mostram o texto)
 const STATUS_ACTION = {
   [BIOMETRIC_STATUS.AVAILABLE]: {
     action: 'activate',
@@ -68,8 +67,6 @@ const DEACTIVATED_ALERT = {
     'Esta conta passará a entrar só com a senha. Outra conta deste celular poderá ativar a biometria.',
 };
 
-// Texto que explica a situação da biometria (mascarando o e-mail de outra
-// conta que já a usa)
 function getStatusText(status, owner) {
   if (status !== BIOMETRIC_STATUS.TAKEN) return STATUS_TEXT[status];
   return `A biometria deste celular já está em uso pela conta ${maskEmail(
@@ -77,16 +74,12 @@ function getStatusText(status, owner) {
   )}. Só uma conta por celular pode usar a biometria.`;
 }
 
-// Cartão do Perfil para ativar ou desativar a biometria (pede a senha antes)
 export function BiometricSettingsCard() {
   const showAlert = useAppAlert();
   const { status, owner, activate, deactivate } = useBiometricSettings();
 
-  // Cada ação devolve o aviso a exibir (ou nada, se a pessoa cancelou)
   const actions = {
-    // Ativa e devolve o aviso do resultado
     activate: async () => ACTIVATION_ALERTS[await activate()],
-    // Desativa e devolve o aviso de biometria desativada
     deactivate: async () => {
       await deactivate();
       return DEACTIVATED_ALERT;
@@ -94,7 +87,6 @@ export function BiometricSettingsCard() {
   };
 
   const prompt = usePasswordPrompt({
-    // Senha confirmada: executa a ação escolhida e mostra o aviso dela
     onConfirmed: async (action) => {
       try {
         const alert = await actions[action]();

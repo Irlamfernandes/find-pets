@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { palette } from './colors';
 
-// Estilos comuns aos formulários do app
 export const formStyles = StyleSheet.create({
   label: {
     fontSize: 14,

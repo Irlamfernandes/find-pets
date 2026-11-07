@@ -20,15 +20,13 @@ const credentialRules = [
   ),
 ];
 
-// Estado e ações das telas de login e cadastro: campos, erros, biometria,
-// entrada com senha e criação da conta
 export function useLogin(onSuccess) {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [hasHardwareBiometric, setHasHardwareBiometric] = useState(false);
   const [biometricOwner, setBiometricOwner] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [authMode, setAuthMode] = useState('home'); // 'home', 'login', 'cadastro'
+  const [authMode, setAuthMode] = useState('home');
 
   const checkBiometricSupport = useCallback(async () => {
     const isAvailable = await biometricService.checkAvailability();
@@ -45,8 +43,6 @@ export function useLogin(onSuccess) {
     checkBiometricSupport();
   }, [checkBiometricSupport]);
 
-  // Valida o formulário e executa a ação com o e-mail já sem espaços.
-  // A ação devolve uma mensagem de erro ou nada, quando dá certo.
   const submitWith = (action, fallbackError) => async () => {
     setErrorMessage('');
     const invalid = validate({ usuario, senha }, credentialRules);
@@ -63,8 +59,6 @@ export function useLogin(onSuccess) {
     }
   };
 
-  // Cria a conta no servidor e entra direto nela, sem voltar para o login.
-  // A biometria é oferecida no fim do cadastro ou ativada no Perfil.
   const handleRegister = submitWith(async (email) => {
     const usuarioConta = await signUp(email, senha);
     setUsuario('');
@@ -72,15 +66,12 @@ export function useLogin(onSuccess) {
     onSuccess?.({ type: 'register', usuario: usuarioConta });
   }, 'Erro ao realizar o cadastro.');
 
-  // Entra com o e-mail como foi cadastrado, mesmo que digitado com outras
-  // maiúsculas, para a sessão sempre apontar para a mesma conta
   const handleManualLogin = submitWith(async (email) => {
     const usuarioConta = await signIn(email, senha);
     if (!usuarioConta) return 'Usuário não existe ou senha errada.';
     onSuccess?.({ type: 'credentials', usuario: usuarioConta });
   }, 'Erro ao realizar o login.');
 
-  // Entra sempre na conta dona da biometria, nunca em outra
   const triggerBiometricAuth = async () => {
     setErrorMessage('');
     const owner = await accountService.getBiometricOwner();

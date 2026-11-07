@@ -15,8 +15,6 @@ export const TABS = [
   { key: 'profile', label: 'Perfil', icon: 'person-outline' },
 ];
 
-// Barra de abas fixa no rodapé. Mostra a aba ativa e as que têm destino em
-// `onNavigate` ({ feed, report, profile }).
 export function BottomTabBar({ active, onNavigate }) {
   const visibleTabs = TABS.filter(
     (tab) => tab.key === active || onNavigate[tab.key]

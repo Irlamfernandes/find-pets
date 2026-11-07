@@ -13,7 +13,6 @@ import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 import { useUnlock } from '../hooks/useUnlock';
 import { palette } from '../../../shared/theme/colors';
 
-// Tela de desbloqueio ao reabrir o app: biometria ou senha da conta
 export default function UnlockScreen({ usuario, onUnlocked, onSwitchAccount }) {
   const {
     canUseBiometrics,
@@ -23,7 +22,6 @@ export default function UnlockScreen({ usuario, onUnlocked, onSwitchAccount }) {
     unlockWithBiometrics,
     unlockWithPassword,
   } = useUnlock(usuario, onUnlocked);
-  // Botão e tecla "concluir" compartilham a mesma trava
   const submitPassword = useSingleFlight(
     dismissKeyboardAnd(unlockWithPassword)
   );

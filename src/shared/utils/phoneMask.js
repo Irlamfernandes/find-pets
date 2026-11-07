@@ -1,13 +1,10 @@
-// Código do país (2) + DDD (2) + número (até 9)
 export const PHONE_MAX_DIGITS = 13;
 export const PHONE_MIN_DIGITS = 12;
 
-// Só os números do telefone, até o tamanho máximo
 export function onlyDigits(value) {
   return (value || '').replaceAll(/\D/g, '').slice(0, PHONE_MAX_DIGITS);
 }
 
-// Formata para exibição: +55 (11) 99999-9999
 export function formatPhone(value) {
   const digits = onlyDigits(value);
   if (!digits) return '';
@@ -19,7 +16,6 @@ export function formatPhone(value) {
   let formatted = `+${country}`;
   if (ddd) formatted += ` (${ddd}`;
   if (number) {
-    // Fixo completo (8 dígitos) usa 4-4; celular usa 5-4
     const splitAt = digits.length === PHONE_MIN_DIGITS ? 4 : 5;
     const prefix = number.slice(0, splitAt);
     const suffix = number.slice(splitAt);

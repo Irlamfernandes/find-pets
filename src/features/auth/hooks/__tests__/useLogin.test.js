@@ -16,7 +16,6 @@ const OWNER = { usuario: 'dona@test.com', hasBiometrics: true };
 const renderLogin = (onSuccess = jest.fn()) =>
   renderHook(() => useLogin(onSuccess)).result;
 
-// Preenche o formulário e aperta o botão (`handleManualLogin` ou `handleRegister`)
 const submit = async (result, action, { usuario = '', senha = '' } = {}) => {
   act(() => {
     result.current.setUsuario(usuario);
@@ -36,7 +35,6 @@ const triggerBiometric = async (result) => {
 describe('useLogin Hook', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Padrão: nenhum e-mail cadastrado e nenhuma conta com biometria
     biometricService.checkAvailability.mockResolvedValue(false);
     signIn.mockResolvedValue(null);
     accountService.getBiometricOwner.mockResolvedValue(null);
@@ -222,7 +220,6 @@ describe('useLogin Hook', () => {
       });
 
       expect(signUp).toHaveBeenCalledWith('novo@test.com', '123456');
-      // O cadastro não pede biometria (ela é oferecida no fim do cadastro)
       expect(biometricService.authenticate).not.toHaveBeenCalled();
       expect(onSuccess).toHaveBeenCalledWith({
         type: 'register',

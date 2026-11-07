@@ -3,9 +3,7 @@ import { sessionService } from '../../auth/services/sessionService';
 import { profileRepository } from '../data/profileRepository';
 import { requestSync } from '../../../shared/services/syncScheduler';
 
-// Perfil da conta conectada
 export const profileService = {
-  // Salva o perfil da conta conectada e pede a sincronização
   async saveProfile(profile) {
     if (!profile?.name || !profile?.whatsapp) {
       throw new Error('Dados inválidos para salvamento do perfil.');
@@ -19,7 +17,6 @@ export const profileService = {
     });
   },
 
-  // Perfil da conta conectada, ou null
   getProfile() {
     return withErrorContext('Erro ao buscar perfil', async () => {
       const owner = await sessionService.getCurrentUser();

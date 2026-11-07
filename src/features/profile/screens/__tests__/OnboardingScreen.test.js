@@ -26,6 +26,14 @@ describe('OnboardingScreen Component', () => {
     expect(queryByText('Preencha todos os campos.')).toBeNull();
   });
 
+  it('deve marcar nome e WhatsApp como obrigatórios', () => {
+    const { getByText, getAllByTestId } = render(<OnboardingScreen />);
+
+    expect(getByText('Nome *')).toBeTruthy();
+    expect(getByText('WhatsApp *')).toBeTruthy();
+    expect(getAllByTestId('required-mark')).toHaveLength(2);
+  });
+
   it('deve exibir mensagem de erro na tela se tentar salvar com campos vazios', async () => {
     const { getByTestId, getByText } = render(<OnboardingScreen />);
 

@@ -44,6 +44,17 @@ describe('FoundPetModal', () => {
     );
   });
 
+  it('deve marcar como obrigatórios só os campos exigidos', () => {
+    const { getByText, getAllByTestId } = renderModal();
+
+    expect(getByText('Nome de quem pegou o animal *')).toBeTruthy();
+    expect(getByText('Quem é essa pessoa? *')).toBeTruthy();
+    expect(getByText('Data *')).toBeTruthy();
+    expect(getByText('Hora *')).toBeTruthy();
+    expect(getByText('Onde foi encontrado (opcional)')).toBeTruthy();
+    expect(getAllByTestId('required-mark')).toHaveLength(4);
+  });
+
   it('deve enviar os dados preenchidos do reencontro', async () => {
     const { getByTestId, getByText, onConfirm } = renderModal();
 

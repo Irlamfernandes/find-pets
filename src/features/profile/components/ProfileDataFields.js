@@ -37,6 +37,7 @@ export function ProfileDataFields({
       <LabeledInput
         testID="input-profile-name"
         label="Nome"
+        required
         style={lockedStyle}
         value={values.name}
         onChangeText={(text) => onChange('name', text)}
@@ -48,6 +49,7 @@ export function ProfileDataFields({
       <LabeledInput
         testID="input-profile-whatsapp"
         label="WhatsApp"
+        required
         ref={whatsappRef}
         style={lockedStyle}
         value={values.whatsapp}

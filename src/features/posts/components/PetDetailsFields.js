@@ -3,6 +3,7 @@ import { Text, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 import { ChipSelector } from '../../../shared/components/ChipSelector';
 import { LabeledInput } from '../../../shared/components/LabeledInput';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
 import { formStyles } from '../../../shared/theme/formStyles';
 import { BreedSuggestions } from '../../breeds/components/BreedSuggestions';
 import { useBreedSuggestions } from '../../breeds/hooks/useBreedSuggestions';
@@ -23,7 +24,7 @@ export function PetDetailsFields({ petData, onChange }) {
 
   return (
     <>
-      <Text style={formStyles.label}>Espécie *</Text>
+      <FieldLabel required>Espécie</FieldLabel>
       <ChipSelector
         options={SPECIES_OPTIONS}
         value={petData.species}

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { FormTextInput } from '../../../shared/components/FormScrollView';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
 import { formStyles } from '../../../shared/theme/formStyles';
 import { palette } from '../../../shared/theme/colors';
 
@@ -45,7 +46,7 @@ function ConfirmPasswordField({
 }) {
   return (
     <>
-      <Text style={formStyles.label}>Confirmar nova senha</Text>
+      <FieldLabel required>Confirmar nova senha</FieldLabel>
       <FormTextInput
         ref={inputRef}
         testID="input-confirm-password"

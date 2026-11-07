@@ -23,4 +23,13 @@ describe('LabeledInput', () => {
     expect(getByTestId('campo').props.returnKeyType).toBe('done');
     expect(getByTestId('campo').props.onSubmitEditing).toBeUndefined();
   });
+
+  it('deve marcar o campo obrigatório', () => {
+    const { getByText, getByTestId } = render(
+      <LabeledInput label="WhatsApp" required testID="campo" />
+    );
+
+    expect(getByText('WhatsApp *')).toBeTruthy();
+    expect(getByTestId('required-mark')).toBeTruthy();
+  });
 });

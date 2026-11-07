@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
 import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { formStyles } from '../../../shared/theme/formStyles';
 import { palette } from '../../../shared/theme/colors';
@@ -39,9 +40,9 @@ export function PetPhotosField({
 }) {
   return (
     <>
-      <Text style={formStyles.label}>
+      <FieldLabel required>
         Fotos do pet ({photos.length}/{maxPhotos})
-      </Text>
+      </FieldLabel>
       <Text style={formStyles.hint}>{hint}</Text>
 
       <ScrollView

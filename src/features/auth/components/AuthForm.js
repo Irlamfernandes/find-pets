@@ -3,6 +3,7 @@ import { Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
 import { useBackHandler } from '../../../shared/hooks/useBackHandler';
 import {
   FormScrollView,
@@ -11,6 +12,28 @@ import {
 import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 import { palette } from '../../../shared/theme/colors';
+
+function AuthField({ label, inputRef, ...inputProps }) {
+  return (
+    <>
+      <FieldLabel required style={styles.fieldLabel}>
+        {label}
+      </FieldLabel>
+      <FormTextInput
+        ref={inputRef}
+        placeholder={label}
+        placeholderTextColor="#888"
+        selectionColor={palette.primary}
+        {...inputProps}
+      />
+    </>
+  );
+}
+
+AuthField.propTypes = {
+  label: PropTypes.string.isRequired,
+  inputRef: PropTypes.object,
+};
 
 export function AuthForm({
   title,
@@ -47,32 +70,28 @@ export function AuthForm({
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
 
-      <FormTextInput
+      <AuthField
+        label="E-mail"
         testID="input-email"
         style={inputStyle}
-        placeholder="E-mail"
-        placeholderTextColor="#888"
         value={usuario}
         onChangeText={setUsuario}
         autoCapitalize="none"
         keyboardType="email-address"
-        selectionColor={palette.primary}
         caretHidden={false}
         returnKeyType="next"
         submitBehavior="submit"
         onSubmitEditing={() => passwordRef.current?.focus()}
       />
 
-      <FormTextInput
-        ref={passwordRef}
+      <AuthField
+        label="Senha"
+        inputRef={passwordRef}
         testID="input-password"
         style={inputStyle}
-        placeholder="Senha"
-        placeholderTextColor="#888"
         value={senha}
         onChangeText={setSenha}
         secureTextEntry
-        selectionColor={palette.primary}
         returnKeyType="done"
         onSubmitEditing={submit}
       />
@@ -146,6 +165,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  fieldLabel: { marginTop: 0 },
   input: {
     height: 50,
     borderWidth: 1,

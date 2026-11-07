@@ -56,7 +56,7 @@ describe('ReportLostPetScreen', () => {
     );
 
     expect(useReportLostPet).toHaveBeenCalledWith(onSaved, null);
-    expect(getByText('Fotos do pet (0/5)')).toBeTruthy();
+    expect(getByText('Fotos do pet (0/5) *')).toBeTruthy();
     expect(getByTestId('button-take-photo')).toBeTruthy();
     expect(getByTestId('button-pick-gallery')).toBeTruthy();
     expect(getByText('Endereço (opcional)')).toBeTruthy();
@@ -129,7 +129,7 @@ describe('ReportLostPetScreen', () => {
     );
 
     expect(getAllByTestId('report-photo')).toHaveLength(2);
-    expect(getByText('Fotos do pet (2/5)')).toBeTruthy();
+    expect(getByText('Fotos do pet (2/5) *')).toBeTruthy();
     expect(queryByTestId('button-take-photo')).toBeNull();
 
     fireEvent.press(getByLabelText('Remover foto 2'));

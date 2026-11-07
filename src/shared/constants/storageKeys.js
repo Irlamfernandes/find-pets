@@ -4,4 +4,6 @@ export const STORAGE_KEYS = {
   FEED_GUIDE_SEEN: 'FindPets_feed_guide_seen',
   // Até onde cada conta já baixou as novidades do Firebase
   SYNC_CURSORS: 'FindPets_firebase_cursors',
+  // Listas de raças baixadas das APIs públicas (para usar offline)
+  BREEDS: 'FindPets_breeds',
 };

@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import { ChipSelector } from '../../../shared/components/ChipSelector';
 import { LabeledInput } from '../../../shared/components/LabeledInput';
 import { formStyles } from '../../../shared/theme/formStyles';
+import { BreedSuggestions } from '../../breeds/components/BreedSuggestions';
+import { useBreedSuggestions } from '../../breeds/hooks/useBreedSuggestions';
 import {
   SPECIES_OPTIONS,
   SIZE_OPTIONS,
@@ -11,10 +13,11 @@ import {
 } from '../constants/petOptions';
 
 // Seção "Sobre o pet": espécie (obrigatória), nome, porte, sexo, cor, raça e
-// detalhes
+// detalhes. A raça tem sugestões vindas de APIs públicas (cachorro e gato).
 export function PetDetailsFields({ petData, onChange }) {
   const breedRef = useRef(null);
   const descriptionRef = useRef(null);
+  const breedSuggestions = useBreedSuggestions(petData.species, petData.breed);
   // Liga um campo do formulário ao valor e à função que o altera
   const bind = (field) => ({
     value: petData[field],
@@ -72,6 +75,10 @@ export function PetDetailsFields({ petData, onChange }) {
         placeholder="Ex.: vira-lata, poodle, siamês"
         maxLength={40}
         onSubmit={() => descriptionRef.current?.focus()}
+      />
+      <BreedSuggestions
+        suggestions={breedSuggestions}
+        onSelect={(breed) => onChange('breed', breed)}
       />
 
       <LabeledInput

@@ -1,12 +1,17 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Keyboard, BackHandler, TextInput } from 'react-native';
 import ReportLostPetScreen from '../ReportLostPetScreen';
 import { useReportLostPet } from '../../hooks/useReportLostPet';
+import { breedService } from '../../../breeds/services/breedService';
 
 jest.mock('../../hooks/useReportLostPet', () => ({
   MAX_PHOTOS: 5,
   useReportLostPet: jest.fn(),
+}));
+
+jest.mock('../../../breeds/services/breedService', () => ({
+  breedService: { getBreeds: jest.fn() },
 }));
 
 const pressHardwareBack = () => {
@@ -62,6 +67,25 @@ describe('ReportLostPetScreen', () => {
         'Sem endereço, usamos a localização da foto ou a sua localização atual.'
       )
     ).toBeTruthy();
+  });
+
+  it('deve sugerir raças do cachorro e preencher a escolhida', async () => {
+    breedService.getBreeds.mockResolvedValue(['Bulldog', 'French Bulldog']);
+    useReportLostPet.mockReturnValue({
+      ...hookValue,
+      petData: { ...hookValue.petData, species: 'Cachorro', breed: 'bull' },
+    });
+    const { getByText } = render(
+      <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
+    );
+
+    await waitFor(() => expect(getByText('French Bulldog')).toBeTruthy());
+    expect(breedService.getBreeds).toHaveBeenCalledWith('Cachorro');
+    fireEvent.press(getByText('French Bulldog'));
+    expect(hookValue.setPetField).toHaveBeenCalledWith(
+      'breed',
+      'French Bulldog'
+    );
   });
 
   it('deve disparar as ações do formulário', () => {

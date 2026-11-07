@@ -100,8 +100,11 @@ def test_so_o_autor_altera_ou_exclui(client, sign_up):
     put(client, sign_up(), post_id)
     other = sign_up("bia@x.com")
 
-    assert put(client, other, post_id).status_code == 403
-    assert client.delete(f"/posts/{post_id}", headers=other).status_code == 403
+    updated = put(client, other, post_id)
+    deleted = client.delete(f"/posts/{post_id}", headers=other)
+
+    assert updated.status_code == 403
+    assert deleted.status_code == 403
 
 
 def test_exclusao_logica_e_sincronizacao(client, sign_up):
@@ -114,7 +117,8 @@ def test_exclusao_logica_e_sincronizacao(client, sign_up):
     assert deleted.get_json()["deletedAt"]
     assert client.get("/posts", headers=headers).get_json() == []
     assert client.get(f"/posts/{post_id}", headers=headers).status_code == 404
-    assert client.delete(f"/posts/{post_id}", headers=headers).status_code == 404
+    deleted_again = client.delete(f"/posts/{post_id}", headers=headers)
+    assert deleted_again.status_code == 404
     since = first["serverUpdatedAt"]
     changes = client.get(f"/posts?since={since}", headers=headers).get_json()
     assert [(item["id"], bool(item["deletedAt"])) for item in changes] == [

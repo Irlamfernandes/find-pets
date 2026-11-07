@@ -36,6 +36,11 @@ def enable_cors(app):
         CORS(app, origins=origins)
 
 
+def no_sniff(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 def create_app(overrides=None):
     app = Flask(__name__)
     app.config.update(load_settings())
@@ -46,6 +51,7 @@ def create_app(overrides=None):
     csrf.init_app(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     register_error_handlers(app)
+    app.after_request(no_sniff)
     init_database(app)
     for blueprint in BLUEPRINTS:
         app.register_blueprint(blueprint)

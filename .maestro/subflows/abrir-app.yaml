@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- openLink: ${EXPO_URL}
+- extendedWaitUntil:
+    visible: 'SDK version.*|Escolha uma opção'
+    timeout: 60000
+- runFlow: fechar-menu-expo.yaml
+- extendedWaitUntil:
+    visible:
+      id: 'button-go-login'
+    timeout: 10000
+- runFlow: mover-ferramentas.yaml

@@ -48,6 +48,7 @@ function ConfirmPasswordField({
       <Text style={formStyles.label}>Confirmar nova senha</Text>
       <FormTextInput
         ref={inputRef}
+        testID="input-confirm-password"
         style={[formStyles.input, mismatch && formStyles.inputError]}
         value={value}
         onChangeText={onChange}
@@ -103,6 +104,7 @@ export function PasswordChangeFields({
       <View style={styles.passwordContainer}>
         <FormTextInput
           ref={newPasswordRef}
+          testID="input-new-password"
           style={styles.passwordInput}
           value={newPassword}
           onChangeText={(text) => onChange('newPassword', text)}

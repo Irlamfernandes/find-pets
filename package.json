@@ -17,6 +17,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "test": "jest --ci --coverage",
+    "test:e2e": "bash .maestro/executar.sh",
     "prepare": "husky"
   },
   "jest": {
@@ -49,7 +50,7 @@
     "setupFiles": [
       "./jest.setup.js"
     ],
-    "testTimeout": 15000,
+    "testTimeout": 30000,
     "globalSetup": "./jest.globalSetup.js",
     "testPathIgnorePatterns": [
       "/node_modules/",

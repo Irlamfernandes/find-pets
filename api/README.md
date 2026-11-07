@@ -60,6 +60,7 @@ findpets_api/
   posts/            payload (validação), mapper (JSON), repository (SQL), service (regras), routes
   uploads/          fotos
 tests/              testes (pytest, banco SQLite temporário)
+tests_propriedades/ testes de propriedade (Hypothesis): regras conferidas com entradas geradas
 ```
 
 ## Desenvolvimento
@@ -69,4 +70,5 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/ruff check . && .venv/bin/ruff format --check .   # lint (complexidade máx. 6)
 .venv/bin/pytest                                             # testes (cobertura mínima de 100%)
+.venv/bin/pytest tests_propriedades --no-cov                 # testes de propriedade (Hypothesis)
 ```

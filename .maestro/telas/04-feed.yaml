@@ -1,0 +1,30 @@
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - assertVisible: 'Como funciona o FindPets'
+      - tapOn:
+          id: 'button-dismiss-guide'
+      - assertNotVisible: 'Como funciona o FindPets'
+      - tapOn: 'Mapa'
+      - assertVisible:
+          id: 'lost-pets-map-area'
+      - tapOn: 'Lista'
+      - assertNotVisible:
+          id: 'lost-pets-map-area'
+      - tapOn: 'Como funciona o app'
+      - assertVisible: 'Como funciona o FindPets'
+      - tapOn:
+          id: 'button-dismiss-guide'
+      - tapOn: 'Abrir meu perfil'
+      - assertVisible: 'Meus dados'
+      - tapOn:
+          id: 'tab-feed'
+
+- tapOn:
+    id: 'button-dismiss-guide'
+    optional: true
+- assertVisible:
+    id: 'tab-feed'

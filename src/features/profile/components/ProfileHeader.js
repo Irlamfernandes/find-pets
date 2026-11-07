@@ -26,6 +26,7 @@ export function ProfileHeader({ onBack, onLogout }) {
       </View>
       {onLogout ? (
         <SafeTouchable
+          testID="button-logout"
           onPress={dismissKeyboardAnd(onLogout)}
           style={styles.logoutButton}
         >

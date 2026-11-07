@@ -54,7 +54,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 | Nuvem         | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                          |
 | Recursos      | expo-image-picker, expo-image, expo-location, expo-local-authentication, expo-sharing, View Shot, react-native-maps |
 | API           | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                                 |
-| Qualidade     | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                                |
+| Qualidade     | Jest + Testing Library, pytest, Maestro (E2E), ESLint, Prettier, Ruff, SonarQube, Husky + Commitlint, Gitleaks      |
 | APIs públicas | Dog CEO (raças de cachorro) e Cat Facts (raças de gato), via `fetch`, sem chave de acesso                           |
 | CI            | GitHub Actions                                                                                                      |
 
@@ -132,7 +132,8 @@ API REST em `api/` (Flask + MySQL + Docker + Swagger), usada pelo app antes do F
 
 ## ✅ Qualidade
 
-- **100% de cobertura de testes** no app (Jest) e na API (pytest).
+- **100% de cobertura de testes** (linhas e ramos) no app (Jest) e na API (pytest com `--cov-branch`).
+- **Testes de ponta a ponta no celular** com [Maestro](https://maestro.mobile.dev), em `.maestro/`.
 - ESLint com limites obrigatórios: complexidade ciclomática até 6, no máximo 3 níveis de aninhamento, funções de até 80 linhas e arquivos de até 300.
 - Prettier (app) e Ruff (API) para formatação.
 - Husky + Commitlint: commits no padrão _Conventional Commits_ e bloqueio de commit direto na `main`.
@@ -167,3 +168,38 @@ npm test                 # app (Jest + cobertura)
 npm run lint             # ESLint
 cd api && pytest         # API (depois de: pip install -r requirements-dev.txt)
 ```
+
+### Testes de ponta a ponta (Maestro)
+
+Os fluxos em [.maestro/telas/](.maestro/telas) usam o app de verdade no celular, como um usuário. Eles percorrem o app **uma tela por vez, em ordem**, numa conta nova criada no começo:
+
+| Tela                | Verificação completa                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `01-tela-inicial`   | Textos, ida ao login e ao cadastro, volta pelo botão e pelo voltar do Android                        |
+| `02-cadastro`       | Sem internet, campos vazios, e-mail sem formato válido e senha curta (recusada pelo Firebase)        |
+| `03-perfil-inicial` | Campos vazios e WhatsApp curto                                                                       |
+| `04-feed`           | Guia de uso, lista e mapa, botão de ajuda e foto do usuário abrindo o perfil                         |
+| `05-registro`       | Registro sem foto não é salvo; voltar do Android                                                     |
+| `06-perfil-dados`   | Senha vazia e errada para editar; nome vazio, WhatsApp inválido e senhas diferentes; salvar os dados |
+| `07-foto-perfil`    | Opções da foto aparecem e "Cancelar" fecha                                                           |
+| `08-offline`        | Com o modo avião, o app avisa e continua funcionando; o aviso some ao reconectar                     |
+| `09-sair-e-entrar`  | E-mail já cadastrado; no login, campos vazios, e-mail inválido e senha errada                        |
+| `10-trocar-senha`   | Troca a senha: a antiga deixa de entrar e a nova entra; depois volta para a original                 |
+| `11-desbloqueio`    | Reabre o app: senha vazia e errada no desbloqueio e "Trocar de conta"                                |
+| `12-login-offline`  | Entra sem internet com a senha guardada; ao reconectar, o app pede para entrar de novo               |
+
+Ficam para teste manual: registrar um pet e trocar a foto do perfil (dependem da câmera ou da galeria do celular), a biometria (precisa da digital de verdade) e as ações do card de um registro (reencontro, editar, excluir, compartilhar, WhatsApp, rota e marcadores do mapa).
+
+Cada tela tem duas partes: a **verificação completa** e o **caminho feliz** (o mínimo para chegar à próxima tela). Na primeira vez, cada tela faz a verificação completa; depois de aprovada, faz só o caminho feliz, o que deixa as execuções seguintes bem mais rápidas. As telas aprovadas ficam anotadas em `.maestro/.aprovadas`, só no seu computador. Se uma tela falhar, a execução para nela.
+
+1. Instale o `adb` e o Maestro:
+   ```bash
+   sudo apt install adb
+   curl -Ls "https://get.maestro.mobile.dev" | bash
+   ```
+2. No celular, ative as **Opções do desenvolvedor** e a **Depuração USB**, conecte no cabo e confira com `adb devices`.
+3. Com o `npx expo start` rodando:
+   ```bash
+   npm run test:e2e              # verifica as telas ainda não aprovadas
+   npm run test:e2e -- --tudo    # esquece as aprovações e verifica tudo
+   ```

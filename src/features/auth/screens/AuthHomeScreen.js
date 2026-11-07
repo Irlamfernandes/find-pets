@@ -16,11 +16,16 @@ export function AuthHomeScreen({ onNavigate }) {
       <Text style={styles.title}>FindPets</Text>
       <Text style={styles.subtitle}>Escolha uma opção</Text>
 
-      <SafeTouchable style={styles.button} onPress={() => onNavigate('login')}>
+      <SafeTouchable
+        testID="button-go-login"
+        style={styles.button}
+        onPress={() => onNavigate('login')}
+      >
         <Text style={styles.buttonText}>Login</Text>
       </SafeTouchable>
 
       <SafeTouchable
+        testID="button-go-register"
         style={[styles.button, styles.secondaryButton]}
         onPress={() => onNavigate('cadastro')}
       >

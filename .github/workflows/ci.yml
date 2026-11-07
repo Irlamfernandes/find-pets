@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ['main', 'develop']
 
+# O workflow só lê o código; nenhum job precisa gravar no repositório
+permissions:
+  contents: read
+
 jobs:
   lint-and-validate:
     name: Validar Código JS, Formatação e Testes
@@ -16,6 +20,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          # Não deixa o token do GitHub salvo no .git depois do checkout
+          persist-credentials: false
 
       - name: Configurar Node.js
         uses: actions/setup-node@v7
@@ -60,6 +66,8 @@ jobs:
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Configurar Python
         uses: actions/setup-python@v7

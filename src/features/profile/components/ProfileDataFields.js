@@ -35,6 +35,7 @@ export function ProfileDataFields({
       </View>
 
       <LabeledInput
+        testID="input-profile-name"
         label="Nome"
         style={lockedStyle}
         value={values.name}
@@ -45,6 +46,7 @@ export function ProfileDataFields({
       />
 
       <LabeledInput
+        testID="input-profile-whatsapp"
         label="WhatsApp"
         ref={whatsappRef}
         style={lockedStyle}

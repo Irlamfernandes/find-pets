@@ -65,6 +65,7 @@ export default function ProfileScreen({ onBack, onOpenReport, onLogout }) {
             />
 
             <SafeTouchable
+              testID="button-save-profile"
               style={formStyles.primaryButton}
               onPress={saveChanges}
             >

@@ -1,0 +1,30 @@
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${VERIFICAR == 'true'}"
+    commands:
+      - tapOn:
+          id: 'tab-report'
+      - assertVisible: 'Sobre o pet'
+      - scrollUntilVisible:
+          element:
+            id: 'button-submit-report'
+          direction: DOWN
+      - tapOn:
+          id: 'button-submit-report'
+      - assertVisible: 'Adicione uma foto'
+      - tapOn: 'Entendi'
+      - assertVisible:
+          id: 'button-submit-report'
+      - back
+      - assertVisible:
+          id: 'tab-feed'
+
+- tapOn:
+    id: 'tab-report'
+- assertVisible: 'Sobre o pet'
+- tapOn:
+    id: 'button-back'
+- assertVisible:
+    id: 'tab-feed'

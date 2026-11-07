@@ -1,0 +1,9 @@
+appId: host.exp.exponent
+---
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: 'SDK version.*'
+    commands:
+      - tapOn: 'Close'
+      - waitForAnimationToEnd

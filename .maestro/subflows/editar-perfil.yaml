@@ -1,0 +1,13 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'tab-profile'
+- tapOn:
+    id: 'button-edit-profile'
+- tapOn:
+    id: 'input-current-password'
+- eraseText: 50
+- inputText: ${SENHA}
+- tapOn: 'Confirmar'
+- assertVisible:
+    id: 'button-save-profile'

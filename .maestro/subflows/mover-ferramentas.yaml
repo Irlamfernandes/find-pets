@@ -1,0 +1,10 @@
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      visible: 'Tools'
+    commands:
+      - swipe:
+          start: 89%, 8%
+          end: 4%, 62%
+          duration: 1500

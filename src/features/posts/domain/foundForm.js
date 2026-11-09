@@ -6,8 +6,6 @@ import {
 import { getTimeZoneInfo } from '../../../shared/utils/timeZone';
 import { rule, isFilled } from '../../../shared/utils/validation';
 
-// Formulário do reencontro de um pet
-
 export const FOUND_RELATIONS = [
   'Dono(a) / tutor',
   'Familiar',
@@ -16,7 +14,6 @@ export const FOUND_RELATIONS = [
   'Outro',
 ];
 
-// Começa com o nome vazio, a primeira relação e a data/hora atual
 export function createFoundForm(now = new Date()) {
   return {
     receiverName: '',
@@ -28,10 +25,8 @@ export function createFoundForm(now = new Date()) {
   };
 }
 
-// Data e hora digitadas no formulário, juntas numa data
 const getFoundAt = (form) => parseDateTimeInput(form.date, form.time);
 
-// A data digitada não tem segundos: compara a partir do minuto do sumiço
 function startOfMinute(value) {
   const date = new Date(value);
   date.setSeconds(0, 0);
@@ -57,7 +52,6 @@ export const foundFormRules = [
   ),
 ];
 
-// Dados gravados no registro (o formulário já deve ter sido validado)
 export function toFoundInfo(form) {
   const foundAt = getFoundAt(form);
   return {

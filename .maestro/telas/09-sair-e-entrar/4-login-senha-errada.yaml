@@ -1,0 +1,21 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-go-login'
+- tapOn:
+    id: 'input-email'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'input-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: 'senhaerrada'
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'Usuário não existe ou senha errada.'
+    timeout: 30000
+- tapOn: 'Voltar'

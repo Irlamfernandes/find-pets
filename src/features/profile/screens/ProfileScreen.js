@@ -20,19 +20,15 @@ import { ProfileDataFields } from '../components/ProfileDataFields';
 import { ProfilePhotoSection } from '../components/ProfilePhotoSection';
 import { PasswordChangeFields } from '../components/PasswordChangeFields';
 
-// Tela de perfil: foto, dados, senha, biometria e saída da conta
 export default function ProfileScreen({ onBack, onOpenReport, onLogout }) {
   const editor = useProfileEditor({ onSaved: onBack });
   const { values, isEditing } = editor;
-  // A edição só é liberada depois de confirmar a senha atual
   const unlockPrompt = usePasswordPrompt({ onConfirmed: editor.startEditing });
-  // A barra inferior some com o teclado aberto para não cobrir os campos
   const isKeyboardVisible = useKeyboardVisible();
   useBackHandler(dismissKeyboardAnd(onBack));
   const whatsappRef = useRef(null);
   const newPasswordRef = useRef(null);
 
-  // Botão e tecla "concluir" compartilham a mesma trava
   const saveChanges = useSingleFlight(dismissKeyboardAnd(editor.save));
 
   return (
@@ -69,6 +65,7 @@ export default function ProfileScreen({ onBack, onOpenReport, onLogout }) {
             />
 
             <SafeTouchable
+              testID="button-save-profile"
               style={formStyles.primaryButton}
               onPress={saveChanges}
             >

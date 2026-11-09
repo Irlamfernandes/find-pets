@@ -5,7 +5,6 @@ import {
   formatDateTime,
 } from '../timeZone';
 
-// A suíte roda com TZ=America/Sao_Paulo (jest.globalSetup.js)
 describe('timeZone', () => {
   afterEach(() => {
     jest.restoreAllMocks();

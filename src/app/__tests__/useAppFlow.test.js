@@ -55,13 +55,10 @@ describe('useAppFlow', () => {
     expect(screenOf(hook)).toBe(SCREENS.LOGIN);
   });
 
-  it('deve pedir o desbloqueio quando houver sessão salva e entrar em seguida', async () => {
+  it('deve abrir na tela de entrada mesmo com sessão salva', () => {
     sessionState.session = { usuario: 'ana@x.com' };
     const hook = renderFlow();
-    expect(screenOf(hook)).toBe(SCREENS.UNLOCK);
-
-    await act(() => hook.result.current.actions.unlocked());
-    expect(screenOf(hook)).toBe(SCREENS.HOME);
+    expect(screenOf(hook)).toBe(SCREENS.LOGIN);
   });
 
   it('deve salvar a sessão ao entrar e avisar conforme a forma de entrada', async () => {
@@ -82,6 +79,26 @@ describe('useAppFlow', () => {
       expect.objectContaining({ message: 'Bem-vindo de volta, ana@x.com!' })
     );
     expect(screenOf(hook)).toBe(SCREENS.HOME);
+    expect(offerBiometrics).toHaveBeenCalledWith(
+      'ana@x.com',
+      'Entre mais rápido'
+    );
+  });
+
+  it('não deve oferecer a biometria ao entrar com ela, ao cadastrar ou sem perfil', async () => {
+    const hook = renderFlow();
+    await act(() =>
+      hook.result.current.actions.loginSucceeded({ type: 'biometric' })
+    );
+    await act(() =>
+      hook.result.current.actions.loginSucceeded({ type: 'register' })
+    );
+    profileService.getProfile.mockResolvedValueOnce(null);
+    await act(() =>
+      hook.result.current.actions.loginSucceeded({ type: 'credentials' })
+    );
+
+    expect(offerBiometrics).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -118,7 +135,13 @@ describe('useAppFlow', () => {
       profileService.getProfile.mockResolvedValueOnce(null);
       sessionState.session = { usuario: 'ana@x.com' };
       const hook = renderFlow();
-      await act(() => hook.result.current.actions.unlocked());
+      await act(() =>
+        hook.result.current.actions.loginSucceeded({
+          type: 'register',
+          usuario: 'ana@x.com',
+        })
+      );
+      showAlert.mockClear();
       await act(() =>
         hook.result.current.actions.onboardingCompleted({ name: 'Ana' })
       );
@@ -129,11 +152,13 @@ describe('useAppFlow', () => {
       offerBiometrics.mockResolvedValueOnce(true);
       const hook = await completeOnboarding();
 
-      // O perfil fica só no banco: a sessão guarda apenas quem está logado
       expect(sessionState.saveUserSession).not.toHaveBeenCalledWith(
         expect.objectContaining({ profile: expect.anything() })
       );
-      expect(offerBiometrics).toHaveBeenCalledWith('ana@x.com', 'Ana');
+      expect(offerBiometrics).toHaveBeenCalledWith(
+        'ana@x.com',
+        'Tudo pronto, Ana!'
+      );
       expect(showAlert).not.toHaveBeenCalled();
       expect(screenOf(hook)).toBe(SCREENS.HOME);
     });
@@ -156,7 +181,10 @@ describe('useAppFlow', () => {
       await act(() =>
         hook.result.current.actions.onboardingCompleted({ name: 'Ana' })
       );
-      expect(offerBiometrics).toHaveBeenCalledWith(undefined, 'Ana');
+      expect(offerBiometrics).toHaveBeenCalledWith(
+        undefined,
+        'Tudo pronto, Ana!'
+      );
     });
   });
 
@@ -206,16 +234,6 @@ describe('useAppFlow', () => {
       );
 
       expect(order).toEqual(['sync', 'perfil']);
-      expect(screenOf(hook)).toBe(SCREENS.HOME);
-    });
-
-    it('deve sincronizar em segundo plano ao desbloquear', async () => {
-      sessionState.session = { usuario: 'ana@x.com' };
-      const hook = renderFlow();
-
-      await act(() => hook.result.current.actions.unlocked());
-
-      expect(syncService.syncNow).toHaveBeenCalledTimes(1);
       expect(screenOf(hook)).toBe(SCREENS.HOME);
     });
 

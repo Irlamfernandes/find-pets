@@ -1,5 +1,3 @@
-// Mensagens dos erros do Firebase Authentication mostradas ao usuário:
-// [código do erro, mensagem]
 const MESSAGES = new Map([
   ['auth/email-already-in-use', 'Este e-mail já está cadastrado. Faça login.'],
   ['auth/weak-password', 'A senha precisa ter pelo menos 6 caracteres.'],
@@ -14,17 +12,14 @@ const MESSAGES = new Map([
   ],
 ]);
 
-// E-mail ou senha não conferem
 const WRONG_CREDENTIALS = new Set([
   'auth/invalid-credential',
   'auth/wrong-password',
   'auth/user-not-found',
 ]);
 
-// Erro de e-mail ou senha incorretos
 export const isWrongCredentials = (error) => WRONG_CREDENTIALS.has(error?.code);
 
-// Erro com a mensagem amigável, quando o código é conhecido
 export function friendlyAuthError(error) {
   const message = MESSAGES.get(error?.code);
   return message ? new Error(message) : error;

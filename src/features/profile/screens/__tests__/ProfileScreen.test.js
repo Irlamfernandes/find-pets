@@ -16,7 +16,6 @@ import { profilePhotoStorage } from '../../../../shared/services/photoStorage';
 import { Alert, TextInput, BackHandler } from 'react-native';
 import { useKeyboardVisible } from '../../../../shared/hooks/useKeyboardVisible';
 
-// Mock dos serviços
 jest.mock('../../services/profileService');
 jest.mock('../../../auth/services/accountService');
 jest.mock('../../../auth/services/passwordService');
@@ -45,7 +44,6 @@ jest.mock('../../../../shared/hooks/useKeyboardVisible', () => ({
 
 jest.spyOn(Alert, 'alert');
 
-// Desbloqueia os campos do perfil confirmando a senha atual
 async function unlockEditing(password = 'senha123') {
   fireEvent.press(screen.getByTestId('button-edit-profile'));
   fireEvent.changeText(screen.getByTestId('input-current-password'), password);
@@ -55,7 +53,6 @@ async function unlockEditing(password = 'senha123') {
   });
 }
 
-// Espera o perfil carregar, desbloqueia a edição e preenche nome e WhatsApp
 async function unlockAndFillProfile() {
   await waitFor(() => {
     expect(screen.getByPlaceholderText('Seu nome')).toBeTruthy();
@@ -475,7 +472,6 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     fireEvent.press(getByLabelText('Ocultar senha'));
     expect(newPasswordInput().props.secureTextEntry).toBe(true);
 
-    // Ao cancelar e editar novamente, a senha volta a ficar oculta
     fireEvent.press(getByTestId('button-toggle-password-visibility'));
     fireEvent.press(getByText('Cancelar'));
     await unlockEditing();
@@ -739,9 +735,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       expect(getByPlaceholderText(CONFIRM)).toBeTruthy();
       expect(getByPlaceholderText(CONFIRM).props.secureTextEntry).toBe(true);
 
-      // Mostrar a senha vale para os dois campos
-      fireEvent.press(screen.getByLabelText('Mostrar senha'));
+      fireEvent.press(screen.getByTestId('button-toggle-confirm-visibility'));
       expect(getByPlaceholderText(CONFIRM).props.secureTextEntry).toBe(false);
+      expect(getByPlaceholderText(NEW).props.secureTextEntry).toBe(false);
     });
 
     it('deve avisar e bloquear o salvamento quando as senhas forem diferentes', async () => {

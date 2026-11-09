@@ -7,7 +7,6 @@ import globals from 'globals';
 
 export default [
   {
-    // api/ é a API em Python (tem lint próprio, com o Ruff)
     ignores: ['coverage/**', 'api/**'],
   },
   js.configs.recommended,
@@ -50,8 +49,6 @@ export default [
     },
   },
   {
-    // Limites de tamanho e complexidade do código do app (os testes ficam
-    // de fora: blocos describe/it são naturalmente longos)
     files: ['**/*.js'],
     ignores: ['**/__tests__/**', 'src/testing/**'],
     rules: {

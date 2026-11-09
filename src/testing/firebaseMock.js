@@ -1,30 +1,20 @@
-// Firebase em memória para os testes. O SDK real fala com a nuvem; aqui o
-// mesmo contrato (Authentication e Realtime Database) é atendido por um
-// estado local, compartilhado pelos três módulos do pacote.
-
 const backend = { users: [], tree: {}, clock: 0, sequence: 0 };
 const auth = { currentUser: null, authStateReady: async () => {} };
 
-// Erro com código, no formato dos erros do Firebase Authentication
 const authError = (code) => Object.assign(new Error(code), { code });
 
-// E-mail sem espaços e em minúsculas, como o Firebase guarda
 const normalize = (email) => String(email).trim().toLowerCase();
 
-// Valor que o Firebase não guarda: nulo, lista ou objeto vazio
 const isEmpty = (value) =>
   value === null ||
   value === undefined ||
   (typeof value === 'object' && Object.keys(value).length === 0);
 
-// Hora do servidor: um relógio que só avança, um passo a cada gravação
 function nextServerTime() {
   backend.clock += 1;
   return backend.clock;
 }
 
-// Como no Firebase: nulos, listas e objetos vazios não são guardados, e
-// undefined é recusado
 function clean(value) {
   if (value === undefined) throw new Error('set failed: value is undefined');
   if (value?.['.sv'] === 'timestamp') return nextServerTime();
@@ -34,15 +24,12 @@ function clean(value) {
   return Object.fromEntries(entries.map(([key, item]) => [key, clean(item)]));
 }
 
-// "posts/1" -> ["posts", "1"]
 const keysOf = (path) => path.split('/').filter(Boolean);
 
-// Valor guardado no caminho, ou null
 function readPath(path) {
   return keysOf(path).reduce((node, key) => node?.[key] ?? null, backend.tree);
 }
 
-// Grava o valor no caminho, criando os níveis que faltarem
 function writePath(path, value) {
   const keys = keysOf(path);
   const last = keys.pop();
@@ -50,23 +37,17 @@ function writePath(path, value) {
   parent[last] = value;
 }
 
-// Cópia do valor, para o teste não alterar o banco sem querer
 const copy = (value) => (value === null ? null : structuredClone(value));
 
-// Resultado de uma leitura, com os métodos usados pelo app
 function snapshotOf(value, children = []) {
   return {
-    // O caminho tem algum valor guardado
     exists: () => !isEmpty(value),
-    // Cópia do valor guardado (null se não houver)
     val: () => (isEmpty(value) ? null : copy(value)),
-    // Percorre os filhos em ordem; para se o callback devolver true
     forEach: (callback) =>
       children.some((child) => callback(snapshotOf(child)) === true),
   };
 }
 
-// Consulta com orderByChild + startAt (únicas usadas pelo app)
 function runQuery({ path, constraints }) {
   const { key } = constraints.find((item) => item.type === 'orderByChild');
   const { value: start } = constraints.find((item) => item.type === 'startAt');
@@ -134,7 +115,6 @@ const databaseModule = {
   ),
 };
 
-// Apaga contas, login e dados (cada teste começa do zero)
 function resetFirebase() {
   backend.users = [];
   backend.tree = {};
@@ -143,7 +123,6 @@ function resetFirebase() {
   auth.currentUser = null;
 }
 
-// Lê o banco direto, sem passar pelo app
 const readFirebase = (path) => copy(readPath(path));
 
 module.exports = {

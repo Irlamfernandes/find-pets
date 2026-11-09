@@ -1,0 +1,25 @@
+appId: host.exp.exponent
+---
+- runFlow: ../../subflows/editar-perfil.yaml
+- tapOn:
+    id: 'input-profile-name'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: 'Nome Editado'
+- tapOn:
+    id: 'input-profile-whatsapp'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: '5521988887777'
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: 'button-save-profile'
+    direction: DOWN
+- tapOn:
+    id: 'button-save-profile'
+- extendedWaitUntil:
+    visible: 'Perfil atualizado'
+    timeout: 30000
+- tapOn: 'Entendi'
+- assertVisible: 'Olá, Nome Editado'

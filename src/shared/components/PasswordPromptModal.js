@@ -3,7 +3,6 @@ import {
   Modal,
   StyleSheet,
   Text,
-  TextInput,
   View,
   KeyboardAvoidingView,
   Keyboard,
@@ -11,10 +10,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from './SafeTouchable';
+import { PasswordInput } from './PasswordInput';
 import { palette } from '../theme/colors';
 
-// Janela que pede a senha atual antes de uma ação sensível (ex.: editar o
-// perfil ou ativar a biometria)
 export default function PasswordPromptModal({
   visible,
   title = 'Confirme sua senha',
@@ -26,14 +24,12 @@ export default function PasswordPromptModal({
 }) {
   const [password, setPassword] = useState('');
 
-  // Cancelou: fecha o teclado e limpa a senha digitada
   const handleCancel = () => {
     Keyboard.dismiss();
     setPassword('');
     onCancel();
   };
 
-  // Confirmou: quem abriu confere a senha; se estiver certa, o campo é limpo
   const handleConfirm = async () => {
     Keyboard.dismiss();
     const confirmed = await onConfirm(password);
@@ -59,15 +55,13 @@ export default function PasswordPromptModal({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
 
-          <TextInput
+          <PasswordInput
             testID="input-current-password"
-            style={styles.input}
+            containerStyle={styles.input}
             value={password}
             onChangeText={setPassword}
             placeholder="Senha atual"
-            secureTextEntry
             autoFocus
-            selectionColor={palette.primary}
             returnKeyType="done"
             onSubmitEditing={handleConfirm}
           />
@@ -148,12 +142,6 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     backgroundColor: palette.background,
-    borderWidth: 1,
-    borderColor: palette.cardBorder,
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    color: palette.text,
   },
   errorText: {
     alignSelf: 'flex-start',

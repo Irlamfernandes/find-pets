@@ -27,7 +27,6 @@ describe('SharePreviewModal', () => {
     });
 
     expect(onShare).toHaveBeenCalledTimes(1);
-    // Recebe a referência do cartaz para gerar a imagem
     expect(onShare.mock.calls[0][0]).toBeTruthy();
   });
 

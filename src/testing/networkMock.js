@@ -1,5 +1,3 @@
-// expo-network para os testes: por padrão, conectado e com internet. Cada
-// teste pode trocar o estado com mockResolvedValueOnce / mockReturnValueOnce.
 const ONLINE = { type: 'WIFI', isConnected: true, isInternetReachable: true };
 
 function createNetworkMock() {

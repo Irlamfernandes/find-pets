@@ -7,7 +7,6 @@ import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 
 export { MAX_PHOTOS } from './usePetPhotos';
 
-// Campos descritivos do pet, na ordem em que aparecem no formulário
 const PET_FIELDS = [
   'petName',
   'species',
@@ -18,11 +17,9 @@ const PET_FIELDS = [
   'description',
 ];
 
-// Valores iniciais do formulário: os do registro editado ou vazios
 const initialPetData = (post) =>
   Object.fromEntries(PET_FIELDS.map((field) => [field, post?.[field] || '']));
 
-// Tira os espaços das pontas de cada campo
 const trimPetData = (petData) =>
   Object.fromEntries(PET_FIELDS.map((field) => [field, petData[field].trim()]));
 
@@ -39,9 +36,7 @@ const reportRules = [
   }),
 ];
 
-// O que muda entre criar um registro e editar um existente
 const CREATE_MODE = {
-  // Publica um registro novo
   save: (_post, draft) => publishLostPost(draft),
   successAlert: {
     type: 'success',
@@ -61,7 +56,6 @@ const EDIT_MODE = {
   errorTitle: 'Não foi possível salvar',
 };
 
-// Cria um registro novo ou, com `initialPost`, edita um existente
 export function useReportLostPet(onSaved, initialPost = null) {
   const showAlert = useAppAlert();
   const isEditing = Boolean(initialPost);
@@ -71,13 +65,10 @@ export function useReportLostPet(onSaved, initialPost = null) {
   const [address, setAddress] = useState(initialPost?.location || '');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Altera um campo dos dados do pet
   const setPetField = (field, value) => {
     setPetData((current) => ({ ...current, [field]: value }));
   };
 
-  // Chamadas repetidas enquanto salva recebem o mesmo salvamento, em vez
-  // de criar registros duplicados
   const submit = useSingleFlight(async () => {
     const invalid = validate(
       { photos: petPhotos.photos, petData },

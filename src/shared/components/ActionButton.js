@@ -17,7 +17,6 @@ const VARIANTS = {
   },
 };
 
-// Botão com ícone e texto usado nas ações dos cards
 export function ActionButton({
   icon,
   label,

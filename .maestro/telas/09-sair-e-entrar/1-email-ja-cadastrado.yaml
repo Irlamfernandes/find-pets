@@ -1,0 +1,22 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-go-register'
+- tapOn:
+    id: 'input-email'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'input-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: 'outrasenha'
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'Este e-mail já está cadastrado. Faça login.'
+    timeout: 30000
+- tapOn: 'Voltar'
+- assertVisible: 'Escolha uma opção'

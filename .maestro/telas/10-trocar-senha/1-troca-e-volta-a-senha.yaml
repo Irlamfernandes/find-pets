@@ -1,0 +1,42 @@
+appId: host.exp.exponent
+---
+- runFlow: ../../subflows/editar-perfil.yaml
+- runFlow:
+    file: ../../subflows/trocar-senha.yaml
+    env:
+      NOVA: ${NOVA_SENHA}
+- tapOn:
+    id: 'tab-profile'
+- tapOn:
+    id: 'button-logout'
+- tapOn:
+    id: 'button-go-login'
+- tapOn:
+    id: 'input-email'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'input-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${SENHA}
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: 'Usuário não existe ou senha errada.'
+    timeout: 30000
+- tapOn: 'Voltar'
+- runFlow:
+    file: ../../subflows/entrar.yaml
+    env:
+      SENHA: ${NOVA_SENHA}
+- runFlow:
+    file: ../../subflows/editar-perfil.yaml
+    env:
+      SENHA: ${NOVA_SENHA}
+- runFlow:
+    file: ../../subflows/trocar-senha.yaml
+    env:
+      NOVA: ${SENHA}

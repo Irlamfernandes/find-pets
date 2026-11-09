@@ -140,7 +140,6 @@ ConfirmTrigger.propTypes = {
   onConfirmed: PropTypes.func.isRequired,
 };
 
-// Guarda a função de aviso para o teste chamá-la diretamente
 function CaptureAlert({ onReady }) {
   onReady(useAppAlert());
   return null;

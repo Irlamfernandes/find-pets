@@ -1,0 +1,8 @@
+appId: host.exp.exponent
+---
+- assertVisible: 'FindPets'
+- assertVisible: 'Escolha uma opção'
+- assertVisible:
+    id: 'button-go-login'
+- assertVisible:
+    id: 'button-go-register'

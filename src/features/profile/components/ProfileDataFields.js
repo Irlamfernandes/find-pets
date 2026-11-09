@@ -8,7 +8,6 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { formStyles } from '../../../shared/theme/formStyles';
 import { palette } from '../../../shared/theme/colors';
 
-// "Meus dados": nome e WhatsApp, travados até a pessoa tocar no lápis
 export function ProfileDataFields({
   values,
   isEditing,
@@ -36,7 +35,9 @@ export function ProfileDataFields({
       </View>
 
       <LabeledInput
+        testID="input-profile-name"
         label="Nome"
+        required
         style={lockedStyle}
         value={values.name}
         onChangeText={(text) => onChange('name', text)}
@@ -46,7 +47,9 @@ export function ProfileDataFields({
       />
 
       <LabeledInput
+        testID="input-profile-whatsapp"
         label="WhatsApp"
+        required
         ref={whatsappRef}
         style={lockedStyle}
         value={values.whatsapp}

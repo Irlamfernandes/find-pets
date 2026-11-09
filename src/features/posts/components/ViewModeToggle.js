@@ -10,7 +10,6 @@ export const VIEW_MODES = [
   { mode: 'map', label: 'Mapa', icon: 'map-outline' },
 ];
 
-// Alterna entre a lista de cards e o mapa com todos os pets perdidos
 export function ViewModeToggle({ value, onChange }) {
   return (
     <View style={styles.container}>

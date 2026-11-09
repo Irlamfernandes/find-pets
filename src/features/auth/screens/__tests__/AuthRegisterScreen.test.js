@@ -47,6 +47,26 @@ describe('AuthRegisterScreen Component', () => {
     expect(defaultProps.onBack).toHaveBeenCalled();
   });
 
+  it('deve marcar e-mail e senha como obrigatórios', () => {
+    const { getByText, getAllByTestId } = render(
+      <AuthRegisterScreen {...defaultProps} />
+    );
+
+    expect(getByText('E-mail *')).toBeTruthy();
+    expect(getByText('Senha *')).toBeTruthy();
+    expect(getAllByTestId('required-mark')).toHaveLength(2);
+  });
+
+  it('deve mostrar a senha ao tocar no olho', () => {
+    const { getByTestId, getByLabelText } = render(
+      <AuthRegisterScreen {...defaultProps} />
+    );
+
+    expect(getByTestId('input-password').props.secureTextEntry).toBe(true);
+    fireEvent.press(getByLabelText('Mostrar senha'));
+    expect(getByTestId('input-password').props.secureTextEntry).toBe(false);
+  });
+
   it('deve exibir mensagem de erro quando errorMessage for fornecido no cadastro', () => {
     const { getByText } = render(
       <AuthRegisterScreen {...defaultProps} errorMessage="Preencha os campos" />

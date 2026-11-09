@@ -1,0 +1,7 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'tab-profile'
+- tapOn:
+    id: 'button-logout'
+- assertVisible: 'Escolha uma opção'

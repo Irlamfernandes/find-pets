@@ -2,9 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 
-// Botão que evita cliques repetidos: se a ação devolver uma Promise
-// (salvar, entrar, registrar...), o botão fica travado até ela terminar.
-// A trava usa uma ref para bloquear até toques duplos no mesmo instante.
 export function SafeTouchable({ onPress, disabled, style, ...props }) {
   const lockedRef = useRef(false);
   const mountedRef = useRef(true);
@@ -17,7 +14,6 @@ export function SafeTouchable({ onPress, disabled, style, ...props }) {
     []
   );
 
-  // Executa a ação e, se ela for assíncrona, trava o botão até terminar
   const handlePress = async (event) => {
     if (lockedRef.current || !onPress) return;
 

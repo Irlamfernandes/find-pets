@@ -6,7 +6,6 @@ const DENIED_MESSAGES = {
   gallery: 'Permita o acesso às fotos para escolher sua foto.',
 };
 
-// Opções do menu de foto; "Remover" só aparece quando há foto
 export function getPhotoOptions({ hasPhoto, onChoose, onRemove }) {
   const options = [
     {
@@ -32,7 +31,6 @@ export function getPhotoOptions({ hasPhoto, onChoose, onRemove }) {
   ];
 }
 
-// Abre a câmera ou a galeria e entrega a foto escolhida a `onPicked`
 export function useProfilePhotoPicker(onPicked) {
   const showAlert = useAppAlert();
 

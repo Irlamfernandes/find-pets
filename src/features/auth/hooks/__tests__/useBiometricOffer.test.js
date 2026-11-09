@@ -21,14 +21,13 @@ describe('useBiometricOffer', () => {
     accountService.checkPassword.mockResolvedValue(true);
   });
 
-  // Exibe o convite e escolhe uma das opções
   const offerAndChoose = async (choice) => {
     const hook = renderHook(() => useBiometricOffer());
     let offered;
     await act(async () => {
       offered = await hook.result.current.offerBiometrics(
         'ana@test.com',
-        'Ana'
+        'Tudo pronto, Ana!'
       );
     });
     expect(offered).toBe(true);
@@ -64,7 +63,6 @@ describe('useBiometricOffer', () => {
         errorMessage: '',
       })
     );
-    // A biometria só é pedida depois da senha
     expect(biometricService.authenticate).not.toHaveBeenCalled();
 
     expect(await confirm(hook, 'senha123')).toBe(true);
@@ -74,7 +72,8 @@ describe('useBiometricOffer', () => {
     );
     expect(accountService.setBiometrics).toHaveBeenCalledWith(
       'ana@test.com',
-      true
+      true,
+      'senha123'
     );
     expect(hook.result.current.passwordPromptProps.visible).toBe(false);
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -153,15 +152,34 @@ describe('useBiometricOffer', () => {
     expect(accountService.setBiometrics).not.toHaveBeenCalled();
   });
 
-  it('não deve oferecer sem biometria no celular, se outra conta já usa ou com erro', async () => {
+  it('deve oferecer a troca quando outra conta tem a biometria', async () => {
+    accountService.getBiometricOwner.mockResolvedValueOnce({
+      usuario: 'outra@test.com',
+    });
     const { result } = renderHook(() => useBiometricOffer());
-    const offer = () => result.current.offerBiometrics('ana@test.com', 'Ana');
+
+    await act(async () => {
+      await expect(
+        result.current.offerBiometrics('ana@test.com', 'Entre mais rápido')
+      ).resolves.toBe(true);
+    });
+
+    const [title, message] = Alert.alert.mock.calls.at(-1);
+    expect(title).toBe('Entre mais rápido');
+    expect(message).toContain(
+      'A biometria deixará de entrar na conta ou***@test.com.'
+    );
+  });
+
+  it('não deve oferecer sem biometria no celular, para a própria dona ou com erro', async () => {
+    const { result } = renderHook(() => useBiometricOffer());
+    const offer = () => result.current.offerBiometrics('Ana@Test.com', 'Oi');
 
     biometricService.checkAvailability.mockResolvedValueOnce(false);
     await expect(offer()).resolves.toBe(false);
 
     accountService.getBiometricOwner.mockResolvedValueOnce({
-      usuario: 'outra@test.com',
+      usuario: 'ana@test.com',
     });
     await expect(offer()).resolves.toBe(false);
 

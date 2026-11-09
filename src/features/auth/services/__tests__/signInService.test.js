@@ -1,4 +1,9 @@
-import { signIn, signOut, signUp } from '../signInService';
+import {
+  signIn,
+  signInWithBiometrics,
+  signOut,
+  signUp,
+} from '../signInService';
 import { authApi } from '../authApi';
 import { accountService } from '../accountService';
 import { OfflineError } from '../../../../shared/firebase/remoteCall';
@@ -87,5 +92,25 @@ describe('signInService', () => {
     await signOut();
 
     expect(authApi.signOut).toHaveBeenCalled();
+  });
+
+  describe('signInWithBiometrics', () => {
+    it('deve entrar no Firebase com a senha guardada da conta dona', async () => {
+      accountService.getBiometricCredentials.mockResolvedValue({
+        usuario: 'ana@x.com',
+        password: 'senha123',
+      });
+      authApi.login.mockResolvedValue('ana@x.com');
+
+      await expect(signInWithBiometrics()).resolves.toBe('ana@x.com');
+      expect(authApi.login).toHaveBeenCalledWith('ana@x.com', 'senha123');
+    });
+
+    it('não deve entrar sem senha guardada para a biometria', async () => {
+      accountService.getBiometricCredentials.mockResolvedValue(null);
+
+      await expect(signInWithBiometrics()).resolves.toBeNull();
+      expect(authApi.login).not.toHaveBeenCalled();
+    });
   });
 });

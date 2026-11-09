@@ -3,18 +3,9 @@ import { navigationReducer, INITIAL_NAVIGATION, SCREENS } from '../navigation';
 const at = (screen, editingPost = null) => ({ screen, editingPost });
 
 describe('navigationReducer', () => {
-  it('deve decidir a tela inicial pela sessão salva', () => {
+  it('deve abrir sempre na tela de entrada', () => {
     expect(
-      navigationReducer(INITIAL_NAVIGATION, {
-        type: 'sessionRestored',
-        hasSession: true,
-      })
-    ).toEqual(at(SCREENS.UNLOCK));
-    expect(
-      navigationReducer(INITIAL_NAVIGATION, {
-        type: 'sessionRestored',
-        hasSession: false,
-      })
+      navigationReducer(INITIAL_NAVIGATION, { type: 'sessionRestored' })
     ).toEqual(at(SCREENS.LOGIN));
   });
 
@@ -26,7 +17,7 @@ describe('navigationReducer', () => {
       })
     ).toEqual(at(SCREENS.ONBOARDING));
     expect(
-      navigationReducer(at(SCREENS.UNLOCK), {
+      navigationReducer(at(SCREENS.LOGIN), {
         type: 'authenticated',
         hasProfile: true,
       })
@@ -56,7 +47,7 @@ describe('navigationReducer', () => {
   });
 
   it('deve sair da conta a partir das telas de quem está conectado', () => {
-    for (const screen of [SCREENS.UNLOCK, SCREENS.HOME, SCREENS.PROFILE]) {
+    for (const screen of [SCREENS.HOME, SCREENS.PROFILE, SCREENS.REPORT]) {
       expect(navigationReducer(at(screen), { type: 'loggedOut' })).toEqual(
         at(SCREENS.LOGIN)
       );
@@ -65,12 +56,8 @@ describe('navigationReducer', () => {
 
   it('deve ignorar transições inválidas ou desconhecidas', () => {
     const login = at(SCREENS.LOGIN);
-    // Ex.: o desbloqueio não pode reaparecer depois de entrar
     expect(
-      navigationReducer(at(SCREENS.HOME), {
-        type: 'sessionRestored',
-        hasSession: true,
-      })
+      navigationReducer(at(SCREENS.HOME), { type: 'sessionRestored' })
     ).toEqual(at(SCREENS.HOME));
     expect(navigationReducer(login, { type: 'homeOpened' })).toBe(login);
     expect(navigationReducer(login, { type: 'desconhecida' })).toBe(login);

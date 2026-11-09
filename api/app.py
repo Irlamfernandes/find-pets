@@ -1,5 +1,3 @@
-"""Ponto de entrada: python app.py"""
-
 import os
 
 from findpets_api import create_app

@@ -79,7 +79,6 @@ describe('photoStorage', () => {
       storage.remove('file:///docs/test-photo-locked.jpg')
     ).not.toThrow();
 
-    // Fotos de outros tipos ou fora da pasta não são tocadas
     storage.remove('file:///docs/profile-photo-1.jpg');
     storage.remove('file:///cache/picker.jpg');
     storage.remove(null);

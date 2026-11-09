@@ -37,7 +37,6 @@ describe('MapPetSummary', () => {
     expect(getByText('Av. Paulista, 1000')).toBeTruthy();
     expect(getByText('Espécie')).toBeTruthy();
     expect(getByText('Cachorro')).toBeTruthy();
-    // O nome não se repete na grade
     expect(queryByText('Nome')).toBeNull();
   });
 

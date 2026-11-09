@@ -32,8 +32,6 @@ describe('PetCard', () => {
     onShare: jest.fn(),
   };
 
-  // O carrossel (FlatList) agenda atualizações internas com timers; com
-  // timers simulados elas rodam dentro do act(...) ao fim de cada teste
   beforeEach(() => {
     jest.useFakeTimers();
     jest.clearAllMocks();
@@ -82,7 +80,6 @@ describe('PetCard', () => {
       nativeEvent: { contentOffset: { x: 300 } },
     };
 
-    // Sem largura medida ainda, ignora o evento
     fireEvent(list, 'momentumScrollEnd', scrollToSecond);
     expect(getByText('1/2')).toBeTruthy();
 
@@ -122,7 +119,6 @@ describe('PetCard', () => {
     expect(queryByText('1/1')).toBeNull();
     expect(getByText('Perdido')).toBeTruthy();
     expect(getByText('Desapareceu em: Data não informada')).toBeTruthy();
-    // Sem coordenadas não há como traçar rota
     expect(queryByText('Como chegar')).toBeNull();
     expect(queryByText('Cachorro caramelo com coleira azul')).toBeNull();
   });
@@ -329,7 +325,6 @@ describe('PetCard', () => {
     );
 
     expect(queryByLabelText('Editar registro')).toBeNull();
-    // Compartilhar fica disponível para todos
     expect(getByLabelText('Compartilhar este registro')).toBeTruthy();
   });
 

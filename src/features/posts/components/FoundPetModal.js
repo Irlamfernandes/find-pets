@@ -12,9 +12,9 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { ChipSelector } from '../../../shared/components/ChipSelector';
 import { LabeledInput } from '../../../shared/components/LabeledInput';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
 import { FormScrollView } from '../../../shared/components/FormScrollView';
 import { palette } from '../../../shared/theme/colors';
-import { formStyles } from '../../../shared/theme/formStyles';
 import {
   formatDateInput,
   formatTimeInput,
@@ -25,7 +25,6 @@ import { useFoundForm } from '../hooks/useFoundForm';
 
 export { FOUND_RELATIONS } from '../domain/foundForm';
 
-// Título e ícone da janela de reencontro
 function FoundModalHeader() {
   return (
     <View style={styles.header}>
@@ -40,13 +39,13 @@ function FoundModalHeader() {
   );
 }
 
-// Campos de data e hora do reencontro, lado a lado
 function FoundDateTimeFields({ form, dateRef, timeRef, onChange, onSubmit }) {
   return (
     <View style={styles.row}>
       <View style={styles.rowItem}>
         <LabeledInput
           label="Data"
+          required
           ref={dateRef}
           testID="input-found-date"
           value={form.date}
@@ -60,6 +59,7 @@ function FoundDateTimeFields({ form, dateRef, timeRef, onChange, onSubmit }) {
       <View style={styles.rowItem}>
         <LabeledInput
           label="Hora"
+          required
           ref={timeRef}
           testID="input-found-time"
           value={form.time}
@@ -85,7 +85,6 @@ FoundDateTimeFields.propTypes = {
   onSubmit: PropTypes.func.isRequired,
 };
 
-// Botões de cancelar e confirmar o reencontro
 function FoundModalActions({ isSaving, onCancel, onConfirm }) {
   return (
     <View style={styles.actions}>
@@ -117,7 +116,6 @@ FoundModalActions.propTypes = {
   onConfirm: PropTypes.func.isRequired,
 };
 
-// Janela para registrar o reencontro: quem recebeu o pet, quando e onde
 export function FoundPetModal({ visible, lostAt, onCancel, onConfirm }) {
   const { form, updateField, errorMessage, isSaving, reset, confirm } =
     useFoundForm(onConfirm, lostAt);
@@ -141,6 +139,7 @@ export function FoundPetModal({ visible, lostAt, onCancel, onConfirm }) {
           <FormScrollView>
             <LabeledInput
               label="Nome de quem pegou o animal"
+              required
               testID="input-receiver-name"
               value={form.receiverName}
               onChangeText={(text) => updateField('receiverName', text)}
@@ -148,7 +147,7 @@ export function FoundPetModal({ visible, lostAt, onCancel, onConfirm }) {
               onSubmit={() => dateRef.current?.focus()}
             />
 
-            <Text style={formStyles.label}>Quem é essa pessoa?</Text>
+            <FieldLabel required>Quem é essa pessoa?</FieldLabel>
             <ChipSelector
               options={FOUND_RELATIONS}
               value={form.receiverRelation}
@@ -204,7 +203,6 @@ export function FoundPetModal({ visible, lostAt, onCancel, onConfirm }) {
 }
 
 FoundPetModal.propTypes = {
-  // Data do desaparecimento (ISO), quando conhecida
   lostAt: PropTypes.string,
   visible: PropTypes.bool.isRequired,
   onCancel: PropTypes.func.isRequired,

@@ -1,0 +1,8 @@
+appId: host.exp.exponent
+---
+- tapOn: 'Mapa'
+- assertVisible:
+    id: 'lost-pets-map-area'
+- tapOn: 'Lista'
+- assertNotVisible:
+    id: 'lost-pets-map-area'

@@ -2,8 +2,6 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 
 export const shareService = {
-  // Gera uma imagem do cartaz (foto + informações) e abre o compartilhamento
-  // do celular, para enviar tudo em uma única mensagem
   async sharePoster(posterRef) {
     if (!(await Sharing.isAvailableAsync())) {
       throw new Error('O compartilhamento não está disponível neste aparelho.');

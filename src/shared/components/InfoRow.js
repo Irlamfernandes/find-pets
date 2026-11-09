@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import PropTypes from 'prop-types';
 import { palette } from '../theme/colors';
 
-// Linha com ícone e texto (data, endereço...)
 export function InfoRow({ icon, text, size = 'regular', numberOfLines }) {
   const compact = size === 'compact';
   return (

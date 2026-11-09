@@ -5,7 +5,6 @@ import { LostPetsMap } from './LostPetsMap';
 import { MapPetSummary } from './MapPetSummary';
 import { getMappablePosts } from '../../posts/utils/mappablePosts';
 
-// Mapa com todos os pets perdidos; tocar em um ponto mostra o resumo dele
 export function LostPetsMapView({
   posts,
   onOpenPhoto,
@@ -16,11 +15,10 @@ export function LostPetsMapView({
   const mappablePosts = useMemo(() => getMappablePosts(posts), [posts]);
   const selectedPost =
     mappablePosts.find((post) => post.id === selectedId) || null;
-  // Fecha o resumo do pet selecionado
   const clearSelection = () => setSelectedId(null);
 
   return (
-    <View style={styles.area}>
+    <View testID="lost-pets-map-area" collapsable={false} style={styles.area}>
       <LostPetsMap
         posts={mappablePosts}
         selectedId={selectedId}
@@ -50,7 +48,6 @@ LostPetsMapView.propTypes = {
 };
 
 const styles = StyleSheet.create({
-  // Espaço para a barra inferior, que fica por cima do conteúdo
   area: { flex: 1, marginBottom: 88 },
   summary: { position: 'absolute', left: 12, right: 12, bottom: 12 },
 });

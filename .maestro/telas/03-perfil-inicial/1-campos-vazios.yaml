@@ -1,0 +1,5 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-complete'
+- assertVisible: 'Preencha todos os campos.'

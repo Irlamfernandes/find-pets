@@ -23,4 +23,4 @@ max-statements = 30
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "--cov=findpets_api --cov-report=term-missing --cov-report=xml --cov-fail-under=100"
+addopts = "--cov=findpets_api --cov-branch --cov-report=term-missing --cov-report=xml --cov-fail-under=100"

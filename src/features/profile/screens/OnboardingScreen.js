@@ -3,6 +3,7 @@ import { Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
 import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 import {
@@ -12,7 +13,6 @@ import {
 import { useOnboarding } from '../hooks/useOnboarding';
 import { palette } from '../../../shared/theme/colors';
 
-// Tela de completar o cadastro: nome e WhatsApp
 export default function OnboardingScreen({ onComplete }) {
   const {
     name,
@@ -23,7 +23,6 @@ export default function OnboardingScreen({ onComplete }) {
     handleSaveProfile,
   } = useOnboarding(onComplete);
   const whatsappRef = useRef(null);
-  // Botão e tecla "concluir" compartilham a mesma trava
   const saveProfile = useSingleFlight(dismissKeyboardAnd(handleSaveProfile));
 
   return (
@@ -45,6 +44,9 @@ export default function OnboardingScreen({ onComplete }) {
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
 
+      <FieldLabel required style={styles.fieldLabel}>
+        Nome
+      </FieldLabel>
       <FormTextInput
         testID="input-name"
         style={styles.input}
@@ -57,6 +59,9 @@ export default function OnboardingScreen({ onComplete }) {
         onSubmitEditing={() => whatsappRef.current?.focus()}
       />
 
+      <FieldLabel required style={styles.fieldLabel}>
+        WhatsApp
+      </FieldLabel>
       <FormTextInput
         ref={whatsappRef}
         testID="input-whatsapp"
@@ -121,6 +126,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  fieldLabel: { marginTop: 0 },
   input: {
     height: 50,
     borderWidth: 1,

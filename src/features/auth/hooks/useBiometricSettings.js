@@ -3,17 +3,14 @@ import { biometricService } from '../services/biometrics';
 import { accountService } from '../services/accountService';
 import { sessionService } from '../services/sessionService';
 
-// Estados possíveis da biometria para a conta logada
 export const BIOMETRIC_STATUS = {
   LOADING: 'loading',
-  UNAVAILABLE: 'unavailable', // celular sem leitor ou sem biometria cadastrada
-  AVAILABLE: 'available', // nenhuma conta usa: esta conta pode ativar
-  ACTIVE: 'active', // ativada nesta conta
-  TAKEN: 'taken', // já pertence a outra conta deste celular
+  UNAVAILABLE: 'unavailable',
+  AVAILABLE: 'available',
+  ACTIVE: 'active',
+  TAKEN: 'taken',
 };
 
-// Situação da biometria para a conta: ativa, usada por outra conta,
-// disponível ou indisponível no aparelho
 export function getBiometricStatus({ currentUser, ownerUser, isAvailable }) {
   if (ownerUser) {
     return ownerUser === currentUser
@@ -25,7 +22,6 @@ export function getBiometricStatus({ currentUser, ownerUser, isAvailable }) {
     : BIOMETRIC_STATUS.UNAVAILABLE;
 }
 
-// Estado da biometria da conta conectada e as ações de ativar/desativar
 export function useBiometricSettings() {
   const [state, setState] = useState({
     usuario: null,
@@ -58,20 +54,18 @@ export function useBiometricSettings() {
     refresh();
   }, [refresh]);
 
-  // Retorna 'activated', 'cancelled' ou 'failed'
-  const activate = async () => {
+  const activate = async (password) => {
     const result = await biometricService.authenticate(
       'Confirme sua biometria para ativá-la nesta conta'
     );
     if (!result.success) {
       return result.error === 'user_cancel' ? 'cancelled' : 'failed';
     }
-    await accountService.setBiometrics(state.usuario, true);
+    await accountService.setBiometrics(state.usuario, true, password);
     await refresh();
     return 'activated';
   };
 
-  // Desativa a biometria da conta e atualiza a situação exibida
   const deactivate = async () => {
     await accountService.setBiometrics(state.usuario, false);
     await refresh();

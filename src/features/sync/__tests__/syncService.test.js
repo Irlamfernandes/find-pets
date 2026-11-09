@@ -104,7 +104,6 @@ describe('syncService', () => {
     finishFirst();
     await first;
 
-    // A primeira rodada mais uma repetição (os dois pedidos viram um só)
     expect(pushProfile).toHaveBeenCalledTimes(2);
   });
 

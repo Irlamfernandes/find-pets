@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+- assertNotVisible: 'Você está sem internet.*'
+- setAirplaneMode: enabled
+- extendedWaitUntil:
+    visible: 'Você está sem internet.*'
+    timeout: 20000
+- tapOn:
+    id: 'tab-profile'
+- assertVisible: 'Meus dados'
+- tapOn:
+    id: 'tab-feed'
+- setAirplaneMode: disabled
+- extendedWaitUntil:
+    notVisible: 'Você está sem internet.*'
+    timeout: 30000

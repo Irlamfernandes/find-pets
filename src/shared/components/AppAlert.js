@@ -30,8 +30,6 @@ const alertStyles = {
   },
 };
 
-// Alerta do próprio sistema (Alert do React Native), usado quando a tela não
-// está dentro do AlertProvider. Devolve uma Promise com true se confirmou.
 export function nativeAlert({
   title,
   message,
@@ -65,8 +63,6 @@ export function nativeAlert({
   });
 }
 
-// Caixa de alerta do app: ícone e cor conforme o tipo, título, mensagem e
-// os botões de confirmar/cancelar
 function AlertDialog({ alert, onClose }) {
   const style = alertStyles[alert.type || 'info'];
 
@@ -117,8 +113,6 @@ AlertDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
-// Avisos pedidos enquanto outro está aberto entram numa fila e aparecem um
-// de cada vez, sem que nenhum (nem a ação dele) se perca
 export function AppAlertProvider({ children }) {
   const [queue, setQueue] = useState([]);
   const alert = queue[0] || null;
@@ -129,8 +123,6 @@ export function AppAlertProvider({ children }) {
     });
   }, []);
 
-  // Fecha o alerta da vez, avisa quem o abriu (confirmou ou não) e passa
-  // para o próximo da fila
   const closeAlert = (confirmed) => {
     if (!alert) return;
     if (confirmed) alert.onConfirm?.();
@@ -153,7 +145,6 @@ export function AppAlertProvider({ children }) {
   );
 }
 
-// Função para abrir alertas: a do AlertProvider ou, fora dele, a do sistema
 export function useAppAlert() {
   return useContext(AlertContext) || nativeAlert;
 }

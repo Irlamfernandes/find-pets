@@ -6,7 +6,6 @@ import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { palette } from '../../../shared/theme/colors';
 
-// Topo do perfil: voltar e sair da conta
 export function ProfileHeader({ onBack, onLogout }) {
   return (
     <View style={styles.header}>
@@ -27,6 +26,7 @@ export function ProfileHeader({ onBack, onLogout }) {
       </View>
       {onLogout ? (
         <SafeTouchable
+          testID="button-logout"
           onPress={dismissKeyboardAnd(onLogout)}
           style={styles.logoutButton}
         >

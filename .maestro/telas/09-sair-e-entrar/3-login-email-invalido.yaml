@@ -1,0 +1,19 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-go-login'
+- tapOn:
+    id: 'input-email'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: 'semarroba.com'
+- tapOn:
+    id: 'input-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${SENHA}
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- assertVisible: 'Insira um formato de e-mail válido.'
+- tapOn: 'Voltar'

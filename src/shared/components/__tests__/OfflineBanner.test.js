@@ -9,7 +9,6 @@ describe('OfflineBanner', () => {
     const online = render(<OfflineBanner />);
     expect(online.queryByText(/sem internet/)).toBeNull();
 
-    // Antes de o sistema informar a conexão, não exibe nada
     useNetworkState.mockReturnValueOnce({});
     const unknown = render(<OfflineBanner />);
     expect(unknown.queryByText(/sem internet/)).toBeNull();

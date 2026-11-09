@@ -13,6 +13,20 @@ describe('PasswordPromptModal', () => {
     expect(queryByText('Senha incorreta')).toBeNull();
   });
 
+  it('deve mostrar a senha digitada ao tocar no olho', () => {
+    const { getByTestId, getByLabelText } = render(
+      <PasswordPromptModal visible onCancel={jest.fn()} onConfirm={jest.fn()} />
+    );
+
+    expect(getByTestId('input-current-password').props.secureTextEntry).toBe(
+      true
+    );
+    fireEvent.press(getByLabelText('Mostrar senha'));
+    expect(getByTestId('input-current-password').props.secureTextEntry).toBe(
+      false
+    );
+  });
+
   it('deve enviar a senha digitada e limpar o campo quando confirmada', async () => {
     const onConfirm = jest.fn().mockResolvedValue(true);
     const { getByTestId, getByText } = render(

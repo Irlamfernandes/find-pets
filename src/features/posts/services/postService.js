@@ -3,31 +3,24 @@ import { withErrorContext } from '../../../shared/services/storage';
 import { postRepository } from '../data/postRepository';
 import { requestSync } from '../../../shared/services/syncScheduler';
 
-// Recusa ações sem o id do registro
 function requireId(postId) {
   if (!postId) {
     throw new Error('ID da publicação é obrigatório.');
   }
 }
 
-// Depois de gravar no celular, pede o envio para o servidor (se houver
-// internet) e devolve a lista atualizada
 async function afterChange() {
   requestSync();
   return postRepository.findActive();
 }
 
-// Registros de pets, do mais novo para o mais antigo. Cada alteração
-// devolve a lista atualizada.
 export const postService = {
-  // Registros ativos para o feed
   getPosts() {
     return withErrorContext('Erro ao carregar as publicações', () =>
       postRepository.findActive()
     );
   },
 
-  // Grava um registro novo e pede a sincronização
   savePost(post) {
     if (!post?.id) {
       throw new Error('Dados do post inválidos.');
@@ -38,7 +31,6 @@ export const postService = {
     });
   },
 
-  // Exclusão lógica: some do feed, mas continua no banco como histórico
   deletePost(postId) {
     requireId(postId);
     return withErrorContext('Erro ao excluir a publicação', async () => {
@@ -47,7 +39,6 @@ export const postService = {
     });
   },
 
-  // Aplica `changes` ao registro, mantendo o id
   updatePost(postId, changes) {
     requireId(postId);
     return withErrorContext('Erro ao atualizar a publicação', async () => {

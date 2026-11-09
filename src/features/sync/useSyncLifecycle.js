@@ -4,9 +4,6 @@ import { useLatestCallback } from '../../shared/hooks/useLatestCallback';
 import { onReconnect } from './connectivity';
 import { SYNC_RESULT, syncService } from './syncService';
 
-// Liga a sincronização enquanto o app está aberto: atende os pedidos feitos
-// depois de cada alteração, sincroniza quando a internet volta e avisa
-// quando o Firebase recusar o login (é preciso entrar com a senha).
 export function useSyncLifecycle(onSessionExpired) {
   const handleSessionExpired = useLatestCallback(onSessionExpired);
 

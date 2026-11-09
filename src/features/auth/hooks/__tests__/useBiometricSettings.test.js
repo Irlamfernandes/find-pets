@@ -86,11 +86,12 @@ describe('useBiometricSettings', () => {
       usuario: 'eu@test.com',
     });
     await act(async () => {
-      await expect(result.current.activate()).resolves.toBe('activated');
+      await expect(result.current.activate('minha')).resolves.toBe('activated');
     });
     expect(accountService.setBiometrics).toHaveBeenCalledWith(
       'eu@test.com',
-      true
+      true,
+      'minha'
     );
     expect(result.current.status).toBe(BIOMETRIC_STATUS.ACTIVE);
   });

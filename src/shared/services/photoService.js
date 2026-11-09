@@ -6,14 +6,12 @@ const PICKER_OPTIONS = {
   exif: true,
 };
 
-// Resultado do seletor de fotos -> [{ uri, exif }] (vazio se cancelou)
 function toPhotos(result) {
   if (result.canceled || !result.assets) return [];
   return result.assets.map((asset) => ({ uri: asset.uri, exif: asset.exif }));
 }
 
 export const photoService = {
-  // Retorna { photos, denied } para a tela decidir qual mensagem exibir
   async pickFromGallery(selectionLimit) {
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!granted) return { photos: [], denied: true };
@@ -26,7 +24,6 @@ export const photoService = {
     return { photos: toPhotos(result), denied: false };
   },
 
-  // Abre a câmera para tirar uma foto, pedindo permissão antes
   async takePhoto() {
     const { granted } = await ImagePicker.requestCameraPermissionsAsync();
     if (!granted) return { photos: [], denied: true };
@@ -35,7 +32,6 @@ export const photoService = {
     return { photos: toPhotos(result), denied: false };
   },
 
-  // Foto de perfil: uma única imagem com recorte quadrado
   async pickProfilePhoto(source) {
     const fromCamera = source === 'camera';
     const { granted } = fromCamera

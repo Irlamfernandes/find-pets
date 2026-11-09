@@ -31,7 +31,6 @@ describe('SafeTouchable', () => {
     await act(async () => {
       fireEvent.press(getByText('Salvar'));
     });
-    // Toques repetidos durante o carregamento são ignorados
     await act(async () => {
       findTouchable(getByText('Salvar')).props.onPress();
       fireEvent.press(getByText('Salvar'));
@@ -91,7 +90,6 @@ describe('SafeTouchable', () => {
   });
 
   it('não deve atualizar o estado depois de desmontado', async () => {
-    // Atualizar estado de um componente desmontado gera erro no console
     const consoleError = jest.spyOn(console, 'error').mockImplementation();
     let finish;
     const onPress = () =>

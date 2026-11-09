@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 import { palette } from '../../../shared/theme/colors';
 
-// Dados do pet em grade de duas colunas, cada um com seu rótulo
 export function PetInfoGrid({ fields }) {
   if (fields.length === 0) return null;
 
@@ -37,7 +36,6 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   cell: {
-    // Duas colunas com um espaço entre elas
     width: '48.5%',
     paddingHorizontal: 10,
     paddingVertical: 8,

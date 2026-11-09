@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { ActionButton } from '../../../shared/components/ActionButton';
 import { hasCoordinates } from '../domain/post';
 
-// WhatsApp de quem registrou e rota até o local (quando há coordenadas)
 export function ContactButtons({ post, onOpenWhatsApp, onOpenRoute }) {
   return (
     <View style={styles.row}>

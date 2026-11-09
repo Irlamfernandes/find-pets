@@ -1,0 +1,7 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-go-login'
+- assertVisible: 'Entre com sua conta'
+- tapOn: 'Voltar'
+- assertVisible: 'Escolha uma opção'

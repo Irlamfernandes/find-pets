@@ -2,6 +2,8 @@ import { biometricService } from '../services/biometrics';
 import { accountService } from '../services/accountService';
 import { useAppAlert } from '../../../shared/components/AppAlert';
 import { usePasswordPrompt } from './usePasswordPrompt';
+import { maskEmail } from '../../../shared/utils/maskEmail';
+import { normalizeEmail } from '../../../shared/utils/validation';
 
 const ALERTS = {
   activated: {
@@ -21,9 +23,7 @@ const ALERTS = {
   },
 };
 
-// Confirma a biometria e ativa na conta; devolve o aviso a exibir, ou null
-// quando a pessoa cancelou
-async function activateBiometrics(usuario) {
+async function activateBiometrics(usuario, password) {
   try {
     const result = await biometricService.authenticate(
       'Confirme sua biometria para ativá-la nesta conta'
@@ -31,52 +31,58 @@ async function activateBiometrics(usuario) {
     if (result.error === 'user_cancel') return null;
     if (!result.success) return ALERTS.notConfirmed;
 
-    await accountService.setBiometrics(usuario, true);
+    await accountService.setBiometrics(usuario, true, password);
     return ALERTS.activated;
   } catch {
     return ALERTS.failed;
   }
 }
 
-// Só oferece quando o celular tem biometria e nenhuma conta a usa
-async function canOfferBiometrics() {
+const isSameAccount = (owner, usuario) =>
+  owner !== null && normalizeEmail(owner) === normalizeEmail(usuario);
+
+async function findOffer(usuario) {
   try {
     const [isAvailable, owner] = await Promise.all([
       biometricService.checkAvailability(),
       accountService.getBiometricOwner(),
     ]);
-    return isAvailable && !owner;
+    const ownerUser = owner?.usuario || null;
+    const canOffer = isAvailable && !isSameAccount(ownerUser, usuario);
+    return canOffer ? { previousOwner: ownerUser } : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
-// Ao terminar o cadastro, convida a pessoa a ativar a biometria. Antes de
-// ativar, pede a senha da conta. `offerBiometrics` retorna se o convite foi
-// exibido, para quem chama não sobrepor outro aviso; `passwordPromptProps`
-// vai para um PasswordPromptModal.
+function offerMessage(previousOwner) {
+  const message =
+    'Quer entrar mais rápido nas próximas vezes? Ative a biometria. Atenção: qualquer digital ou rosto cadastrado neste celular poderá entrar nesta conta.';
+  if (!previousOwner) return message;
+  return `${message} A biometria deixará de entrar na conta ${maskEmail(
+    previousOwner
+  )}.`;
+}
+
 export function useBiometricOffer() {
   const showAlert = useAppAlert();
   const prompt = usePasswordPrompt({
-    // Confere se a senha digitada é a da conta
     verify: (password, usuario) =>
       accountService.checkPassword(usuario, password),
-    // Senha certa: ativa a biometria e mostra o resultado
-    onConfirmed: async (usuario) => {
-      const alert = await activateBiometrics(usuario);
+    onConfirmed: async (usuario, password) => {
+      const alert = await activateBiometrics(usuario, password);
       if (alert) showAlert(alert);
     },
   });
 
-  // Convida a ativar a biometria, se o aparelho tiver e ela estiver livre
-  const offerBiometrics = async (usuario, name) => {
-    if (!(await canOfferBiometrics())) return false;
+  const offerBiometrics = async (usuario, title) => {
+    const offer = await findOffer(usuario);
+    if (!offer) return false;
 
     showAlert({
       type: 'info',
-      title: `Tudo pronto, ${name}!`,
-      message:
-        'Quer entrar mais rápido nas próximas vezes? Ative a biometria. Atenção: qualquer digital ou rosto cadastrado neste celular poderá entrar nesta conta.',
+      title,
+      message: offerMessage(offer.previousOwner),
       confirmText: 'Ativar agora',
       cancelText: 'Depois',
       onConfirm: () => prompt.open(usuario),

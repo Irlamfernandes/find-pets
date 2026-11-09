@@ -5,8 +5,6 @@ import { SafeTouchable } from './SafeTouchable';
 import { dismissKeyboardAnd } from '../utils/keyboard';
 import { palette } from '../theme/colors';
 
-// Grupo de opções em forma de "chip". Tocar na opção já escolhida a
-// desmarca, exceto quando o campo é obrigatório.
 export function ChipSelector({ options, value, onChange, required = false }) {
   return (
     <View style={styles.container}>

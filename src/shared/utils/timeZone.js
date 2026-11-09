@@ -1,12 +1,6 @@
-// Fuso horário das datas registradas. Cada data guarda o deslocamento em
-// relação ao UTC e a sigla do fuso do momento em que aconteceu, para que a
-// hora seja sempre exibida como no local do fato, em qualquer país.
-
-// Siglas conhecidas (BRT, EDT...). "GMT+2" e similares viram "UTC+2".
 const ABBREVIATION = /^[A-Z]{2,5}$/;
 const ABBREVIATION_LOCALES = ['pt-BR', 'en-US'];
 
-// Sigla do fuso na data (ex.: "BRT") no idioma informado, ou null
 function getAbbreviation(date, locale) {
   try {
     const part = new Intl.DateTimeFormat(locale, { timeZoneName: 'short' })
@@ -18,7 +12,6 @@ function getAbbreviation(date, locale) {
   }
 }
 
-// Fuso do aparelho na data informada (considera horário de verão)
 export function getTimeZoneInfo(date = new Date()) {
   const offsetMinutes = -date.getTimezoneOffset();
   let abbreviation = null;
@@ -28,7 +21,6 @@ export function getTimeZoneInfo(date = new Date()) {
   return { offsetMinutes, abbreviation };
 }
 
-// Ex.: -180 -> "UTC-3", 330 -> "UTC+5:30", 0 -> "UTC"
 export function formatUtcOffset(offsetMinutes) {
   if (offsetMinutes === 0) return 'UTC';
   const sign = offsetMinutes > 0 ? '+' : '-';
@@ -38,22 +30,17 @@ export function formatUtcOffset(offsetMinutes) {
   return `UTC${sign}${hours}${suffix}`;
 }
 
-// Ex.: "BRT, UTC-3" ou só "UTC+2" quando não há sigla conhecida
 export function formatTimeZone({ offsetMinutes, abbreviation }) {
   const utc = formatUtcOffset(offsetMinutes);
   return abbreviation && abbreviation !== utc ? `${abbreviation}, ${utc}` : utc;
 }
 
-// Fuso gravado com o deslocamento em minutos
 function isValidZone(zone) {
   return Number.isFinite(zone?.offsetMinutes);
 }
 
-// Número com dois dígitos: 5 -> "05"
 const pad = (value) => String(value).padStart(2, '0');
 
-// Formata no fuso em que a data foi registrada: "25/09/2026 às 14:30 (BRT, UTC-3)".
-// Sem fuso informado, usa o fuso do aparelho.
 export function formatDateTime(value, zone) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';

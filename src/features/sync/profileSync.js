@@ -3,7 +3,6 @@ import { isCloudPhoto, toCloudPhoto } from '../../shared/services/cloudPhoto';
 import { profileApi } from '../profile/api/profileApi';
 import { profileRepository } from '../profile/data/profileRepository';
 
-// Foto no formato da nuvem; converte só se ainda não foi convertida
 async function cloudPhotoOf(usuario, row) {
   if (!row.photo_uri) return null;
   if (row.photo_remote_url) return row.photo_remote_url;
@@ -14,7 +13,6 @@ async function cloudPhotoOf(usuario, row) {
   return photo;
 }
 
-// Envia o perfil, se ele foi alterado neste celular
 export async function pushProfile(uid, usuario) {
   const row = await profileRepository.findRow(usuario);
   if (row?.sync_status !== SYNC_STATUS.PENDING) return;
@@ -28,8 +26,6 @@ export async function pushProfile(uid, usuario) {
   await profileRepository.markSynced(usuario, row.updated_at);
 }
 
-// Baixa o perfil da nuvem (ex.: primeiro acesso num celular novo).
-// Uma alteração local ainda não enviada tem prioridade.
 export async function pullProfile(uid, usuario) {
   const row = await profileRepository.findRow(usuario);
   if (row?.sync_status === SYNC_STATUS.PENDING) return;

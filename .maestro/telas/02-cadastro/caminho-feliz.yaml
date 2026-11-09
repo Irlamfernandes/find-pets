@@ -1,0 +1,29 @@
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${CONTA_CRIADA == 'false'}"
+    commands:
+      - tapOn:
+          id: 'input-email'
+          point: '95%,50%'
+      - eraseText: 50
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: 'input-password'
+          point: '95%,50%'
+      - eraseText: 50
+      - inputText: ${SENHA}
+      - hideKeyboard
+      - tapOn:
+          id: 'button-submit-auth'
+      - extendedWaitUntil:
+          visible: 'Conta criada'
+          timeout: 30000
+      - tapOn: 'Entendi'
+      - assertVisible: 'Complete seu Perfil'
+- runFlow:
+    when:
+      true: "${CONTA_CRIADA == 'true'}"
+    commands:
+      - runFlow: ../../subflows/entrar.yaml

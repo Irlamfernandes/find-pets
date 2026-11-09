@@ -6,6 +6,10 @@ def test_informa_que_esta_no_ar(client):
     assert client.get("/health").get_json() == {"status": "ok"}
 
 
+def test_avisa_o_navegador_para_nao_adivinhar_o_tipo(client):
+    assert client.get("/health").headers["X-Content-Type-Options"] == "nosniff"
+
+
 def test_responde_json_em_rota_inexistente(client):
     response = client.get("/nao-existe")
 

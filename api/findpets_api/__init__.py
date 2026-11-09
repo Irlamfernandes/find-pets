@@ -1,5 +1,3 @@
-"""API do FindPets: contas, perfis, registros de pets e fotos."""
-
 from flasgger import Swagger
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -15,7 +13,6 @@ from .uploads.routes import blueprint as uploads_blueprint
 
 BLUEPRINTS = (auth_blueprint, profiles_blueprint, posts_blueprint, uploads_blueprint)
 
-# Documentação interativa em /apidocs
 SWAGGER_TEMPLATE = {
     "info": {
         "title": "FindPets API",
@@ -34,14 +31,16 @@ SWAGGER_TEMPLATE = {
 
 
 def enable_cors(app):
-    """Libera o navegador só para os sites listados em CORS_ORIGINS."""
     origins = app.config["CORS_ORIGINS"]
     if origins:
         CORS(app, origins=origins)
 
 
-# Monta a API: configurações, CORS, CSRF, Swagger, erros, banco e rotas.
-# `overrides` troca configurações (usado nos testes).
+def no_sniff(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
 def create_app(overrides=None):
     app = Flask(__name__)
     app.config.update(load_settings())
@@ -52,6 +51,7 @@ def create_app(overrides=None):
     csrf.init_app(app)
     Swagger(app, template=SWAGGER_TEMPLATE)
     register_error_handlers(app)
+    app.after_request(no_sniff)
     init_database(app)
     for blueprint in BLUEPRINTS:
         app.register_blueprint(blueprint)

@@ -1,5 +1,3 @@
-"""Rotas do perfil da conta conectada."""
-
 import re
 
 from flask import Blueprint, g, jsonify
@@ -11,11 +9,9 @@ from . import repository
 
 blueprint = Blueprint("profiles", __name__, url_prefix="/profile")
 
-# Código do país (2) + DDD (2) + número (8 ou 9), só dígitos
 WHATSAPP = re.compile(r"^\d{12,13}$")
 
 
-# Linha da tabela -> perfil em JSON
 def to_json(row):
     return {
         "name": row["name"],
@@ -25,7 +21,6 @@ def to_json(row):
     }
 
 
-# Perfil enviado no corpo da requisição, validado
 def read_profile():
     data = json_body()
     whatsapp = required_text(data, "whatsapp")

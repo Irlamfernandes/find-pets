@@ -3,6 +3,8 @@ import { Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
+import { PasswordInput } from '../../../shared/components/PasswordInput';
 import { useBackHandler } from '../../../shared/hooks/useBackHandler';
 import {
   FormScrollView,
@@ -12,8 +14,42 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 import { palette } from '../../../shared/theme/colors';
 
-// Formulário de e-mail e senha comum ao login e ao cadastro. Ações extras
-// (como a biometria) entram como `children`, entre o botão e o "Voltar".
+function AuthField({ label, secret = false, hasError, inputRef, ...props }) {
+  const field = secret ? (
+    <PasswordInput
+      inputRef={inputRef}
+      placeholder={label}
+      containerStyle={[styles.passwordBox, hasError && styles.inputError]}
+      {...props}
+    />
+  ) : (
+    <FormTextInput
+      ref={inputRef}
+      placeholder={label}
+      placeholderTextColor="#888"
+      selectionColor={palette.primary}
+      style={[styles.input, hasError && styles.inputError]}
+      {...props}
+    />
+  );
+
+  return (
+    <>
+      <FieldLabel required style={styles.fieldLabel}>
+        {label}
+      </FieldLabel>
+      {field}
+    </>
+  );
+}
+
+AuthField.propTypes = {
+  label: PropTypes.string.isRequired,
+  secret: PropTypes.bool,
+  hasError: PropTypes.bool.isRequired,
+  inputRef: PropTypes.object,
+};
+
 export function AuthForm({
   title,
   subtitle,
@@ -29,9 +65,8 @@ export function AuthForm({
 }) {
   const passwordRef = useRef(null);
   useBackHandler(dismissKeyboardAnd(onBack));
-  // Botão e tecla "concluir" compartilham a mesma trava
   const submit = useSingleFlight(dismissKeyboardAnd(onSubmit));
-  const inputStyle = [styles.input, !!errorMessage && styles.inputError];
+  const hasError = Boolean(errorMessage);
 
   return (
     <FormScrollView
@@ -50,35 +85,37 @@ export function AuthForm({
         <Text style={styles.errorText}>{errorMessage}</Text>
       ) : null}
 
-      <FormTextInput
-        style={inputStyle}
-        placeholder="E-mail"
-        placeholderTextColor="#888"
+      <AuthField
+        label="E-mail"
+        testID="input-email"
+        hasError={hasError}
         value={usuario}
         onChangeText={setUsuario}
         autoCapitalize="none"
         keyboardType="email-address"
-        selectionColor={palette.primary}
         caretHidden={false}
         returnKeyType="next"
         submitBehavior="submit"
         onSubmitEditing={() => passwordRef.current?.focus()}
       />
 
-      <FormTextInput
-        ref={passwordRef}
-        style={inputStyle}
-        placeholder="Senha"
-        placeholderTextColor="#888"
+      <AuthField
+        label="Senha"
+        inputRef={passwordRef}
+        testID="input-password"
+        secret
+        hasError={hasError}
         value={senha}
         onChangeText={setSenha}
-        secureTextEntry
-        selectionColor={palette.primary}
         returnKeyType="done"
         onSubmitEditing={submit}
       />
 
-      <SafeTouchable style={styles.button} onPress={submit}>
+      <SafeTouchable
+        testID="button-submit-auth"
+        style={styles.button}
+        onPress={submit}
+      >
         <Text style={styles.buttonText}>{submitLabel}</Text>
       </SafeTouchable>
 
@@ -143,6 +180,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  fieldLabel: { marginTop: 0 },
   input: {
     height: 50,
     borderWidth: 1,
@@ -152,6 +190,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: palette.surface,
     color: palette.text,
+  },
+  passwordBox: {
+    height: 50,
+    paddingLeft: 4,
+    marginBottom: 12,
+    borderColor: palette.neutral,
   },
   inputError: {
     borderColor: palette.error,

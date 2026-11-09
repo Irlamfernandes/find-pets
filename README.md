@@ -18,8 +18,10 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 **Conta e acesso**
 
 - Cadastro e login com e-mail e senha pelo **Firebase Authentication** (o login fica guardado no aparelho).
-- Desbloqueio por biometria do aparelho (Expo Local Authentication), configurável no perfil.
-- Sessão persistente e opção de sair da conta.
+- Entrada por biometria como em app de banco (Expo Local Authentication): ao tocar em **Login**, o app pede a digital da conta que tem a biometria; cancelando, dá para entrar em qualquer conta com e-mail e senha.
+- A biometria fica com uma conta por celular, a última que a ativou: ao entrar com senha em outra conta, o app oferece passar a biometria para ela. Também é possível ativar ou desativar no perfil.
+- A senha da conta com biometria fica no armazenamento criptografado do aparelho (expo-secure-store), para a digital também entrar no Firebase.
+- Botão de mostrar e ocultar a senha em todos os campos de senha.
 
 **Perfil**
 
@@ -29,6 +31,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 **Registros de pets**
 
 - Registro de pet desaparecido com várias fotos (câmera ou galeria) e dados completos do animal.
+- Sugestões de raça ao digitar, vindas de APIs públicas e gratuitas (sem chave): [Dog CEO](https://dog.ceo/dog-api/) para cachorros e [Cat Facts](https://catfact.ninja) para gatos. A lista fica guardada no aparelho e funciona offline.
 - Localização capturada automaticamente (Expo Location) e exibida em mapa.
 - Feed em lista ou em mapa geral com todos os pets perdidos (mapa nativo do Expo, `react-native-maps`).
 - Edição e exclusão do próprio registro (exclusão lógica).
@@ -46,15 +49,16 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 
 ## 🛠️ Tecnologias
 
-| Parte        | Ferramentas                                                                                                         |
-| ------------ | ------------------------------------------------------------------------------------------------------------------- |
-| App          | React Native 0.88, Expo SDK 58, JavaScript (Node.js 22.13 ou mais novo)                                             |
-| Dados no app | expo-sqlite (banco e kv-store para sessão e preferências), expo-secure-store (senha), expo-network                  |
-| Nuvem        | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                          |
-| Recursos     | expo-image-picker, expo-image, expo-location, expo-local-authentication, expo-sharing, View Shot, react-native-maps |
-| API          | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                                 |
-| Qualidade    | Jest + Testing Library, pytest, ESLint, Prettier, Ruff, Husky + Commitlint, Gitleaks                                |
-| CI           | GitHub Actions                                                                                                      |
+| Parte         | Ferramentas                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------- |
+| App           | React Native 0.88, Expo SDK 58, JavaScript (Node.js 22.13 ou mais novo)                                             |
+| Dados no app  | expo-sqlite (banco e kv-store para sessão e preferências), expo-secure-store (senha), expo-network                  |
+| Nuvem         | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                          |
+| Recursos      | expo-image-picker, expo-image, expo-location, expo-local-authentication, expo-sharing, View Shot, react-native-maps |
+| API           | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                                 |
+| Qualidade     | Jest + Testing Library, pytest, Maestro (E2E), ESLint, Prettier, Ruff, SonarQube, Husky + Commitlint, Gitleaks      |
+| APIs públicas | Dog CEO (raças de cachorro) e Cat Facts (raças de gato), via `fetch`, sem chave de acesso                           |
+| CI            | GitHub Actions                                                                                                      |
 
 ---
 
@@ -64,10 +68,11 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 src/
   app/          fluxo do app: navegação (máquina de estados)
   features/
-    auth/       conta, sessão, biometria, login e desbloqueio
+    auth/       conta, sessão, biometria e login
     profile/    cadastro e edição do perfil
     posts/      registros de pets: feed, registro, reencontro e compartilhamento
     map/        mapas nativos (react-native-maps): ponto do registro e mapa geral
+    breeds/     sugestões de raça vindas de APIs públicas (Dog CEO e Cat Facts)
     sync/       sincronização com o Firebase (envio, download e conexão)
   shared/
     firebase/   projeto do Firebase, leitura e gravação no Realtime Database
@@ -81,7 +86,7 @@ Cada funcionalidade é dividida em camadas, do mais puro ao visual:
 
 - **`domain/`**: regras puras, sem tela nem armazenamento.
 - **`data/`**: repositórios com o SQL e mappers entre o registro do app e a linha da tabela.
-- **`api/`**: leitura e gravação daquela funcionalidade no Firebase.
+- **`api/`**: comunicação externa daquela funcionalidade (Firebase ou APIs públicas).
 - **`services/`**: casos de uso usados pelos hooks.
 - **`hooks/`**: estado e lógica das telas.
 - **`components/`** e **`screens/`**: só apresentação.
@@ -105,7 +110,7 @@ Tabelas `profiles`, `posts` e `post_images` (1 registro : N fotos), criadas em `
 3. Em conflito vale a alteração mais recente (`updatedAt`): uma versão mais nova já gravada por outro celular é mantida.
 4. A sincronização roda ao entrar, quando a internet volta e depois de cada alteração.
 
-O cadastro e o primeiro login num celular precisam de internet. Depois disso, o app reabre offline com a biometria ou a senha guardada no aparelho.
+O cadastro e o primeiro login num celular precisam de internet. Depois disso, dá para entrar sem internet com a biometria ou com a senha guardada no aparelho.
 
 ### ☁️ Firebase
 
@@ -129,7 +134,8 @@ API REST em `api/` (Flask + MySQL + Docker + Swagger), usada pelo app antes do F
 
 ## ✅ Qualidade
 
-- **100% de cobertura de testes** no app (Jest) e na API (pytest).
+- **100% de cobertura de testes** (linhas e ramos) no app (Jest) e na API (pytest com `--cov-branch`).
+- **Testes de ponta a ponta no celular** com [Maestro](https://maestro.mobile.dev), em `.maestro/`.
 - ESLint com limites obrigatórios: complexidade ciclomática até 6, no máximo 3 níveis de aninhamento, funções de até 80 linhas e arquivos de até 300.
 - Prettier (app) e Ruff (API) para formatação.
 - Husky + Commitlint: commits no padrão _Conventional Commits_ e bloqueio de commit direto na `main`.
@@ -164,3 +170,58 @@ npm test                 # app (Jest + cobertura)
 npm run lint             # ESLint
 cd api && pytest         # API (depois de: pip install -r requirements-dev.txt)
 ```
+
+### Testes de ponta a ponta (Maestro)
+
+Os fluxos em [.maestro/telas/](.maestro/telas) usam o app de verdade, como um usuário, num emulador Android ou num celular. Cada tela é uma pasta, e cada **função** da tela é um arquivo separado:
+
+```
+.maestro/telas/02-cadastro/
+  preparar.yaml          chega até a tela
+  1-sem-internet.yaml    uma função testada por arquivo
+  2-campos-vazios.yaml
+  ...
+  caminho-feliz.yaml     o mínimo para seguir à próxima tela
+```
+
+| Tela                | Funções testadas                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `01-tela-inicial`   | Textos; ida ao login e volta; ida ao cadastro e volta pelo Android                                      |
+| `02-cadastro`       | Sem internet; campos vazios; e-mail inválido; senha curta (recusada pelo Firebase); campos obrigatórios |
+| `03-perfil-inicial` | Campos vazios; WhatsApp curto; campos obrigatórios                                                      |
+| `04-feed`           | Guia de uso; lista e mapa; botão de ajuda; foto do usuário abrindo o perfil                             |
+| `05-registro`       | Sem foto não registra; campos obrigatórios; sugestões de raça (API pública); voltar pelo Android        |
+| `06-perfil-dados`   | Senha para liberar a edição; nome vazio, WhatsApp inválido e senhas diferentes; salvar nome e WhatsApp  |
+| `07-foto-perfil`    | Opções da foto aparecem e "Cancelar" fecha                                                              |
+| `08-offline`        | Com o modo avião, o app avisa e continua funcionando; o aviso some ao reconectar                        |
+| `09-sair-e-entrar`  | E-mail já cadastrado; no login, campos vazios, e-mail inválido e senha errada                           |
+| `10-trocar-senha`   | Troca a senha: a antiga deixa de entrar e a nova entra; depois volta para a original                    |
+| `11-reabrir-app`    | Reabre o app na tela inicial; o Login sem biometria pede a senha; o olho mostra e esconde a senha       |
+| `12-login-offline`  | Entra sem internet com a senha guardada; ao reconectar, o app pede para entrar de novo                  |
+
+Ficam para teste manual: registrar um pet e trocar a foto do perfil (dependem da câmera ou da galeria), a biometria (precisa da digital de verdade) e as ações do card de um registro (reencontro, editar, excluir, compartilhar, WhatsApp, rota e marcadores do mapa).
+
+**Como a execução avança:**
+
+- As telas rodam em ordem. Cada função aprovada fica anotada em `.maestro/.aprovadas` e não roda de novo; uma tela com todas as funções aprovadas faz só o caminho feliz.
+- Se uma função falhar, a execução para nela e mostra o erro. A próxima execução recomeça dessa função.
+- A conta criada no cadastro fica guardada em `.maestro/.conta`. Com o cadastro e o perfil inicial aprovados, as execuções seguintes entram com essa conta, depois de apagar os dados do app (como numa troca de celular), em vez de criar outra.
+- Os dois arquivos ficam só no seu computador.
+
+**Para rodar:**
+
+1. Instale o Maestro: `curl -Ls "https://get.maestro.mobile.dev" | bash`
+2. Tenha um Android conectado, de uma destas formas:
+   - **Emulador (sem o Android Studio):** instale as [ferramentas de linha de comando](https://developer.android.com/studio#command-line-tools-only) em `~/Android/cmdline-tools/latest` e rode:
+     ```bash
+     sdkmanager --sdk_root=$HOME/Android "platform-tools" "emulator" "system-images;android-34;default;x86_64"
+     avdmanager create avd -n findpets -k "system-images;android-34;default;x86_64" -d pixel_4
+     ~/Android/emulator/emulator -avd findpets -no-boot-anim -no-snapshot -no-audio &
+     ```
+     Depois instale o [Expo Go](https://expo.dev/go) do SDK 58 com `adb install`.
+   - **Celular:** ative as **Opções do desenvolvedor** e a **Depuração USB**, conecte no cabo e confira com `adb devices`.
+3. Com o `npx expo start` rodando:
+   ```bash
+   npm run test:e2e              # verifica as funções ainda não aprovadas
+   npm run test:e2e -- --tudo    # esquece as aprovações, cria uma conta nova e verifica tudo
+   ```

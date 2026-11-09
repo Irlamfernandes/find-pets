@@ -3,28 +3,28 @@ import { Text, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
 import { ChipSelector } from '../../../shared/components/ChipSelector';
 import { LabeledInput } from '../../../shared/components/LabeledInput';
+import { FieldLabel } from '../../../shared/components/FieldLabel';
 import { formStyles } from '../../../shared/theme/formStyles';
+import { BreedSuggestions } from '../../breeds/components/BreedSuggestions';
+import { useBreedSuggestions } from '../../breeds/hooks/useBreedSuggestions';
 import {
   SPECIES_OPTIONS,
   SIZE_OPTIONS,
   SEX_OPTIONS,
 } from '../constants/petOptions';
 
-// Seção "Sobre o pet": espécie (obrigatória), nome, porte, sexo, cor, raça e
-// detalhes
 export function PetDetailsFields({ petData, onChange }) {
   const breedRef = useRef(null);
   const descriptionRef = useRef(null);
-  // Liga um campo do formulário ao valor e à função que o altera
+  const breedSuggestions = useBreedSuggestions(petData.species, petData.breed);
   const bind = (field) => ({
     value: petData[field],
-    // Ao digitar, atualiza o campo correspondente
     onChangeText: (text) => onChange(field, text),
   });
 
   return (
     <>
-      <Text style={formStyles.label}>Espécie *</Text>
+      <FieldLabel required>Espécie</FieldLabel>
       <ChipSelector
         options={SPECIES_OPTIONS}
         value={petData.species}
@@ -72,6 +72,10 @@ export function PetDetailsFields({ petData, onChange }) {
         placeholder="Ex.: vira-lata, poodle, siamês"
         maxLength={40}
         onSubmit={() => descriptionRef.current?.focus()}
+      />
+      <BreedSuggestions
+        suggestions={breedSuggestions}
+        onSelect={(breed) => onChange('breed', breed)}
       />
 
       <LabeledInput

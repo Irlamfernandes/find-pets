@@ -9,47 +9,59 @@ import { normalizeEmail } from '../../../shared/utils/validation';
 
 const BCRYPT_ROUNDS = 10;
 
-// Conta guardada com os campos esperados (ignora dados corrompidos)
 const isValidAccount = (account) =>
   typeof account?.usuario === 'string' &&
   typeof account.passwordHash === 'string';
 
-// Contas deste aparelho: [{ usuario, passwordHash, hasBiometrics }].
-// Ficam no armazenamento criptografado do sistema.
 const accountsStore = createJsonStore(STORAGE_KEYS.CREDENTIALS, {
   adapter: secureStorageAdapter,
   fallback: [],
-  // Descarta contas corrompidas ao ler
   normalize: (accounts) => accounts.filter(isValidAccount),
 });
 
-// Mesma conta, sem diferenciar maiúsculas nem espaços
 const sameUser = (account, usuario) =>
   normalizeEmail(account.usuario) === normalizeEmail(usuario);
 
-// Conta do usuário na lista, ou null
 const findAccount = (accounts, usuario) =>
   accounts.find((account) => sameUser(account, usuario)) || null;
 
-// Hash da senha com bcrypt (a senha nunca é gravada como texto)
 async function hashPassword(password) {
   const salt = await bcrypt.genSalt(BCRYPT_ROUNDS);
   return bcrypt.hash(password, salt);
 }
 
-// Aplica `changes` à conta, que precisa existir
 function updateAccount(usuario, changes) {
   return accountsStore.update((accounts) => {
     if (!findAccount(accounts, usuario)) {
       throw new Error('Conta não encontrada.');
     }
-    return accounts.map((account) =>
-      sameUser(account, usuario) ? { ...account, ...changes } : account
-    );
+    return accounts.map((account) => {
+      if (!sameUser(account, usuario)) return account;
+      const change = typeof changes === 'function' ? changes(account) : changes;
+      return { ...account, ...change };
+    });
   });
 }
 
-// Recusa usuário ou senha vazios
+function transferBiometrics(usuario, password) {
+  return accountsStore.update((accounts) => {
+    if (!findAccount(accounts, usuario)) {
+      throw new Error('Conta não encontrada.');
+    }
+    return accounts.map((account) => {
+      const isOwner = sameUser(account, usuario);
+      return {
+        ...account,
+        hasBiometrics: isOwner,
+        biometricPassword: isOwner ? password : null,
+      };
+    });
+  });
+}
+
+const findOwner = (accounts) =>
+  accounts.find((account) => account.hasBiometrics) || null;
+
 function requireCredentials(usuario, password) {
   if (!usuario || !password) {
     throw new Error('Usuário e senha são obrigatórios.');
@@ -57,15 +69,12 @@ function requireCredentials(usuario, password) {
 }
 
 export const accountService = {
-  // Conta guardada neste aparelho, ou null
   getAccount(usuario) {
     return withErrorContext('Erro ao recuperar credenciais', async () =>
       findAccount(await accountsStore.read(), usuario)
     );
   },
 
-  // Cria a conta sem biometria (ela é ativada depois, no fim do cadastro ou
-  // no Perfil). Recusa e-mails já cadastrados, o que trocaria a senha.
   async createAccount(usuario, password) {
     requireCredentials(usuario, password);
     if (await this.getAccount(usuario)) {
@@ -87,8 +96,6 @@ export const accountService = {
     );
   },
 
-  // Guarda a conta neste aparelho com a senha confirmada pelo Firebase, para a
-  // pessoa conseguir reabrir o app sem internet. Cria ou atualiza a senha.
   async rememberAccount(usuario, password) {
     const account = await this.getAccount(usuario);
     return account
@@ -96,16 +103,17 @@ export const accountService = {
       : this.createAccount(usuario, password);
   },
 
-  // Troca a senha guardada neste aparelho
   async changePassword(usuario, newPassword) {
     requireCredentials(usuario, newPassword);
-    return withErrorContext('Erro ao alterar a senha', async () =>
-      updateAccount(usuario, { passwordHash: await hashPassword(newPassword) })
-    );
+    return withErrorContext('Erro ao alterar a senha', async () => {
+      const passwordHash = await hashPassword(newPassword);
+      return updateAccount(usuario, (account) => ({
+        passwordHash,
+        ...(account.hasBiometrics ? { biometricPassword: newPassword } : {}),
+      }));
+    });
   },
 
-  // Devolve o e-mail da conta, como foi cadastrado, quando a senha confere;
-  // senão, null. A senha é comparada exatamente como foi digitada.
   async authenticate(usuario, password) {
     if (!usuario || !password) return null;
     const account = await this.getAccount(usuario);
@@ -114,29 +122,35 @@ export const accountService = {
     return isValid ? account.usuario : null;
   },
 
-  // true quando a senha confere com a da conta
   async checkPassword(usuario, password) {
     return (await this.authenticate(usuario, password)) !== null;
   },
 
-  // A biometria do aparelho fica vinculada a uma única conta: o sistema não
-  // informa ao app qual digital/rosto foi usado, então não há como separar
-  // biometrias de pessoas diferentes no mesmo celular.
   getBiometricOwner() {
     return withErrorContext('Erro ao verificar a biometria', async () => {
-      const accounts = await accountsStore.read();
-      return accounts.find((account) => account.hasBiometrics) || null;
+      const owner = findOwner(await accountsStore.read());
+      return owner ? { usuario: owner.usuario } : null;
     });
   },
 
-  // Liga ou desliga a biometria da conta (só uma conta por aparelho)
-  setBiometrics(usuario, enabled) {
-    return withErrorContext('Erro ao atualizar a biometria', async () => {
-      const owner = await this.getBiometricOwner();
-      if (enabled && owner && !sameUser(owner, usuario)) {
-        throw new Error('A biometria deste aparelho já está em uso.');
-      }
-      await updateAccount(usuario, { hasBiometrics: enabled });
+  getBiometricCredentials() {
+    return withErrorContext('Erro ao verificar a biometria', async () => {
+      const owner = findOwner(await accountsStore.read());
+      const password = owner?.biometricPassword;
+      return typeof password === 'string'
+        ? { usuario: owner.usuario, password }
+        : null;
     });
+  },
+
+  setBiometrics(usuario, enabled, password = null) {
+    return withErrorContext('Erro ao atualizar a biometria', () =>
+      enabled
+        ? transferBiometrics(usuario, password)
+        : updateAccount(usuario, {
+            hasBiometrics: false,
+            biometricPassword: null,
+          })
+    );
   },
 };

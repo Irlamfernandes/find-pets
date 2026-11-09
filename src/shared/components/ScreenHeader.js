@@ -6,7 +6,6 @@ import { SafeTouchable } from './SafeTouchable';
 import { dismissKeyboardAnd } from '../utils/keyboard';
 import { palette } from '../theme/colors';
 
-// Cabeçalho com seta de voltar e título
 export function ScreenHeader({ title, onBack }) {
   return (
     <View style={styles.header}>

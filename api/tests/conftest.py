@@ -1,5 +1,3 @@
-"""Cada teste usa uma API nova, com banco SQLite e pasta de fotos temporários."""
-
 import pytest
 
 from findpets_api import create_app
@@ -24,7 +22,6 @@ def client(app):
 
 @pytest.fixture
 def sign_up(client):
-    """Cria uma conta e devolve os cabeçalhos com o token dela."""
 
     def create(email="ana@x.com", password="senha123"):
         response = client.post(

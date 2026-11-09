@@ -41,7 +41,6 @@ def test_cria_registro_com_id_do_app_e_lista_para_todos(client, sign_up):
     assert post["occurredZone"] == POST["occurredZone"]
     assert post["images"] == POST["images"]
     assert post["deletedAt"] is None
-    # Outra conta vê o registro (o feed é de todos)
     listed = client.get("/posts", headers=sign_up("bia@x.com")).get_json()
     assert [item["id"] for item in listed] == [post_id]
 
@@ -60,7 +59,6 @@ def test_vale_a_alteracao_mais_recente(client, sign_up):
     headers, post_id = sign_up(), new_id()
     put(client, headers, post_id, petName="Novo", updatedAt="2026-10-15T15:00:00Z")
 
-    # Alteração feita antes, num celular que estava offline
     stale = put(client, headers, post_id, petName="Velho")
 
     assert stale.status_code == 200
@@ -90,7 +88,6 @@ def test_troca_as_fotos_guardando_as_que_sairam(client, sign_up, app):
     with app.app_context(), transaction() as connection:
         rows = connection.execute(select(post_images.c.url, post_images.c.deleted_at))
         state = {url: deleted_at is None for url, deleted_at in rows}
-    # A foto que voltou reaproveita a linha; a que saiu fica como histórico
     assert state == {
         "http://x/1.jpg": True,
         "http://x/2.jpg": True,
@@ -103,8 +100,11 @@ def test_so_o_autor_altera_ou_exclui(client, sign_up):
     put(client, sign_up(), post_id)
     other = sign_up("bia@x.com")
 
-    assert put(client, other, post_id).status_code == 403
-    assert client.delete(f"/posts/{post_id}", headers=other).status_code == 403
+    updated = put(client, other, post_id)
+    deleted = client.delete(f"/posts/{post_id}", headers=other)
+
+    assert updated.status_code == 403
+    assert deleted.status_code == 403
 
 
 def test_exclusao_logica_e_sincronizacao(client, sign_up):
@@ -117,8 +117,8 @@ def test_exclusao_logica_e_sincronizacao(client, sign_up):
     assert deleted.get_json()["deletedAt"]
     assert client.get("/posts", headers=headers).get_json() == []
     assert client.get(f"/posts/{post_id}", headers=headers).status_code == 404
-    assert client.delete(f"/posts/{post_id}", headers=headers).status_code == 404
-    # A sincronização recebe a exclusão, para tirar o registro dos celulares
+    deleted_again = client.delete(f"/posts/{post_id}", headers=headers)
+    assert deleted_again.status_code == 404
     since = first["serverUpdatedAt"]
     changes = client.get(f"/posts?since={since}", headers=headers).get_json()
     assert [(item["id"], bool(item["deletedAt"])) for item in changes] == [

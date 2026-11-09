@@ -1,0 +1,30 @@
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      visible: 'Complete seu Perfil'
+    commands:
+      - tapOn:
+          id: 'input-name'
+          point: '95%,50%'
+      - eraseText: 50
+      - inputText: 'Teste E2E'
+      - tapOn:
+          id: 'input-whatsapp'
+          point: '95%,50%'
+      - eraseText: 50
+      - inputText: '5511999999999'
+      - hideKeyboard
+      - tapOn:
+          id: 'button-complete'
+      - waitForAnimationToEnd
+      - tapOn:
+          text: 'Depois'
+          optional: true
+      - runFlow:
+          when:
+            visible: 'Perfil completo'
+          commands:
+            - tapOn: 'Entendi'
+- assertVisible:
+    id: 'tab-feed'

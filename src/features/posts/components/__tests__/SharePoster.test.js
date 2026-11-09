@@ -26,7 +26,6 @@ describe('SharePoster', () => {
       uri: 'file:///docs/post-photo-1.jpg',
     });
     expect(getByText('Rex')).toBeTruthy();
-    // O nome é o título; os demais dados vêm com rótulo
     expect(getByText('Espécie')).toBeTruthy();
     expect(getByText('Cachorro')).toBeTruthy();
     expect(getByText('Porte')).toBeTruthy();

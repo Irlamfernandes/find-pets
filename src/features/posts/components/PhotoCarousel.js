@@ -6,12 +6,10 @@ import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { palette } from '../../../shared/theme/colors';
 
-// Fotos do pet deslizando para o lado, com contador "1/3"
 export function PhotoCarousel({ images, onOpenPhoto }) {
   const [width, setWidth] = useState(0);
   const [current, setCurrent] = useState(0);
 
-  // Ao terminar de arrastar, atualiza o indicador da foto atual
   const handleScrollEnd = (event) => {
     if (!width) return;
     setCurrent(Math.round(event.nativeEvent.contentOffset.x / width));

@@ -11,7 +11,6 @@ import { ContactButtons } from '../../posts/components/ContactButtons';
 import { InfoRow } from '../../../shared/components/InfoRow';
 import { palette } from '../../../shared/theme/colors';
 
-// Resumo do pet mostrado sobre o mapa ao tocar no ponto dele
 export function MapPetSummary({
   post,
   onClose,
@@ -59,7 +58,6 @@ export function MapPetSummary({
         </SafeTouchable>
       </View>
 
-      {/* O nome já está no título */}
       <PetInfoGrid fields={getPetFields(post, { includeName: false })} />
 
       <ContactButtons

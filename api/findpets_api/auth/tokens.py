@@ -1,5 +1,3 @@
-"""Token de acesso (JWT): o app envia em cada requisição para provar quem é."""
-
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -10,7 +8,6 @@ from ..errors import ApiError
 ALGORITHM = "HS256"
 
 
-# Token JWT da conta, com a data de expiração
 def create_token(user):
     hours = current_app.config["JWT_EXPIRES_HOURS"]
     claims = {
@@ -22,7 +19,6 @@ def create_token(user):
 
 
 def read_token(token):
-    """Devolve { id, email } do dono do token, ou erro 401."""
     try:
         claims = jwt.decode(
             token, current_app.config["JWT_SECRET"], algorithms=[ALGORITHM]

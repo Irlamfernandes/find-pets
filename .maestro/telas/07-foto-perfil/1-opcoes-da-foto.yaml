@@ -1,0 +1,22 @@
+appId: host.exp.exponent
+---
+- runFlow: ../../subflows/editar-perfil.yaml
+- scrollUntilVisible:
+    element:
+      id: 'button-change-photo'
+    direction: UP
+- tapOn:
+    id: 'button-change-photo'
+- assertVisible: 'Foto do perfil'
+- assertVisible: 'Tirar foto'
+- assertVisible: 'Escolher da galeria'
+- tapOn: 'Cancelar'
+- assertNotVisible: 'Escolher da galeria'
+- scrollUntilVisible:
+    element:
+      text: 'Cancelar'
+    direction: DOWN
+- tapOn: 'Cancelar'
+- assertNotVisible:
+    id: 'button-save-profile'
+- assertVisible: 'Meus dados'

@@ -1,6 +1,5 @@
 import { externalLinkService, buildRouteUrl } from '../externalLinkService';
 
-// Mock limpo e direto do módulo Linking sem quebrar o ecossistema do Expo
 jest.mock('react-native', () => {
   const RN = jest.requireActual('react-native');
   return Object.setPrototypeOf(

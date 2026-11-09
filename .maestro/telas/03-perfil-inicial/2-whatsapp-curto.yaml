@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'input-name'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: 'Teste E2E'
+- tapOn:
+    id: 'input-whatsapp'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: '119999'
+- hideKeyboard
+- tapOn:
+    id: 'button-complete'
+- assertVisible: 'Insira um número de WhatsApp válido com código do país e DDD.'

@@ -1,0 +1,7 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-dismiss-guide'
+    optional: true
+- assertVisible:
+    id: 'tab-feed'

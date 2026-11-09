@@ -1,7 +1,5 @@
 import { SYNC_COLUMNS } from './syncColumns';
 
-// Registros de pets. O fuso (occurred_zone) e os dados do reencontro
-// (found_info) são objetos, gravados como texto JSON.
 export const POSTS_TABLE = `
 CREATE TABLE IF NOT EXISTS posts (
   id TEXT PRIMARY KEY NOT NULL,

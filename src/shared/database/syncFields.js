@@ -1,8 +1,5 @@
-// Valores das colunas de controle (ver tables/syncColumns.js). Toda
-// alteração volta o registro para 'pending', para ser enviado à nuvem.
 export const SYNC_STATUS = { PENDING: 'pending', SYNCED: 'synced' };
 
-// Data e hora atuais no formato ISO, como ficam gravadas no banco
 const now = () => new Date().toISOString();
 
 export const createdFields = (at = now()) => ({
@@ -17,7 +14,6 @@ export const updatedFields = (at = now()) => ({
   sync_status: SYNC_STATUS.PENDING,
 });
 
-// Exclusão lógica: marca a data em vez de apagar a linha
 export const deletedFields = (at = now()) => ({
   deleted_at: at,
   ...updatedFields(at),

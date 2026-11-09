@@ -1,0 +1,9 @@
+appId: host.exp.exponent
+---
+- assertVisible: 'Escolha uma opção'
+- assertVisible:
+    id: 'button-go-login'
+- assertVisible:
+    id: 'button-go-register'
+- assertNotVisible:
+    id: 'tab-feed'

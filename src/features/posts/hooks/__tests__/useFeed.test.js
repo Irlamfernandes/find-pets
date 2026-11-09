@@ -87,7 +87,6 @@ describe('useFeed Hook - 100% Coverage', () => {
     return result;
   };
 
-  // Pede a exclusão e aperta "Excluir" no alerta de confirmação
   const confirmDeletion = async (result, id) => {
     await act(async () => {
       await result.current.deletePost(id);

@@ -1,14 +1,13 @@
-// src/screens/__tests__/LoginScreen.test.js
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import LoginScreen from '../LoginScreen';
 import { useLogin } from '../../hooks/useLogin';
 
-// MOCK DO ASYNC STORAGE NECESSÁRIO PARA A ÁRVORE DE IMPORTAÇÃO
 jest.mock('../../hooks/useLogin');
 
 describe('LoginScreen Component', () => {
   const mockSetAuthMode = jest.fn();
+  const mockNavigate = jest.fn();
   const mockSetUsuario = jest.fn();
   const mockSetSenha = jest.fn();
   const mockHandleRegister = jest.fn();
@@ -25,6 +24,7 @@ describe('LoginScreen Component', () => {
     errorMessage: '',
     authMode: 'home',
     setAuthMode: mockSetAuthMode,
+    navigate: mockNavigate,
     handleRegister: mockHandleRegister,
     handleManualLogin: mockHandleManualLogin,
     triggerBiometricAuth: mockTriggerBiometricAuth,
@@ -35,23 +35,19 @@ describe('LoginScreen Component', () => {
     useLogin.mockReturnValue(baseHookValues);
   });
 
-  // --- TELA 1: HOME ---
   it('deve renderizar a tela Home corretamente e navegar para Login ou Cadastro', () => {
     const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
 
     expect(getByText('FindPets')).toBeTruthy();
     expect(getByText('Escolha uma opção')).toBeTruthy();
 
-    // Clica no botão Login
     fireEvent.press(getByText('Login'));
-    expect(mockSetAuthMode).toHaveBeenCalledWith('login');
+    expect(mockNavigate).toHaveBeenCalledWith('login');
 
-    // Clica no botão Cadastrar
     fireEvent.press(getByText('Cadastrar'));
-    expect(mockSetAuthMode).toHaveBeenCalledWith('cadastro');
+    expect(mockNavigate).toHaveBeenCalledWith('cadastro');
   });
 
-  // --- TELA 2: CADASTRO ---
   it('deve renderizar a tela de Cadastro e disparar as ações corretamente', () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
@@ -75,11 +71,9 @@ describe('LoginScreen Component', () => {
     expect(mockSetUsuario).toHaveBeenCalledWith('novo@test.com');
     expect(mockSetSenha).toHaveBeenCalledWith('123456');
 
-    // Criar conta
     fireEvent.press(getByText('Criar conta'));
     expect(mockHandleRegister).toHaveBeenCalled();
 
-    // Voltar para Home
     fireEvent.press(getByText('Voltar'));
     expect(mockSetAuthMode).toHaveBeenCalledWith('home');
   });
@@ -95,7 +89,6 @@ describe('LoginScreen Component', () => {
     expect(queryByText('Erro de teste')).toBeNull();
   });
 
-  // --- TELA 3: LOGIN ---
   it('deve renderizar a tela de Login, campos, botões e biometria', () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
@@ -117,15 +110,12 @@ describe('LoginScreen Component', () => {
     expect(mockSetUsuario).toHaveBeenCalledWith('user@test.com');
     expect(mockSetSenha).toHaveBeenCalledWith('123456');
 
-    // Entrar com Senha
     fireEvent.press(getByText('Entrar com Senha'));
     expect(mockHandleManualLogin).toHaveBeenCalled();
 
-    // Entrar com Biometria
     fireEvent.press(getByText('Entrar com Biometria'));
     expect(mockTriggerBiometricAuth).toHaveBeenCalled();
 
-    // Voltar para Home
     fireEvent.press(getByText('Voltar'));
     expect(mockSetAuthMode).toHaveBeenCalledWith('home');
   });

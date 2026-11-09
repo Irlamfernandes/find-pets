@@ -4,7 +4,6 @@ import PropTypes from 'prop-types';
 import { canManage, isOwnedBy } from '../domain/post';
 import { PetCard } from './PetCard';
 
-// Ações que só o autor vê no próprio card
 function getOwnerActions(post, currentUser, handlers) {
   const manageable = canManage(post, currentUser);
   return {
@@ -17,7 +16,6 @@ function getOwnerActions(post, currentUser, handlers) {
   };
 }
 
-// Lista de cards dos pets; `header` aparece antes do primeiro card
 export function PetList({
   posts,
   currentUser,

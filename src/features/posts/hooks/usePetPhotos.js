@@ -5,13 +5,10 @@ import { useAppAlert } from '../../../shared/components/AppAlert';
 
 export const MAX_PHOTOS = 5;
 
-// A câmera aberta pelo app nem sempre grava GPS na foto (no iPhone nunca
-// grava). Por isso o local é registrado no momento da foto, e não depois.
 async function takePhotoWithLocation() {
   const result = await photoService.takePhoto();
   if (result.denied || result.photos.length === 0) return result;
 
-  // Sem permissão ou sinal, o serviço devolve latitude/longitude nulas
   const { latitude, longitude } = await locationService.getCurrentLocation();
   if (latitude === null) return result;
 
@@ -24,8 +21,6 @@ async function takePhotoWithLocation() {
   };
 }
 
-// Fotos do registro (até MAX_PHOTOS), vindas da câmera ou da galeria.
-// Na edição, começa com as fotos já salvas no registro.
 export function usePetPhotos(initialPost) {
   const showAlert = useAppAlert();
   const [photos, setPhotos] = useState(() =>
@@ -33,7 +28,6 @@ export function usePetPhotos(initialPost) {
   );
   const remainingPhotos = MAX_PHOTOS - photos.length;
 
-  // Adiciona as fotos escolhidas, respeitando o limite e as permissões
   const addPhotos = async (pickPhotos, deniedMessage) => {
     if (remainingPhotos <= 0) {
       showAlert({
@@ -67,19 +61,16 @@ export function usePetPhotos(initialPost) {
   return {
     photos,
     remainingPhotos,
-    // Escolhe fotos da galeria (até completar o limite)
     pickFromGallery: () =>
       addPhotos(
         () => photoService.pickFromGallery(remainingPhotos),
         'Permita o acesso às fotos para anexar imagens do seu pet.'
       ),
-    // Tira uma foto com a câmera, guardando a localização
     takePhoto: () =>
       addPhotos(
         takePhotoWithLocation,
         'Permita o acesso à câmera para fotografar o seu pet.'
       ),
-    // Tira a foto da lista
     removePhoto: (uri) =>
       setPhotos((current) => current.filter((photo) => photo.uri !== uri)),
   };

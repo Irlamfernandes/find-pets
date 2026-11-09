@@ -19,7 +19,10 @@
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW"
-      ]
+      ],
+      "runtimeVersion": {
+        "policy": "sdkVersion"
+      }
     },
     "plugins": [
       "expo-secure-store",
@@ -51,6 +54,9 @@
     "owner": "irlam",
     "updates": {
       "url": "https://u.expo.dev/f0bc1f8a-cffd-4f6b-ad1c-937a6bd4968a"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }

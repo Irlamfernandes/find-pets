@@ -13,7 +13,7 @@ permissions:
 jobs:
   lint-and-validate:
     name: Validar Código JS, Formatação e Testes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout do repositório
@@ -58,7 +58,7 @@ jobs:
 
   api:
     name: Validar a API (Python)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: api

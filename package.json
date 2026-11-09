@@ -29,6 +29,7 @@
       "**/*.{js,jsx}",
       "!**/node_modules/**",
       "!**/coverage/**",
+      "!**/app.config.js",
       "!**/babel.config.js",
       "!**/eslint.config.js",
       "!**/commitlint.config.js",

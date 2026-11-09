@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { biometricService } from '../services/biometrics';
 import { accountService } from '../services/accountService';
 import { signInWithBiometrics } from '../services/signInService';
+import { useBusy } from '../../../shared/components/BusyOverlay';
 
 const BIOMETRIC_PASSWORD_CHANGED =
   'A senha desta conta mudou. Entre com a senha para voltar a usar a biometria.';
@@ -21,6 +22,7 @@ async function confirmBiometrics() {
 export function useBiometricLogin(onSuccess, setErrorMessage) {
   const [hasHardwareBiometric, setHasHardwareBiometric] = useState(false);
   const [biometricOwner, setBiometricOwner] = useState(null);
+  const track = useBusy();
 
   const checkBiometricSupport = useCallback(async () => {
     const isAvailable = await biometricService.checkAvailability();
@@ -37,7 +39,7 @@ export function useBiometricLogin(onSuccess, setErrorMessage) {
     checkBiometricSupport();
   }, [checkBiometricSupport]);
 
-  const triggerBiometricAuth = async () => {
+  const signInWithFingerprint = async () => {
     setErrorMessage('');
     try {
       const confirmation = await confirmBiometrics();
@@ -50,11 +52,13 @@ export function useBiometricLogin(onSuccess, setErrorMessage) {
         setErrorMessage(BIOMETRIC_PASSWORD_CHANGED);
         return;
       }
-      onSuccess?.({ type: 'biometric', usuario: usuarioConta });
+      await onSuccess?.({ type: 'biometric', usuario: usuarioConta });
     } catch (error) {
       setErrorMessage(error.message || 'Erro ao entrar com a biometria.');
     }
   };
+
+  const triggerBiometricAuth = () => track(signInWithFingerprint());
 
   return {
     hasHardwareBiometric,

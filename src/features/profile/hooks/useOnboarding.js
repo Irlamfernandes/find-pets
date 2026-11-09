@@ -34,7 +34,7 @@ export function useOnboarding(onComplete) {
     try {
       const profile = toProfileData({ name, whatsapp });
       await profileService.saveProfile(profile);
-      onComplete?.(profile);
+      await onComplete?.(profile);
     } catch (error) {
       setErrorMessage(error.message || 'Erro ao salvar perfil.');
     }

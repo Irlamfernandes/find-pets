@@ -45,7 +45,7 @@ export function usePasswordPrompt({
     }
 
     close();
-    await onConfirmed(request.payload);
+    await onConfirmed(request.payload, password);
     return true;
   };
 

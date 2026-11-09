@@ -735,8 +735,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       expect(getByPlaceholderText(CONFIRM)).toBeTruthy();
       expect(getByPlaceholderText(CONFIRM).props.secureTextEntry).toBe(true);
 
-      fireEvent.press(screen.getByLabelText('Mostrar senha'));
+      fireEvent.press(screen.getByTestId('button-toggle-confirm-visibility'));
       expect(getByPlaceholderText(CONFIRM).props.secureTextEntry).toBe(false);
+      expect(getByPlaceholderText(NEW).props.secureTextEntry).toBe(false);
     });
 
     it('deve avisar e bloquear o salvamento quando as senhas forem diferentes', async () => {

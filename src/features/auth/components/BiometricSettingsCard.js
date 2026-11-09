@@ -84,7 +84,7 @@ export function BiometricSettingsCard() {
   const { status, owner, activate, deactivate } = useBiometricSettings();
 
   const actions = {
-    activate: async () => ACTIVATION_ALERTS[await activate()],
+    activate: async (password) => ACTIVATION_ALERTS[await activate(password)],
     deactivate: async () => {
       await deactivate();
       return DEACTIVATED_ALERT;
@@ -92,9 +92,9 @@ export function BiometricSettingsCard() {
   };
 
   const prompt = usePasswordPrompt({
-    onConfirmed: async (action) => {
+    onConfirmed: async (action, password) => {
       try {
-        const alert = await actions[action]();
+        const alert = await actions[action](password);
         if (alert) showAlert(alert);
       } catch (error) {
         showAlert({

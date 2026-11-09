@@ -35,4 +35,10 @@ export async function signIn(email, password) {
   }
 }
 
+export async function signInWithBiometrics() {
+  const credentials = await accountService.getBiometricCredentials();
+  if (!credentials) return null;
+  return signIn(credentials.usuario, credentials.password);
+}
+
 export const signOut = () => authApi.signOut();

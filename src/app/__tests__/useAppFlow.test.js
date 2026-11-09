@@ -55,13 +55,10 @@ describe('useAppFlow', () => {
     expect(screenOf(hook)).toBe(SCREENS.LOGIN);
   });
 
-  it('deve pedir o desbloqueio quando houver sessão salva e entrar em seguida', async () => {
+  it('deve abrir na tela de entrada mesmo com sessão salva', () => {
     sessionState.session = { usuario: 'ana@x.com' };
     const hook = renderFlow();
-    expect(screenOf(hook)).toBe(SCREENS.UNLOCK);
-
-    await act(() => hook.result.current.actions.unlocked());
-    expect(screenOf(hook)).toBe(SCREENS.HOME);
+    expect(screenOf(hook)).toBe(SCREENS.LOGIN);
   });
 
   it('deve salvar a sessão ao entrar e avisar conforme a forma de entrada', async () => {
@@ -138,7 +135,13 @@ describe('useAppFlow', () => {
       profileService.getProfile.mockResolvedValueOnce(null);
       sessionState.session = { usuario: 'ana@x.com' };
       const hook = renderFlow();
-      await act(() => hook.result.current.actions.unlocked());
+      await act(() =>
+        hook.result.current.actions.loginSucceeded({
+          type: 'register',
+          usuario: 'ana@x.com',
+        })
+      );
+      showAlert.mockClear();
       await act(() =>
         hook.result.current.actions.onboardingCompleted({ name: 'Ana' })
       );
@@ -231,16 +234,6 @@ describe('useAppFlow', () => {
       );
 
       expect(order).toEqual(['sync', 'perfil']);
-      expect(screenOf(hook)).toBe(SCREENS.HOME);
-    });
-
-    it('deve sincronizar em segundo plano ao desbloquear', async () => {
-      sessionState.session = { usuario: 'ana@x.com' };
-      const hook = renderFlow();
-
-      await act(() => hook.result.current.actions.unlocked());
-
-      expect(syncService.syncNow).toHaveBeenCalledTimes(1);
       expect(screenOf(hook)).toBe(SCREENS.HOME);
     });
 

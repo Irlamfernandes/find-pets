@@ -54,14 +54,14 @@ export function useBiometricSettings() {
     refresh();
   }, [refresh]);
 
-  const activate = async () => {
+  const activate = async (password) => {
     const result = await biometricService.authenticate(
       'Confirme sua biometria para ativá-la nesta conta'
     );
     if (!result.success) {
       return result.error === 'user_cancel' ? 'cancelled' : 'failed';
     }
-    await accountService.setBiometrics(state.usuario, true);
+    await accountService.setBiometrics(state.usuario, true, password);
     await refresh();
     return 'activated';
   };

@@ -2,7 +2,11 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useLogin } from '../useLogin';
 import { biometricService } from '../../services/biometrics';
 import { accountService } from '../../services/accountService';
-import { signIn, signUp } from '../../services/signInService';
+import {
+  signIn,
+  signInWithBiometrics,
+  signUp,
+} from '../../services/signInService';
 import { Alert } from 'react-native';
 
 jest.mock('../../services/biometrics');
@@ -37,6 +41,7 @@ describe('useLogin Hook', () => {
     jest.clearAllMocks();
     biometricService.checkAvailability.mockResolvedValue(false);
     signIn.mockResolvedValue(null);
+    signInWithBiometrics.mockResolvedValue('dona@test.com');
     accountService.getBiometricOwner.mockResolvedValue(null);
   });
 
@@ -71,7 +76,60 @@ describe('useLogin Hook', () => {
         type: 'biometric',
         usuario: 'dona@test.com',
       });
+      expect(signInWithBiometrics).toHaveBeenCalledTimes(1);
       expect(signIn).not.toHaveBeenCalled();
+    });
+
+    it('deve pedir a senha quando a guardada para a biometria não entrar', async () => {
+      biometricService.authenticate.mockResolvedValue({ success: true });
+      accountService.getBiometricOwner.mockResolvedValue(OWNER);
+      signInWithBiometrics.mockResolvedValueOnce(null);
+      const onSuccess = jest.fn();
+      const result = renderLogin(onSuccess);
+
+      await triggerBiometric(result);
+
+      expect(result.current.errorMessage).toBe(
+        'A senha desta conta mudou. Entre com a senha para voltar a usar a biometria.'
+      );
+      expect(onSuccess).not.toHaveBeenCalled();
+    });
+
+    it('deve mostrar o erro ao entrar com a biometria', async () => {
+      biometricService.authenticate.mockResolvedValue({ success: true });
+      accountService.getBiometricOwner.mockResolvedValue(OWNER);
+      signInWithBiometrics.mockRejectedValueOnce(new Error('Sem conexão.'));
+      const result = renderLogin();
+      await triggerBiometric(result);
+      expect(result.current.errorMessage).toBe('Sem conexão.');
+
+      signInWithBiometrics.mockRejectedValueOnce(new Error(''));
+      await triggerBiometric(result);
+      expect(result.current.errorMessage).toBe(
+        'Erro ao entrar com a biometria.'
+      );
+    });
+
+    it('deve pedir a biometria da conta dona ao abrir o login', async () => {
+      biometricService.authenticate.mockResolvedValue({ success: true });
+      accountService.getBiometricOwner.mockResolvedValue(OWNER);
+      signInWithBiometrics.mockResolvedValue('dona@test.com');
+      const onSuccess = jest.fn();
+      const result = renderLogin(onSuccess);
+      await waitFor(() => {
+        expect(result.current.biometricOwner).toBe('dona@test.com');
+      });
+
+      await act(async () => {
+        result.current.navigate('login');
+      });
+
+      expect(result.current.authMode).toBe('login');
+      expect(biometricService.authenticate).toHaveBeenCalledTimes(1);
+      expect(onSuccess).toHaveBeenCalledWith({
+        type: 'biometric',
+        usuario: 'dona@test.com',
+      });
     });
 
     it('deve exibir erro se não houver conta com biometria no aparelho', async () => {
@@ -117,6 +175,20 @@ describe('useLogin Hook', () => {
       expect(result.current.errorMessage).toBe(message);
       expect(onSuccess).not.toHaveBeenCalled();
     });
+  });
+
+  it('não deve pedir biometria ao abrir o login sem conta dona nem no cadastro', async () => {
+    const result = renderLogin();
+    await waitFor(() => {
+      expect(biometricService.checkAvailability).toHaveBeenCalled();
+    });
+
+    act(() => result.current.navigate('login'));
+    expect(result.current.authMode).toBe('login');
+    act(() => result.current.navigate('cadastro'));
+    expect(result.current.authMode).toBe('cadastro');
+
+    expect(biometricService.authenticate).not.toHaveBeenCalled();
   });
 
   describe.each([

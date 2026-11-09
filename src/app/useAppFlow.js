@@ -52,20 +52,14 @@ export function useAppFlow() {
     if (!isLoading) {
       dispatch({
         type: 'sessionRestored',
-        hasSession: Boolean(session?.usuario),
       });
     }
-  }, [isLoading, session]);
+  }, [isLoading]);
 
   const enter = async () => {
     const hasProfile = await hasSavedProfile();
     dispatch({ type: 'authenticated', hasProfile });
     return hasProfile;
-  };
-
-  const unlock = () => {
-    syncService.syncNow();
-    return enter();
   };
 
   const handleLoginSuccess = async (data) => {
@@ -117,7 +111,6 @@ export function useAppFlow() {
     navigation,
     passwordPromptProps,
     actions: {
-      unlocked: unlock,
       loginSucceeded: handleLoginSuccess,
       onboardingCompleted: handleOnboardingComplete,
       logout: handleLogout,

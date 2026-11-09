@@ -6,10 +6,10 @@ appId: host.exp.exponent
       all: allow
 - openLink: ${EXPO_URL}
 - extendedWaitUntil:
-    visible: 'SDK version.*|Bem-vindo de volta'
+    visible: 'SDK version.*|Escolha uma opção'
     timeout: 60000
 - runFlow: fechar-menu-expo.yaml
 - extendedWaitUntil:
-    visible: 'Bem-vindo de volta'
+    visible: 'Escolha uma opção'
     timeout: 10000
 - runFlow: mover-ferramentas.yaml

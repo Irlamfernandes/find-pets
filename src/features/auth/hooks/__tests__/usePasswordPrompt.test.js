@@ -46,7 +46,7 @@ describe('usePasswordPrompt', () => {
       'ana@x.com',
       'certa'
     );
-    expect(onConfirmed).toHaveBeenCalledWith('activate');
+    expect(onConfirmed).toHaveBeenCalledWith('activate', 'certa');
     expect(result.current.promptProps.visible).toBe(false);
     expect(result.current.payload).toBe('activate');
   });

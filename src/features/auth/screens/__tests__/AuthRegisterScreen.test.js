@@ -57,6 +57,16 @@ describe('AuthRegisterScreen Component', () => {
     expect(getAllByTestId('required-mark')).toHaveLength(2);
   });
 
+  it('deve mostrar a senha ao tocar no olho', () => {
+    const { getByTestId, getByLabelText } = render(
+      <AuthRegisterScreen {...defaultProps} />
+    );
+
+    expect(getByTestId('input-password').props.secureTextEntry).toBe(true);
+    fireEvent.press(getByLabelText('Mostrar senha'));
+    expect(getByTestId('input-password').props.secureTextEntry).toBe(false);
+  });
+
   it('deve exibir mensagem de erro quando errorMessage for fornecido no cadastro', () => {
     const { getByText } = render(
       <AuthRegisterScreen {...defaultProps} errorMessage="Preencha os campos" />

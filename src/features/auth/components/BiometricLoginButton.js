@@ -7,11 +7,11 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { maskEmail } from '../../../shared/utils/maskEmail';
 import { palette } from '../../../shared/theme/colors';
 
-export function BiometricLoginButton({ owner, onPress, testID, style }) {
+export function BiometricLoginButton({ owner, onPress, testID }) {
   return (
     <SafeTouchable
       testID={testID}
-      style={[styles.button, style]}
+      style={styles.button}
       onPress={dismissKeyboardAnd(onPress)}
     >
       <Ionicons name="finger-print" size={24} color={palette.primary} />
@@ -25,7 +25,6 @@ BiometricLoginButton.propTypes = {
   owner: PropTypes.string.isRequired,
   onPress: PropTypes.func.isRequired,
   testID: PropTypes.string,
-  style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
 };
 
 const styles = StyleSheet.create({

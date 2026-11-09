@@ -14,9 +14,6 @@ function mockScreen(name) {
 }
 
 jest.mock('../../features/auth/screens/LoginScreen', () => mockScreen('Login'));
-jest.mock('../../features/auth/screens/UnlockScreen', () =>
-  mockScreen('Unlock')
-);
 jest.mock('../../features/profile/screens/OnboardingScreen', () =>
   mockScreen('Onboarding')
 );
@@ -30,7 +27,6 @@ jest.mock('../../features/posts/screens/ReportLostPetScreen', () =>
 
 describe('AppScreens', () => {
   const actions = {
-    unlocked: jest.fn(),
     loginSucceeded: jest.fn(),
     onboardingCompleted: jest.fn(),
     logout: jest.fn(),
@@ -53,13 +49,6 @@ describe('AppScreens', () => {
   });
 
   it('deve ligar as telas de entrada às ações do fluxo', () => {
-    show(SCREENS.UNLOCK);
-    expect(received.Unlock).toEqual({
-      usuario: 'ana@x.com',
-      onUnlocked: actions.unlocked,
-      onSwitchAccount: actions.logout,
-    });
-
     show(SCREENS.LOGIN);
     expect(received.Login.onLoginSuccess).toBe(actions.loginSucceeded);
 

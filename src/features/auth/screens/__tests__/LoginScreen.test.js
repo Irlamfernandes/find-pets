@@ -7,6 +7,7 @@ jest.mock('../../hooks/useLogin');
 
 describe('LoginScreen Component', () => {
   const mockSetAuthMode = jest.fn();
+  const mockNavigate = jest.fn();
   const mockSetUsuario = jest.fn();
   const mockSetSenha = jest.fn();
   const mockHandleRegister = jest.fn();
@@ -23,6 +24,7 @@ describe('LoginScreen Component', () => {
     errorMessage: '',
     authMode: 'home',
     setAuthMode: mockSetAuthMode,
+    navigate: mockNavigate,
     handleRegister: mockHandleRegister,
     handleManualLogin: mockHandleManualLogin,
     triggerBiometricAuth: mockTriggerBiometricAuth,
@@ -40,26 +42,10 @@ describe('LoginScreen Component', () => {
     expect(getByText('Escolha uma opção')).toBeTruthy();
 
     fireEvent.press(getByText('Login'));
-    expect(mockSetAuthMode).toHaveBeenCalledWith('login');
+    expect(mockNavigate).toHaveBeenCalledWith('login');
 
     fireEvent.press(getByText('Cadastrar'));
-    expect(mockSetAuthMode).toHaveBeenCalledWith('cadastro');
-  });
-
-  it('deve mostrar a biometria na tela inicial só com o leitor disponível', () => {
-    const { getByTestId, queryByTestId, rerender } = render(
-      <LoginScreen onLoginSuccess={jest.fn()} />
-    );
-
-    fireEvent.press(getByTestId('button-home-biometrics'));
-    expect(mockTriggerBiometricAuth).toHaveBeenCalledTimes(1);
-
-    useLogin.mockReturnValue({
-      ...baseHookValues,
-      hasHardwareBiometric: false,
-    });
-    rerender(<LoginScreen onLoginSuccess={jest.fn()} />);
-    expect(queryByTestId('button-home-biometrics')).toBeNull();
+    expect(mockNavigate).toHaveBeenCalledWith('cadastro');
   });
 
   it('deve renderizar a tela de Cadastro e disparar as ações corretamente', () => {

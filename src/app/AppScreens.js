@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import LoginScreen from '../features/auth/screens/LoginScreen';
-import UnlockScreen from '../features/auth/screens/UnlockScreen';
 import OnboardingScreen from '../features/profile/screens/OnboardingScreen';
 import ProfileScreen from '../features/profile/screens/ProfileScreen';
 import FeedScreen from '../features/posts/screens/FeedScreen';
@@ -9,14 +8,6 @@ import ReportLostPetScreen from '../features/posts/screens/ReportLostPetScreen';
 import { SCREENS } from './navigation';
 
 const SCREEN_CONFIG = {
-  [SCREENS.UNLOCK]: {
-    component: UnlockScreen,
-    props: ({ session, actions }) => ({
-      usuario: session.usuario,
-      onUnlocked: actions.unlocked,
-      onSwitchAccount: actions.logout,
-    }),
-  },
   [SCREENS.LOGIN]: {
     component: LoginScreen,
     props: ({ actions }) => ({ onLoginSuccess: actions.loginSucceeded }),

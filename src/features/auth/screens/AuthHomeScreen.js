@@ -3,15 +3,9 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
-import { BiometricLoginButton } from '../components/BiometricLoginButton';
 import { palette } from '../../../shared/theme/colors';
 
-export function AuthHomeScreen({
-  onNavigate,
-  biometricOwner = null,
-  onBiometricLogin,
-  errorMessage = '',
-}) {
+export function AuthHomeScreen({ onNavigate }) {
   return (
     <View style={styles.container}>
       <Image
@@ -21,19 +15,6 @@ export function AuthHomeScreen({
       />
       <Text style={styles.title}>FindPets</Text>
       <Text style={styles.subtitle}>Escolha uma opção</Text>
-
-      {errorMessage ? (
-        <Text style={styles.errorText}>{errorMessage}</Text>
-      ) : null}
-
-      {biometricOwner ? (
-        <BiometricLoginButton
-          testID="button-home-biometrics"
-          owner={biometricOwner}
-          onPress={onBiometricLogin}
-          style={styles.biometricButton}
-        />
-      ) : null}
 
       <SafeTouchable
         testID="button-go-login"
@@ -58,9 +39,6 @@ export function AuthHomeScreen({
 
 AuthHomeScreen.propTypes = {
   onNavigate: PropTypes.func.isRequired,
-  biometricOwner: PropTypes.string,
-  onBiometricLogin: PropTypes.func,
-  errorMessage: PropTypes.string,
 };
 
 const styles = StyleSheet.create({
@@ -112,8 +90,6 @@ const styles = StyleSheet.create({
     borderColor: palette.primarySoft,
     marginTop: 12,
   },
-  biometricButton: { marginTop: 0, marginBottom: 8 },
-  errorText: { color: palette.error, textAlign: 'center', marginBottom: 12 },
   secondaryButtonText: {
     color: palette.primary,
   },

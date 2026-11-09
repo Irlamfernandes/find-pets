@@ -72,7 +72,8 @@ describe('useBiometricOffer', () => {
     );
     expect(accountService.setBiometrics).toHaveBeenCalledWith(
       'ana@test.com',
-      true
+      true,
+      'senha123'
     );
     expect(hook.result.current.passwordPromptProps.visible).toBe(false);
     expect(Alert.alert).toHaveBeenCalledWith(

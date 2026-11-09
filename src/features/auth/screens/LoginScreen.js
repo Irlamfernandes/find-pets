@@ -16,20 +16,14 @@ export default function LoginScreen({ onLoginSuccess }) {
     errorMessage,
     authMode,
     setAuthMode,
+    navigate,
     handleRegister,
     handleManualLogin,
     triggerBiometricAuth,
   } = useLogin(onLoginSuccess);
 
   if (authMode === 'home') {
-    return (
-      <AuthHomeScreen
-        onNavigate={setAuthMode}
-        biometricOwner={hasHardwareBiometric ? biometricOwner : null}
-        onBiometricLogin={triggerBiometricAuth}
-        errorMessage={errorMessage}
-      />
-    );
+    return <AuthHomeScreen onNavigate={navigate} />;
   }
 
   if (authMode === 'cadastro') {

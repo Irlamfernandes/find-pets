@@ -23,7 +23,7 @@ const ALERTS = {
   },
 };
 
-async function activateBiometrics(usuario) {
+async function activateBiometrics(usuario, password) {
   try {
     const result = await biometricService.authenticate(
       'Confirme sua biometria para ativá-la nesta conta'
@@ -31,7 +31,7 @@ async function activateBiometrics(usuario) {
     if (result.error === 'user_cancel') return null;
     if (!result.success) return ALERTS.notConfirmed;
 
-    await accountService.setBiometrics(usuario, true);
+    await accountService.setBiometrics(usuario, true, password);
     return ALERTS.activated;
   } catch {
     return ALERTS.failed;
@@ -69,8 +69,8 @@ export function useBiometricOffer() {
   const prompt = usePasswordPrompt({
     verify: (password, usuario) =>
       accountService.checkPassword(usuario, password),
-    onConfirmed: async (usuario) => {
-      const alert = await activateBiometrics(usuario);
+    onConfirmed: async (usuario, password) => {
+      const alert = await activateBiometrics(usuario, password);
       if (alert) showAlert(alert);
     },
   });

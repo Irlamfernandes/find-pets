@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { biometricService } from '../services/biometrics';
-import { accountService } from '../services/accountService';
+import { useState } from 'react';
 import { signIn, signUp } from '../services/signInService';
+import { useBiometricLogin } from './useBiometricLogin';
 import {
   rule,
   validate,
@@ -23,25 +22,9 @@ const credentialRules = [
 export function useLogin(onSuccess) {
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
-  const [hasHardwareBiometric, setHasHardwareBiometric] = useState(false);
-  const [biometricOwner, setBiometricOwner] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [authMode, setAuthMode] = useState('home');
-
-  const checkBiometricSupport = useCallback(async () => {
-    const isAvailable = await biometricService.checkAvailability();
-    setHasHardwareBiometric(isAvailable);
-    try {
-      const owner = await accountService.getBiometricOwner();
-      setBiometricOwner(owner?.usuario || null);
-    } catch {
-      setBiometricOwner(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkBiometricSupport();
-  }, [checkBiometricSupport]);
+  const biometrics = useBiometricLogin(onSuccess, setErrorMessage);
 
   const submitWith = (action, fallbackError) => async () => {
     setErrorMessage('');
@@ -72,21 +55,11 @@ export function useLogin(onSuccess) {
     onSuccess?.({ type: 'credentials', usuario: usuarioConta });
   }, 'Erro ao realizar o login.');
 
-  const triggerBiometricAuth = async () => {
+  const navigate = (mode) => {
     setErrorMessage('');
-    const owner = await accountService.getBiometricOwner();
-    if (!owner) {
-      setErrorMessage('Nenhuma conta com biometria neste aparelho.');
-      return;
-    }
-
-    const result = await biometricService.authenticate(
-      'Autentique-se com sua biometria'
-    );
-    if (result.success) {
-      onSuccess?.({ type: 'biometric', usuario: owner.usuario });
-    } else if (result.error && result.error !== 'user_cancel') {
-      setErrorMessage('Biometria não reconhecida.');
+    setAuthMode(mode);
+    if (mode === 'login' && biometrics.canUse) {
+      biometrics.triggerBiometricAuth();
     }
   };
 
@@ -95,13 +68,14 @@ export function useLogin(onSuccess) {
     setUsuario,
     senha,
     setSenha,
-    hasHardwareBiometric,
-    biometricOwner,
+    hasHardwareBiometric: biometrics.hasHardwareBiometric,
+    biometricOwner: biometrics.biometricOwner,
     errorMessage,
     authMode,
     setAuthMode,
+    navigate,
     handleRegister,
     handleManualLogin,
-    triggerBiometricAuth,
+    triggerBiometricAuth: biometrics.triggerBiometricAuth,
   };
 }

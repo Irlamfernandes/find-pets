@@ -108,7 +108,7 @@ describe('BiometricSettingsCard', () => {
       'eu@test.com',
       'abc'
     );
-    expect(settings.activate).toHaveBeenCalledTimes(1);
+    expect(settings.activate).toHaveBeenCalledWith('abc');
     expect(Alert.alert).toHaveBeenCalledWith(
       'Biometria ativada',
       'Da próxima vez, você poderá entrar com a biometria.'

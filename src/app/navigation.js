@@ -1,6 +1,5 @@
 export const SCREENS = {
   LOADING: 'loading',
-  UNLOCK: 'unlock',
   LOGIN: 'login',
   ONBOARDING: 'onboarding',
   HOME: 'home',
@@ -20,10 +19,10 @@ const SIGNED_IN = [SCREENS.HOME, SCREENS.PROFILE, SCREENS.REPORT];
 const TRANSITIONS = {
   sessionRestored: {
     from: [SCREENS.LOADING],
-    to: ({ hasSession }) => goTo(hasSession ? SCREENS.UNLOCK : SCREENS.LOGIN),
+    to: () => goTo(SCREENS.LOGIN),
   },
   authenticated: {
-    from: [SCREENS.LOGIN, SCREENS.UNLOCK],
+    from: [SCREENS.LOGIN],
     to: ({ hasProfile }) =>
       goTo(hasProfile ? SCREENS.HOME : SCREENS.ONBOARDING),
   },
@@ -38,7 +37,7 @@ const TRANSITIONS = {
     to: ({ post }) => goTo(SCREENS.REPORT, post || null),
   },
   loggedOut: {
-    from: [SCREENS.UNLOCK, ...SIGNED_IN],
+    from: SIGNED_IN,
     to: () => goTo(SCREENS.LOGIN),
   },
 };

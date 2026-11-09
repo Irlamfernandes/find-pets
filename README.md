@@ -18,8 +18,10 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 **Conta e acesso**
 
 - Cadastro e login com e-mail e senha pelo **Firebase Authentication** (o login fica guardado no aparelho).
-- Desbloqueio por biometria do aparelho (Expo Local Authentication), configurável no perfil.
-- Sessão persistente e opção de sair da conta.
+- Entrada por biometria como em app de banco (Expo Local Authentication): ao tocar em **Login**, o app pede a digital da conta que tem a biometria; cancelando, dá para entrar em qualquer conta com e-mail e senha.
+- A biometria fica com uma conta por celular, a última que a ativou: ao entrar com senha em outra conta, o app oferece passar a biometria para ela. Também é possível ativar ou desativar no perfil.
+- A senha da conta com biometria fica no armazenamento criptografado do aparelho (expo-secure-store), para a digital também entrar no Firebase.
+- Botão de mostrar e ocultar a senha em todos os campos de senha.
 
 **Perfil**
 
@@ -66,7 +68,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 src/
   app/          fluxo do app: navegação (máquina de estados)
   features/
-    auth/       conta, sessão, biometria, login e desbloqueio
+    auth/       conta, sessão, biometria e login
     profile/    cadastro e edição do perfil
     posts/      registros de pets: feed, registro, reencontro e compartilhamento
     map/        mapas nativos (react-native-maps): ponto do registro e mapa geral
@@ -108,7 +110,7 @@ Tabelas `profiles`, `posts` e `post_images` (1 registro : N fotos), criadas em `
 3. Em conflito vale a alteração mais recente (`updatedAt`): uma versão mais nova já gravada por outro celular é mantida.
 4. A sincronização roda ao entrar, quando a internet volta e depois de cada alteração.
 
-O cadastro e o primeiro login num celular precisam de internet. Depois disso, o app reabre offline com a biometria ou a senha guardada no aparelho.
+O cadastro e o primeiro login num celular precisam de internet. Depois disso, dá para entrar sem internet com a biometria ou com a senha guardada no aparelho.
 
 ### ☁️ Firebase
 
@@ -194,7 +196,7 @@ Os fluxos em [.maestro/telas/](.maestro/telas) usam o app de verdade, como um us
 | `08-offline`        | Com o modo avião, o app avisa e continua funcionando; o aviso some ao reconectar                        |
 | `09-sair-e-entrar`  | E-mail já cadastrado; no login, campos vazios, e-mail inválido e senha errada                           |
 | `10-trocar-senha`   | Troca a senha: a antiga deixa de entrar e a nova entra; depois volta para a original                    |
-| `11-desbloqueio`    | Reabre o app: senha vazia e errada; "Trocar de conta"                                                   |
+| `11-reabrir-app`    | Reabre o app na tela inicial; o Login sem biometria pede a senha; o olho mostra e esconde a senha       |
 | `12-login-offline`  | Entra sem internet com a senha guardada; ao reconectar, o app pede para entrar de novo                  |
 
 Ficam para teste manual: registrar um pet e trocar a foto do perfil (dependem da câmera ou da galeria), a biometria (precisa da digital de verdade) e as ações do card de um registro (reencontro, editar, excluir, compartilhar, WhatsApp, rota e marcadores do mapa).

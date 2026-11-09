@@ -18,27 +18,4 @@ describe('AuthHomeScreen Component', () => {
     fireEvent.press(getByText('Cadastrar'));
     expect(mockOnNavigate).toHaveBeenCalledWith('cadastro');
   });
-
-  it('deve oferecer a entrada com biometria da conta dona e mostrar erros', () => {
-    const onBiometricLogin = jest.fn();
-    const { getByTestId, getByText } = render(
-      <AuthHomeScreen
-        onNavigate={jest.fn()}
-        biometricOwner="irlam@gmail.com"
-        onBiometricLogin={onBiometricLogin}
-        errorMessage="Biometria não reconhecida."
-      />
-    );
-
-    expect(getByText('ir***@gmail.com')).toBeTruthy();
-    expect(getByText('Biometria não reconhecida.')).toBeTruthy();
-    fireEvent.press(getByTestId('button-home-biometrics'));
-    expect(onBiometricLogin).toHaveBeenCalledTimes(1);
-  });
-
-  it('não deve mostrar a biometria sem conta dona', () => {
-    const { queryByTestId } = render(<AuthHomeScreen onNavigate={jest.fn()} />);
-
-    expect(queryByTestId('button-home-biometrics')).toBeNull();
-  });
 });

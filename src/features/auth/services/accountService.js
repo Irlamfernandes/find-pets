@@ -35,23 +35,32 @@ function updateAccount(usuario, changes) {
     if (!findAccount(accounts, usuario)) {
       throw new Error('Conta não encontrada.');
     }
-    return accounts.map((account) =>
-      sameUser(account, usuario) ? { ...account, ...changes } : account
-    );
+    return accounts.map((account) => {
+      if (!sameUser(account, usuario)) return account;
+      const change = typeof changes === 'function' ? changes(account) : changes;
+      return { ...account, ...change };
+    });
   });
 }
 
-function transferBiometrics(usuario) {
+function transferBiometrics(usuario, password) {
   return accountsStore.update((accounts) => {
     if (!findAccount(accounts, usuario)) {
       throw new Error('Conta não encontrada.');
     }
-    return accounts.map((account) => ({
-      ...account,
-      hasBiometrics: sameUser(account, usuario),
-    }));
+    return accounts.map((account) => {
+      const isOwner = sameUser(account, usuario);
+      return {
+        ...account,
+        hasBiometrics: isOwner,
+        biometricPassword: isOwner ? password : null,
+      };
+    });
   });
 }
+
+const findOwner = (accounts) =>
+  accounts.find((account) => account.hasBiometrics) || null;
 
 function requireCredentials(usuario, password) {
   if (!usuario || !password) {
@@ -96,9 +105,13 @@ export const accountService = {
 
   async changePassword(usuario, newPassword) {
     requireCredentials(usuario, newPassword);
-    return withErrorContext('Erro ao alterar a senha', async () =>
-      updateAccount(usuario, { passwordHash: await hashPassword(newPassword) })
-    );
+    return withErrorContext('Erro ao alterar a senha', async () => {
+      const passwordHash = await hashPassword(newPassword);
+      return updateAccount(usuario, (account) => ({
+        passwordHash,
+        ...(account.hasBiometrics ? { biometricPassword: newPassword } : {}),
+      }));
+    });
   },
 
   async authenticate(usuario, password) {
@@ -115,16 +128,29 @@ export const accountService = {
 
   getBiometricOwner() {
     return withErrorContext('Erro ao verificar a biometria', async () => {
-      const accounts = await accountsStore.read();
-      return accounts.find((account) => account.hasBiometrics) || null;
+      const owner = findOwner(await accountsStore.read());
+      return owner ? { usuario: owner.usuario } : null;
     });
   },
 
-  setBiometrics(usuario, enabled) {
+  getBiometricCredentials() {
+    return withErrorContext('Erro ao verificar a biometria', async () => {
+      const owner = findOwner(await accountsStore.read());
+      const password = owner?.biometricPassword;
+      return typeof password === 'string'
+        ? { usuario: owner.usuario, password }
+        : null;
+    });
+  },
+
+  setBiometrics(usuario, enabled, password = null) {
     return withErrorContext('Erro ao atualizar a biometria', () =>
       enabled
-        ? transferBiometrics(usuario)
-        : updateAccount(usuario, { hasBiometrics: false })
+        ? transferBiometrics(usuario, password)
+        : updateAccount(usuario, {
+            hasBiometrics: false,
+            biometricPassword: null,
+          })
     );
   },
 };

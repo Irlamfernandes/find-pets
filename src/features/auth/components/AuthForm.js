@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import PropTypes from 'prop-types';
 import { SafeTouchable } from '../../../shared/components/SafeTouchable';
 import { FieldLabel } from '../../../shared/components/FieldLabel';
+import { PasswordInput } from '../../../shared/components/PasswordInput';
 import { useBackHandler } from '../../../shared/hooks/useBackHandler';
 import {
   FormScrollView,
@@ -13,25 +14,39 @@ import { dismissKeyboardAnd } from '../../../shared/utils/keyboard';
 import { useSingleFlight } from '../../../shared/hooks/useSingleFlight';
 import { palette } from '../../../shared/theme/colors';
 
-function AuthField({ label, inputRef, ...inputProps }) {
+function AuthField({ label, secret = false, hasError, inputRef, ...props }) {
+  const field = secret ? (
+    <PasswordInput
+      inputRef={inputRef}
+      placeholder={label}
+      containerStyle={[styles.passwordBox, hasError && styles.inputError]}
+      {...props}
+    />
+  ) : (
+    <FormTextInput
+      ref={inputRef}
+      placeholder={label}
+      placeholderTextColor="#888"
+      selectionColor={palette.primary}
+      style={[styles.input, hasError && styles.inputError]}
+      {...props}
+    />
+  );
+
   return (
     <>
       <FieldLabel required style={styles.fieldLabel}>
         {label}
       </FieldLabel>
-      <FormTextInput
-        ref={inputRef}
-        placeholder={label}
-        placeholderTextColor="#888"
-        selectionColor={palette.primary}
-        {...inputProps}
-      />
+      {field}
     </>
   );
 }
 
 AuthField.propTypes = {
   label: PropTypes.string.isRequired,
+  secret: PropTypes.bool,
+  hasError: PropTypes.bool.isRequired,
   inputRef: PropTypes.object,
 };
 
@@ -51,7 +66,7 @@ export function AuthForm({
   const passwordRef = useRef(null);
   useBackHandler(dismissKeyboardAnd(onBack));
   const submit = useSingleFlight(dismissKeyboardAnd(onSubmit));
-  const inputStyle = [styles.input, !!errorMessage && styles.inputError];
+  const hasError = Boolean(errorMessage);
 
   return (
     <FormScrollView
@@ -73,7 +88,7 @@ export function AuthForm({
       <AuthField
         label="E-mail"
         testID="input-email"
-        style={inputStyle}
+        hasError={hasError}
         value={usuario}
         onChangeText={setUsuario}
         autoCapitalize="none"
@@ -88,10 +103,10 @@ export function AuthForm({
         label="Senha"
         inputRef={passwordRef}
         testID="input-password"
-        style={inputStyle}
+        secret
+        hasError={hasError}
         value={senha}
         onChangeText={setSenha}
-        secureTextEntry
         returnKeyType="done"
         onSubmitEditing={submit}
       />
@@ -175,6 +190,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: palette.surface,
     color: palette.text,
+  },
+  passwordBox: {
+    height: 50,
+    paddingLeft: 4,
+    marginBottom: 12,
+    borderColor: palette.neutral,
   },
   inputError: {
     borderColor: palette.error,

@@ -1,6 +1,0 @@
-appId: host.exp.exponent
----
-- tapOn: 'Trocar de conta'
-- assertVisible: 'Escolha uma opção'
-- runFlow: ../../subflows/entrar.yaml
-- runFlow: ../../subflows/reabrir-app.yaml

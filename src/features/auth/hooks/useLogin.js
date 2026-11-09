@@ -46,13 +46,13 @@ export function useLogin(onSuccess) {
     const usuarioConta = await signUp(email, senha);
     setUsuario('');
     setSenha('');
-    onSuccess?.({ type: 'register', usuario: usuarioConta });
+    await onSuccess?.({ type: 'register', usuario: usuarioConta });
   }, 'Erro ao realizar o cadastro.');
 
   const handleManualLogin = submitWith(async (email) => {
     const usuarioConta = await signIn(email, senha);
     if (!usuarioConta) return 'Usuário não existe ou senha errada.';
-    onSuccess?.({ type: 'credentials', usuario: usuarioConta });
+    await onSuccess?.({ type: 'credentials', usuario: usuarioConta });
   }, 'Erro ao realizar o login.');
 
   const navigate = (mode) => {

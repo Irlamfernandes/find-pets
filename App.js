@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { palette } from './src/shared/theme/colors';
 import { AppAlertProvider } from './src/shared/components/AppAlert';
+import { BusyProvider } from './src/shared/components/BusyOverlay';
 import PasswordPromptModal from './src/shared/components/PasswordPromptModal';
 import { useAppFlow } from './src/app/useAppFlow';
 import { AppScreens } from './src/app/AppScreens';
@@ -34,9 +35,11 @@ function AppContent() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppAlertProvider>
-        <AppContent />
-      </AppAlertProvider>
+      <BusyProvider>
+        <AppAlertProvider>
+          <AppContent />
+        </AppAlertProvider>
+      </BusyProvider>
     </SafeAreaProvider>
   );
 }

@@ -3,6 +3,7 @@ import { useSession } from '../features/auth/hooks/useSession';
 import { useBiometricOffer } from '../features/auth/hooks/useBiometricOffer';
 import { profileService } from '../features/profile/services/profileService';
 import { useAppAlert } from '../shared/components/AppAlert';
+import { useBusy } from '../shared/components/BusyOverlay';
 import { syncService } from '../features/sync/syncService';
 import { useSyncLifecycle } from '../features/sync/useSyncLifecycle';
 import { navigationReducer, INITIAL_NAVIGATION } from './navigation';
@@ -42,6 +43,7 @@ async function hasSavedProfile() {
 export function useAppFlow() {
   const { isLoading, session, saveUserSession, logout } = useSession();
   const showAlert = useAppAlert();
+  const track = useBusy();
   const { offerBiometrics, passwordPromptProps } = useBiometricOffer();
   const [navigation, dispatch] = useReducer(
     navigationReducer,
@@ -63,10 +65,10 @@ export function useAppFlow() {
   };
 
   const handleLoginSuccess = async (data) => {
-    showAlert(loginAlert(data));
     await saveUserSession(data);
     await syncService.syncNow();
     const hasProfile = await enter();
+    showAlert(loginAlert(data));
     if (data.type === 'credentials' && hasProfile) {
       await offerBiometrics(data.usuario, 'Entre mais rápido');
     }
@@ -94,7 +96,7 @@ export function useAppFlow() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await track(logout());
       dispatch({ type: 'loggedOut' });
     } catch (error) {
       showAlert({

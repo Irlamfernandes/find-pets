@@ -4,6 +4,7 @@ import { isFound, isOwnedBy, markAsFound } from '../domain/post';
 import { profileService } from '../../profile/services/profileService';
 import { sessionService } from '../../auth/services/sessionService';
 import { useAppAlert } from '../../../shared/components/AppAlert';
+import { useBusy } from '../../../shared/components/BusyOverlay';
 import { SYNC_RESULT, syncService } from '../../sync/syncService';
 
 const ALERTS = {
@@ -42,6 +43,7 @@ async function loadViewer() {
 
 export function useFeed() {
   const showAlert = useAppAlert();
+  const track = useBusy();
   const [posts, setPosts] = useState([]);
   const [viewer, setViewer] = useState(EMPTY_VIEWER);
   const [foundPostId, setFoundPostId] = useState(null);
@@ -79,7 +81,7 @@ export function useFeed() {
 
   const removePost = async (post) => {
     try {
-      setPosts(await postService.deletePost(post.id));
+      setPosts(await track(postService.deletePost(post.id)));
     } catch {
       showAlert(ALERTS.deleteFailed);
     }

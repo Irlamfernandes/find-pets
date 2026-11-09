@@ -5,11 +5,13 @@ import {
   toFoundInfo,
 } from '../domain/foundForm';
 import { validate } from '../../../shared/utils/validation';
+import { useBusy } from '../../../shared/components/BusyOverlay';
 
 export function useFoundForm(onConfirm, lostAt) {
   const [form, setForm] = useState(createFoundForm);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const track = useBusy();
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -27,7 +29,7 @@ export function useFoundForm(onConfirm, lostAt) {
 
     setIsSaving(true);
     try {
-      await onConfirm(toFoundInfo(form));
+      await track(onConfirm(toFoundInfo(form)));
     } finally {
       setIsSaving(false);
     }

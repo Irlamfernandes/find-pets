@@ -1,0 +1,6 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'tab-feed'
+- assertVisible:
+    id: 'tab-feed'

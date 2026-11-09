@@ -1,0 +1,8 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'tab-report'
+- assertVisible: 'Sobre o pet'
+- back
+- assertVisible:
+    id: 'tab-feed'

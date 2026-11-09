@@ -6,6 +6,7 @@ appId: host.exp.exponent
     id: 'button-edit-profile'
 - tapOn:
     id: 'input-current-password'
+    point: '95%,50%'
 - eraseText: 50
 - inputText: ${SENHA}
 - tapOn: 'Confirmar'

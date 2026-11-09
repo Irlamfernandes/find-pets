@@ -1,0 +1,21 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'input-email'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'input-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: '12345'
+- hideKeyboard
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          id: 'button-submit-auth'
+      - extendedWaitUntil:
+          visible: 'A senha precisa ter pelo menos 6 caracteres.'
+          timeout: 15000

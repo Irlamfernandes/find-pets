@@ -1,0 +1,11 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'input-unlock-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${SENHA}
+- tapOn:
+    id: 'button-unlock-password'
+- assertVisible:
+    id: 'tab-feed'

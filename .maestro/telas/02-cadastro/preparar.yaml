@@ -1,0 +1,9 @@
+appId: host.exp.exponent
+---
+- runFlow:
+    when:
+      true: "${CONTA_CRIADA == 'false'}"
+    commands:
+      - tapOn:
+          id: 'button-go-register'
+      - assertVisible: 'Crie seus dados de acesso'

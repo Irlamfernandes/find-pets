@@ -1,0 +1,7 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-go-register'
+- assertVisible: 'Crie seus dados de acesso'
+- back
+- assertVisible: 'Escolha uma opção'

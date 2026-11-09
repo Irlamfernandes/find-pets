@@ -1,0 +1,20 @@
+appId: host.exp.exponent
+---
+- setAirplaneMode: enabled
+- tapOn:
+    id: 'input-email'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${EMAIL}
+- tapOn:
+    id: 'input-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: ${SENHA}
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- extendedWaitUntil:
+    visible: '.*Conecte-se à internet para criar a conta.*'
+    timeout: 30000
+- setAirplaneMode: disabled

@@ -1,0 +1,4 @@
+appId: host.exp.exponent
+---
+- assertVisible: 'E-mail \*'
+- assertVisible: 'Senha \*'

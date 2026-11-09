@@ -1,0 +1,14 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'input-email'
+    point: '95%,50%'
+- eraseText: 50
+- tapOn:
+    id: 'input-password'
+    point: '95%,50%'
+- eraseText: 50
+- hideKeyboard
+- tapOn:
+    id: 'button-submit-auth'
+- assertVisible: 'Preencha usuário e senha.'

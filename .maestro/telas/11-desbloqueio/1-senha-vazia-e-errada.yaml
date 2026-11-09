@@ -1,0 +1,13 @@
+appId: host.exp.exponent
+---
+- tapOn:
+    id: 'button-unlock-password'
+- assertVisible: 'Digite sua senha.'
+- tapOn:
+    id: 'input-unlock-password'
+    point: '95%,50%'
+- eraseText: 50
+- inputText: 'senhaerrada'
+- tapOn:
+    id: 'button-unlock-password'
+- assertVisible: 'Senha incorreta.'

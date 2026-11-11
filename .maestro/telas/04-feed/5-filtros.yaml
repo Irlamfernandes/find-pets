@@ -1,0 +1,16 @@
+appId: host.exp.exponent
+---
+- assertVisible:
+    id: 'feed-filters'
+- tapOn: 'Gato'
+- tapOn:
+    id: 'input-feed-search'
+    point: '95%,50%'
+- inputText: 'zzz nenhum pet zzz'
+- hideKeyboard
+- assertVisible: 'Nenhum pet encontrado com esses filtros.'
+- tapOn:
+    id: 'button-clear-filters'
+- assertNotVisible: 'Nenhum pet encontrado com esses filtros.'
+- assertVisible:
+    id: 'tab-feed'

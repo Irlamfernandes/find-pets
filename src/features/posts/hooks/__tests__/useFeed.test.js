@@ -44,7 +44,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     const mockPosts = [{ id: '1', type: 'Perdido' }];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
 
     await act(async () => {});
 
@@ -59,7 +59,7 @@ describe('useFeed Hook - 100% Coverage', () => {
       new Error('Erro sessão')
     );
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
 
     await act(async () => {});
 
@@ -71,7 +71,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     postService.getPosts.mockResolvedValueOnce([]);
     profileService.getProfile.mockResolvedValueOnce(null);
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
 
     await act(async () => {});
 
@@ -82,7 +82,7 @@ describe('useFeed Hook - 100% Coverage', () => {
 
   const renderFeed = async (posts) => {
     postService.getPosts.mockResolvedValueOnce(posts);
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
     return result;
   };
@@ -153,12 +153,12 @@ describe('useFeed Hook - 100% Coverage', () => {
     postService.getPosts.mockResolvedValueOnce(mockPosts);
     postService.updatePost.mockResolvedValueOnce(updatedPosts);
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
     expect(result.current.isFoundFormOpen).toBe(false);
 
     expect(result.current.foundPost).toBeNull();
-    act(() => result.current.markPostAsFound('1'));
+    await act(() => result.current.markPostAsFound('1'));
     expect(result.current.isFoundFormOpen).toBe(true);
     expect(result.current.foundPost).toEqual(mockPosts[0]);
 
@@ -183,11 +183,11 @@ describe('useFeed Hook - 100% Coverage', () => {
       { id: '1', type: 'Perdido', author: 'user1@test.com' },
     ]);
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
 
-    act(() => result.current.markPostAsFound('1'));
-    act(() => result.current.cancelFound());
+    await act(() => result.current.markPostAsFound('1'));
+    await act(() => result.current.cancelFound());
 
     expect(result.current.isFoundFormOpen).toBe(false);
     expect(postService.updatePost).not.toHaveBeenCalled();
@@ -205,9 +205,9 @@ describe('useFeed Hook - 100% Coverage', () => {
     ];
     postService.getPosts.mockResolvedValueOnce(mockPosts);
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
-    act(() => {
+    await act(() => {
       result.current.markPostAsFound('1');
       result.current.markPostAsFound('2');
       result.current.markPostAsFound('999');
@@ -222,9 +222,9 @@ describe('useFeed Hook - 100% Coverage', () => {
     ]);
     sessionService.getCurrentUser.mockResolvedValueOnce(null);
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
-    act(() => result.current.markPostAsFound('1'));
+    await act(() => result.current.markPostAsFound('1'));
 
     expect(result.current.isFoundFormOpen).toBe(false);
   });
@@ -235,9 +235,9 @@ describe('useFeed Hook - 100% Coverage', () => {
     ]);
     postService.updatePost.mockRejectedValueOnce(new Error('Erro storage'));
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
-    act(() => result.current.markPostAsFound('1'));
+    await act(() => result.current.markPostAsFound('1'));
     await act(async () => {
       await result.current.confirmFound({ receiverName: 'Ana' });
     });
@@ -253,7 +253,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     postService.getPosts.mockResolvedValueOnce([]);
     sessionService.getCurrentUser.mockResolvedValueOnce(null);
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
 
     expect(result.current.currentUser).toBeNull();
@@ -266,19 +266,19 @@ describe('useFeed Hook - 100% Coverage', () => {
       photoUri: 'file:///docs/profile-photo-1.jpg',
     });
 
-    const { result } = renderHook(() => useFeed());
+    const { result } = await renderHook(() => useFeed());
     await act(async () => {});
     expect(result.current.userPhoto).toBe('file:///docs/profile-photo-1.jpg');
 
     profileService.getProfile.mockRejectedValueOnce(new Error('x'));
-    const second = renderHook(() => useFeed());
+    const second = await renderHook(() => useFeed());
     await act(async () => {});
     expect(second.result.current.userPhoto).toBeNull();
   });
 
   it('deve recarregar os posts quando a sincronização trouxer novidades', async () => {
     postService.getPosts.mockResolvedValue([]);
-    const { unmount } = renderHook(() => useFeed());
+    const { unmount } = await renderHook(() => useFeed());
     await act(async () => {});
     const listener = syncService.subscribe.mock.calls[0][0];
 
@@ -289,7 +289,7 @@ describe('useFeed Hook - 100% Coverage', () => {
     await act(async () => listener('synced'));
     expect(postService.getPosts).toHaveBeenCalledTimes(2);
 
-    unmount();
+    await unmount();
     const stopListening = syncService.subscribe.mock.results[0].value;
     expect(stopListening).toHaveBeenCalled();
   });

@@ -14,9 +14,9 @@ describe('OnboardingScreen Component', () => {
     jest.clearAllMocks();
   });
 
-  it('deve renderizar os títulos, inputs e botões corretamente e sem mensagem de erro inicial', () => {
+  it('deve renderizar os títulos, inputs e botões corretamente e sem mensagem de erro inicial', async () => {
     const { getByPlaceholderText, getByText, getByTestId, queryByText } =
-      render(<OnboardingScreen onComplete={mockOnComplete} />);
+      await render(<OnboardingScreen onComplete={mockOnComplete} />);
 
     expect(getByText('Complete seu Perfil')).toBeTruthy();
     expect(getByPlaceholderText('Seu Nome')).toBeTruthy();
@@ -26,8 +26,8 @@ describe('OnboardingScreen Component', () => {
     expect(queryByText('Preencha todos os campos.')).toBeNull();
   });
 
-  it('deve marcar nome e WhatsApp como obrigatórios', () => {
-    const { getByText, getAllByTestId } = render(<OnboardingScreen />);
+  it('deve marcar nome e WhatsApp como obrigatórios', async () => {
+    const { getByText, getAllByTestId } = await render(<OnboardingScreen />);
 
     expect(getByText('Nome *')).toBeTruthy();
     expect(getByText('WhatsApp *')).toBeTruthy();
@@ -35,9 +35,9 @@ describe('OnboardingScreen Component', () => {
   });
 
   it('deve exibir mensagem de erro na tela se tentar salvar com campos vazios', async () => {
-    const { getByTestId, getByText } = render(<OnboardingScreen />);
+    const { getByTestId, getByText } = await render(<OnboardingScreen />);
 
-    fireEvent.press(getByTestId('button-complete'));
+    await fireEvent.press(getByTestId('button-complete'));
 
     await waitFor(() => {
       expect(getByText('Preencha todos os campos.')).toBeTruthy();
@@ -45,13 +45,13 @@ describe('OnboardingScreen Component', () => {
   });
 
   it('deve interagir com os campos e disparar a conclusão', async () => {
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <OnboardingScreen onComplete={mockOnComplete} />
     );
 
-    fireEvent.changeText(getByTestId('input-name'), 'Irlam');
-    fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
-    fireEvent.press(getByTestId('button-complete'));
+    await fireEvent.changeText(getByTestId('input-name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
+    await fireEvent.press(getByTestId('button-complete'));
 
     await waitFor(() => {
       expect(mockOnComplete).toHaveBeenCalledWith({
@@ -62,13 +62,13 @@ describe('OnboardingScreen Component', () => {
   });
 
   it('deve salvar ao confirmar no teclado do campo WhatsApp', async () => {
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <OnboardingScreen onComplete={mockOnComplete} />
     );
 
-    fireEvent.changeText(getByTestId('input-name'), 'Irlam');
-    fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
-    fireEvent(getByTestId('input-whatsapp'), 'submitEditing');
+    await fireEvent.changeText(getByTestId('input-name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
+    await fireEvent(getByTestId('input-whatsapp'), 'submitEditing');
 
     await waitFor(() => {
       expect(mockOnComplete).toHaveBeenCalledWith({
@@ -79,22 +79,22 @@ describe('OnboardingScreen Component', () => {
   });
 
   it('deve executar sem quebrar se onComplete não for passado para a tela', async () => {
-    const { getByTestId } = render(<OnboardingScreen />);
+    const { getByTestId } = await render(<OnboardingScreen />);
 
-    fireEvent.changeText(getByTestId('input-name'), 'Irlam');
-    fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
-    fireEvent.press(getByTestId('button-complete'));
+    await fireEvent.changeText(getByTestId('input-name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('input-whatsapp'), '5511999999999');
+    await fireEvent.press(getByTestId('button-complete'));
 
     await waitFor(() => {
       expect(getByTestId('button-complete')).toBeTruthy();
     });
   });
 
-  it('deve renderizar corretamente no ambiente Android', () => {
+  it('deve renderizar corretamente no ambiente Android', async () => {
     const originalOS = Platform.OS;
     Platform.OS = 'android';
 
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <OnboardingScreen onComplete={mockOnComplete} />
     );
     expect(getByTestId('button-complete')).toBeTruthy();
@@ -102,11 +102,11 @@ describe('OnboardingScreen Component', () => {
     Platform.OS = originalOS;
   });
 
-  it('deve ir para o campo de WhatsApp ao confirmar o nome no teclado', () => {
+  it('deve ir para o campo de WhatsApp ao confirmar o nome no teclado', async () => {
     const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
-    const { getByTestId } = render(<OnboardingScreen />);
+    const { getByTestId } = await render(<OnboardingScreen />);
 
-    fireEvent(getByTestId('input-name'), 'submitEditing');
+    await fireEvent(getByTestId('input-name'), 'submitEditing');
 
     expect(focusSpy).toHaveBeenCalledTimes(1);
     focusSpy.mockRestore();

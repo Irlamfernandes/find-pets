@@ -6,8 +6,8 @@ jest.mock('../../services/breedService', () => ({
   breedService: { getBreeds: jest.fn() },
 }));
 
-const renderSuggestions = (species, text) =>
-  renderHook((props) => useBreedSuggestions(props.species, props.text), {
+const renderSuggestions = async (species, text) =>
+  await renderHook((props) => useBreedSuggestions(props.species, props.text), {
     initialProps: { species, text },
   });
 
@@ -20,34 +20,40 @@ describe('useBreedSuggestions', () => {
   });
 
   it('deve sugerir raças da espécie a partir de 2 letras', async () => {
-    const { result, rerender } = renderSuggestions('Cachorro', 'p');
+    const { result, rerender } = await renderSuggestions('Cachorro', 'p');
     await act(async () => {});
     expect(breedService.getBreeds).not.toHaveBeenCalled();
     expect(result.current).toEqual([]);
 
-    rerender({ species: 'Cachorro', text: 'pu' });
+    await rerender({ species: 'Cachorro', text: 'pu' });
     await act(async () => {});
     expect(breedService.getBreeds).toHaveBeenCalledWith('Cachorro');
     expect(result.current).toEqual(['Pug', 'Puli']);
 
-    rerender({ species: 'Cachorro', text: 'pug' });
+    await rerender({ species: 'Cachorro', text: 'pug' });
     await act(async () => {});
     expect(breedService.getBreeds).toHaveBeenCalledTimes(1);
   });
 
   it('deve trocar a lista ao trocar de espécie, sem misturar as raças', async () => {
-    const { result, rerender } = renderSuggestions('Cachorro', 'pe');
+    const { result, rerender } = await renderSuggestions('Cachorro', 'pe');
     await act(async () => {});
     expect(result.current).toEqual([]);
 
-    rerender({ species: 'Gato', text: 'pe' });
+    let finish;
+    breedService.getBreeds.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
+    await rerender({ species: 'Gato', text: 'pe' });
     expect(result.current).toEqual([]);
-    await act(async () => {});
+    await act(async () => finish(['Siamese', 'Persian']));
     expect(result.current).toEqual(['Persian']);
   });
 
   it('não deve buscar para outras espécies nem sem texto', async () => {
-    const { result } = renderHook(() => useBreedSuggestions('Outro'));
+    const { result } = await renderHook(() => useBreedSuggestions('Outro'));
     await act(async () => {});
 
     expect(result.current).toEqual([]);
@@ -56,7 +62,7 @@ describe('useBreedSuggestions', () => {
 
   it('deve ficar sem sugestões se a busca falhar', async () => {
     breedService.getBreeds.mockRejectedValueOnce(new Error('x'));
-    const { result } = renderSuggestions('Cachorro', 'pu');
+    const { result } = await renderSuggestions('Cachorro', 'pu');
     await act(async () => {});
 
     expect(result.current).toEqual([]);
@@ -69,8 +75,8 @@ describe('useBreedSuggestions', () => {
         finish = resolve;
       })
     );
-    const { result, unmount } = renderSuggestions('Cachorro', 'pu');
-    unmount();
+    const { result, unmount } = await renderSuggestions('Cachorro', 'pu');
+    await unmount();
 
     await act(async () => finish(['Pug']));
     expect(result.current).toEqual([]);

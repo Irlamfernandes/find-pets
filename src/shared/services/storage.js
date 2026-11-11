@@ -62,6 +62,6 @@ export async function withErrorContext(context, action) {
   try {
     return await action();
   } catch (error) {
-    throw new Error(`${context}: ${error.message}`);
+    throw new Error(`${context}: ${error.message}`, { cause: error });
   }
 }

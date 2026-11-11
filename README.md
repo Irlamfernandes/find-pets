@@ -34,6 +34,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 - Sugestões de raça ao digitar, vindas de APIs públicas e gratuitas (sem chave): [Dog CEO](https://dog.ceo/dog-api/) para cachorros e [Cat Facts](https://catfact.ninja) para gatos. A lista fica guardada no aparelho e funciona offline.
 - Localização capturada automaticamente (Expo Location) e exibida em mapa.
 - Feed em lista ou em mapa geral com todos os pets perdidos (mapa nativo do Expo, `react-native-maps`).
+- Filtros no feed: por espécie e por busca no nome, raça, cor, descrição ou lugar, na lista e no mapa.
 - Edição e exclusão do próprio registro (exclusão lógica).
 - Marcar o pet como **reencontrado**, informando onde e quando.
 - Contato direto com o tutor pelo WhatsApp.
@@ -55,7 +56,7 @@ O app funciona **sem internet** (dados no SQLite do celular) e **sincroniza com 
 | Dados no app  | expo-sqlite (banco e kv-store para sessão e preferências), expo-secure-store (senha), expo-network                  |
 | Nuvem         | Firebase Authentication e Realtime Database, Image Manipulator (fotos reduzidas em base64)                          |
 | Recursos      | expo-image-picker, expo-image, expo-location, expo-local-authentication, expo-sharing, View Shot, react-native-maps |
-| API           | Python, Flask, SQLAlchemy, MySQL, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                                 |
+| API           | Python, Flask, SQLAlchemy, MySQL 8.4, JWT, bcrypt, Swagger (flasgger), Gunicorn, Docker                             |
 | Qualidade     | Jest + Testing Library, pytest, Maestro (E2E), ESLint, Prettier, Ruff, SonarQube, Husky + Commitlint, Gitleaks      |
 | APIs públicas | Dog CEO (raças de cachorro) e Cat Facts (raças de gato), via `fetch`, sem chave de acesso                           |
 | CI            | GitHub Actions                                                                                                      |
@@ -162,6 +163,20 @@ API REST em `api/` (Flask + MySQL + Docker + Swagger), usada pelo app antes do F
    ```bash
    npx expo start
    ```
+   Depois de mudanças grandes (arquivos apagados ou bibliotecas novas), use `npx expo start --clear` uma vez.
+
+### Publicar no Expo (abrir sem o computador)
+
+O app é publicado no [expo.dev](https://expo.dev/accounts/irlam/projects/find-pets) pelo **EAS Update** e abre pelo **Expo Go** com qualquer internet, sem o computador ligado. Não há APK: o mapa só funciona sem chave do Google Maps dentro do Expo Go.
+
+1. Publique a versão atual (o `.env` entra só na montagem do app):
+   ```bash
+   set -a; . ./.env; set +a
+   npx eas-cli update --channel preview --environment preview --platform android --message "descrição da mudança"
+   ```
+2. No celular, entre no Expo Go com a conta dona do projeto e abra o **find-pets** pela lista de projetos, ou pelo QR code da publicação no expo.dev.
+
+O Expo Go só abre projetos do próprio usuário ou de uma organização da qual ele seja membro. Para outras pessoas abrirem (como o professor), crie uma organização no expo.dev, convide as contas delas e passe o projeto para a organização (campo `owner` do `app.json`).
 
 ### Testes
 
@@ -189,7 +204,7 @@ Os fluxos em [.maestro/telas/](.maestro/telas) usam o app de verdade, como um us
 | `01-tela-inicial`   | Textos; ida ao login e volta; ida ao cadastro e volta pelo Android                                      |
 | `02-cadastro`       | Sem internet; campos vazios; e-mail inválido; senha curta (recusada pelo Firebase); campos obrigatórios |
 | `03-perfil-inicial` | Campos vazios; WhatsApp curto; campos obrigatórios                                                      |
-| `04-feed`           | Guia de uso; lista e mapa; botão de ajuda; foto do usuário abrindo o perfil                             |
+| `04-feed`           | Guia de uso; lista e mapa; botão de ajuda; foto do usuário abrindo o perfil; filtros                    |
 | `05-registro`       | Sem foto não registra; campos obrigatórios; sugestões de raça (API pública); voltar pelo Android        |
 | `06-perfil-dados`   | Senha para liberar a edição; nome vazio, WhatsApp inválido e senhas diferentes; salvar nome e WhatsApp  |
 | `07-foto-perfil`    | Opções da foto aparecem e "Cancelar" fecha                                                              |

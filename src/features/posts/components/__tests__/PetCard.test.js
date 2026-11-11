@@ -37,15 +37,15 @@ describe('PetCard', () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
-    act(() => {
+  afterEach(async () => {
+    await act(() => {
       jest.runOnlyPendingTimers();
     });
     jest.useRealTimers();
   });
 
-  it('deve exibir fotos, descrição, data/hora, endereço e mapa', () => {
-    const { getAllByTestId, getByText } = render(
+  it('deve exibir fotos, descrição, data/hora, endereço e mapa', async () => {
+    const { getAllByTestId, getByText } = await render(
       <PetCard item={baseItem} {...handlers} />
     );
 
@@ -62,56 +62,56 @@ describe('PetCard', () => {
     expect(getByText('mapa:-23.5505,-46.6333')).toBeTruthy();
   });
 
-  it('deve abrir a foto tocada em tela cheia', () => {
-    const { getByLabelText } = render(
+  it('deve abrir a foto tocada em tela cheia', async () => {
+    const { getByLabelText } = await render(
       <PetCard item={baseItem} {...handlers} />
     );
 
-    fireEvent.press(getByLabelText('Ver foto 2 em tela cheia'));
+    await fireEvent.press(getByLabelText('Ver foto 2 em tela cheia'));
     expect(handlers.onOpenPhoto).toHaveBeenCalledWith(1);
   });
 
-  it('deve atualizar o contador ao deslizar as fotos', () => {
-    const { getByText, getByTestId, UNSAFE_getByProps } = render(
+  it('deve atualizar o contador ao deslizar as fotos', async () => {
+    const { getByText, getByTestId } = await render(
       <PetCard item={baseItem} {...handlers} />
     );
-    const list = UNSAFE_getByProps({ pagingEnabled: true });
+    const list = getByTestId('pet-carousel-list');
     const scrollToSecond = {
       nativeEvent: { contentOffset: { x: 300 } },
     };
 
-    fireEvent(list, 'momentumScrollEnd', scrollToSecond);
+    await fireEvent(list, 'momentumScrollEnd', scrollToSecond);
     expect(getByText('1/2')).toBeTruthy();
 
-    fireEvent(getByTestId('pet-carousel'), 'layout', {
+    await fireEvent(getByTestId('pet-carousel'), 'layout', {
       nativeEvent: { layout: { width: 300 } },
     });
-    fireEvent(list, 'momentumScrollEnd', scrollToSecond);
+    await fireEvent(list, 'momentumScrollEnd', scrollToSecond);
     expect(getByText('2/2')).toBeTruthy();
   });
 
-  it('deve abrir o mapa em tela cheia, o WhatsApp e a rota', () => {
-    const { getByTestId, getByText } = render(
+  it('deve abrir o mapa em tela cheia, o WhatsApp e a rota', async () => {
+    const { getByTestId, getByText } = await render(
       <PetCard item={baseItem} {...handlers} />
     );
 
-    fireEvent.press(getByTestId('button-open-map'));
-    fireEvent.press(getByText('WhatsApp'));
-    fireEvent.press(getByText('Como chegar'));
+    await fireEvent.press(getByTestId('button-open-map'));
+    await fireEvent.press(getByText('WhatsApp'));
+    await fireEvent.press(getByText('Como chegar'));
 
     expect(handlers.onOpenMap).toHaveBeenCalledTimes(1);
     expect(handlers.onOpenWhatsApp).toHaveBeenCalledWith('5511999999999');
     expect(handlers.onOpenRoute).toHaveBeenCalledTimes(1);
   });
 
-  it('deve suportar registro com uma foto, sem descrição e sem data', () => {
+  it('deve suportar registro com uma foto, sem descrição e sem data', async () => {
     const minimalItem = {
       id: '2',
       images: ['https://example.com/old.jpg'],
       status: 'Perdido',
     };
 
-    const { getAllByTestId, getByText, queryByText } = render(
+    const { getAllByTestId, getByText, queryByText } = await render(
       <PetCard item={minimalItem} {...handlers} />
     );
 
@@ -123,10 +123,10 @@ describe('PetCard', () => {
     expect(queryByText('Cachorro caramelo com coleira azul')).toBeNull();
   });
 
-  it('deve exibir as ações de dono', () => {
+  it('deve exibir as ações de dono', async () => {
     const onDelete = jest.fn();
     const onMarkFound = jest.fn();
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText, getByText } = await render(
       <PetCard
         item={baseItem}
         {...handlers}
@@ -135,13 +135,13 @@ describe('PetCard', () => {
       />
     );
 
-    fireEvent.press(getByLabelText('Marcar como encontrado'));
-    fireEvent.press(getByText('Excluir'));
+    await fireEvent.press(getByLabelText('Marcar como encontrado'));
+    await fireEvent.press(getByText('Excluir'));
     expect(onMarkFound).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('deve exibir o selo e os dados completos do reencontro', () => {
+  it('deve exibir o selo e os dados completos do reencontro', async () => {
     const foundInfo = {
       receiverName: 'Ana Souza',
       receiverRelation: 'Dono(a) / tutor',
@@ -149,7 +149,7 @@ describe('PetCard', () => {
       foundLocation: 'Praça Central',
       notes: 'Estava com fome, mas bem.',
     };
-    const { getByText, getByTestId } = render(
+    const { getByText, getByTestId } = await render(
       <PetCard
         item={{ ...baseItem, status: 'Encontrado', foundInfo }}
         {...handlers}
@@ -164,8 +164,8 @@ describe('PetCard', () => {
     expect(getByText('Estava com fome, mas bem.')).toBeTruthy();
   });
 
-  it('deve exibir as horas no fuso em que foram registradas', () => {
-    const { getByText } = render(
+  it('deve exibir as horas no fuso em que foram registradas', async () => {
+    const { getByText } = await render(
       <PetCard
         item={{
           ...baseItem,
@@ -189,8 +189,8 @@ describe('PetCard', () => {
     expect(getByText('Em: 26/09/2026 às 13:00 (CET, UTC+1)')).toBeTruthy();
   });
 
-  it('não deve mostrar "undefined" num reencontro incompleto', () => {
-    const { getByTestId, getByText, queryByText } = render(
+  it('não deve mostrar "undefined" num reencontro incompleto', async () => {
+    const { getByTestId, getByText, queryByText } = await render(
       <PetCard
         item={{
           ...baseItem,
@@ -207,8 +207,8 @@ describe('PetCard', () => {
     expect(queryByText(/undefined/)).toBeNull();
   });
 
-  it('deve mostrar "Perdido" e avisar a data em registros sem esses dados', () => {
-    const { getByText } = render(
+  it('deve mostrar "Perdido" e avisar a data em registros sem esses dados', async () => {
+    const { getByText } = await render(
       <PetCard item={{ id: '9', images: ['a.jpg'] }} {...handlers} />
     );
 
@@ -216,8 +216,8 @@ describe('PetCard', () => {
     expect(getByText('Desapareceu em: Data não informada')).toBeTruthy();
   });
 
-  it('deve omitir local e observações do reencontro quando vazios', () => {
-    const { getByTestId, queryByText } = render(
+  it('deve omitir local e observações do reencontro quando vazios', async () => {
+    const { getByTestId, queryByText } = await render(
       <PetCard
         item={{
           ...baseItem,
@@ -238,8 +238,8 @@ describe('PetCard', () => {
     expect(queryByText(/Onde:/)).toBeNull();
   });
 
-  it('deve exibir apenas a exclusão quando não puder marcar como encontrado', () => {
-    const { getByText, queryByLabelText } = render(
+  it('deve exibir apenas a exclusão quando não puder marcar como encontrado', async () => {
+    const { getByText, queryByLabelText } = await render(
       <PetCard item={baseItem} {...handlers} onDelete={jest.fn()} />
     );
 
@@ -247,8 +247,8 @@ describe('PetCard', () => {
     expect(queryByLabelText('Marcar como encontrado')).toBeNull();
   });
 
-  it('deve exibir apenas o botão de encontrado quando não puder excluir', () => {
-    const { getByLabelText, queryByText } = render(
+  it('deve exibir apenas o botão de encontrado quando não puder excluir', async () => {
+    const { getByLabelText, queryByText } = await render(
       <PetCard item={baseItem} {...handlers} onMarkFound={jest.fn()} />
     );
 
@@ -266,8 +266,8 @@ describe('PetCard', () => {
       color: 'Caramelo',
     };
 
-    it('deve mostrar cada dado do pet com seu rótulo', () => {
-      const { getByText, getByTestId } = render(
+    it('deve mostrar cada dado do pet com seu rótulo', async () => {
+      const { getByText, getByTestId } = await render(
         <PetCard item={petItem} {...handlers} />
       );
 
@@ -284,8 +284,8 @@ describe('PetCard', () => {
       });
     });
 
-    it('deve mostrar só os dados preenchidos', () => {
-      const { queryByText, getByText } = render(
+    it('deve mostrar só os dados preenchidos', async () => {
+      const { queryByText, getByText } = await render(
         <PetCard item={{ ...petItem, petName: '', color: '' }} {...handlers} />
       );
 
@@ -294,8 +294,8 @@ describe('PetCard', () => {
       expect(queryByText('Cor')).toBeNull();
     });
 
-    it('não deve mostrar a grade de dados sem dados do pet', () => {
-      const { queryByTestId } = render(
+    it('não deve mostrar a grade de dados sem dados do pet', async () => {
+      const { queryByTestId } = await render(
         <PetCard
           item={{ id: '9', images: ['x.jpg'], status: 'Perdido' }}
           {...handlers}
@@ -306,21 +306,21 @@ describe('PetCard', () => {
     });
   });
 
-  it('deve compartilhar e editar o registro', () => {
+  it('deve compartilhar e editar o registro', async () => {
     const onEdit = jest.fn();
-    const { getByLabelText } = render(
+    const { getByLabelText } = await render(
       <PetCard item={baseItem} {...handlers} onEdit={onEdit} />
     );
 
-    fireEvent.press(getByLabelText('Compartilhar este registro'));
-    fireEvent.press(getByLabelText('Editar registro'));
+    await fireEvent.press(getByLabelText('Compartilhar este registro'));
+    await fireEvent.press(getByLabelText('Editar registro'));
 
     expect(handlers.onShare).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledTimes(1);
   });
 
-  it('não deve mostrar o botão editar sem permissão', () => {
-    const { queryByLabelText, getByLabelText } = render(
+  it('não deve mostrar o botão editar sem permissão', async () => {
+    const { queryByLabelText, getByLabelText } = await render(
       <PetCard item={baseItem} {...handlers} />
     );
 
@@ -328,15 +328,15 @@ describe('PetCard', () => {
     expect(getByLabelText('Compartilhar este registro')).toBeTruthy();
   });
 
-  it('deve avisar quando o registro ainda não foi enviado ao servidor', () => {
-    const { getByText, rerender, queryByText } = render(
+  it('deve avisar quando o registro ainda não foi enviado ao servidor', async () => {
+    const { getByText, rerender, queryByText } = await render(
       <PetCard item={{ ...baseItem, syncStatus: 'pending' }} {...handlers} />
     );
     expect(
       getByText('Aguardando internet para enviar ao servidor')
     ).toBeTruthy();
 
-    rerender(
+    await rerender(
       <PetCard item={{ ...baseItem, syncStatus: 'synced' }} {...handlers} />
     );
     expect(

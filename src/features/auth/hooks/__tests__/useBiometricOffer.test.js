@@ -22,7 +22,7 @@ describe('useBiometricOffer', () => {
   });
 
   const offerAndChoose = async (choice) => {
-    const hook = renderHook(() => useBiometricOffer());
+    const hook = await renderHook(() => useBiometricOffer());
     let offered;
     await act(async () => {
       offered = await hook.result.current.offerBiometrics(
@@ -105,7 +105,7 @@ describe('useBiometricOffer', () => {
     expect(biometricService.authenticate).not.toHaveBeenCalled();
     expect(accountService.setBiometrics).not.toHaveBeenCalled();
 
-    act(() => hook.result.current.passwordPromptProps.onCancel());
+    await act(() => hook.result.current.passwordPromptProps.onCancel());
     expect(hook.result.current.passwordPromptProps).toEqual(
       expect.objectContaining({ visible: false, errorMessage: '' })
     );
@@ -156,7 +156,7 @@ describe('useBiometricOffer', () => {
     accountService.getBiometricOwner.mockResolvedValueOnce({
       usuario: 'outra@test.com',
     });
-    const { result } = renderHook(() => useBiometricOffer());
+    const { result } = await renderHook(() => useBiometricOffer());
 
     await act(async () => {
       await expect(
@@ -172,7 +172,7 @@ describe('useBiometricOffer', () => {
   });
 
   it('não deve oferecer sem biometria no celular, para a própria dona ou com erro', async () => {
-    const { result } = renderHook(() => useBiometricOffer());
+    const { result } = await renderHook(() => useBiometricOffer());
     const offer = () => result.current.offerBiometrics('Ana@Test.com', 'Oi');
 
     biometricService.checkAvailability.mockResolvedValueOnce(false);

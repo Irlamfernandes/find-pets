@@ -3,9 +3,9 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { FeedGuideCard, FEED_GUIDE_STEPS } from '../FeedGuideCard';
 
 describe('FeedGuideCard', () => {
-  it('deve exibir todos os passos e dispensar ao tocar em Entendi', () => {
+  it('deve exibir todos os passos e dispensar ao tocar em Entendi', async () => {
     const onDismiss = jest.fn();
-    const { getByText } = render(<FeedGuideCard onDismiss={onDismiss} />);
+    const { getByText } = await render(<FeedGuideCard onDismiss={onDismiss} />);
 
     expect(getByText('Como funciona o FindPets')).toBeTruthy();
     FEED_GUIDE_STEPS.forEach((step) => {
@@ -13,7 +13,7 @@ describe('FeedGuideCard', () => {
       expect(getByText(step.text)).toBeTruthy();
     });
 
-    fireEvent.press(getByText('Entendi'));
+    await fireEvent.press(getByText('Entendi'));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });

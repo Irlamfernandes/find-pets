@@ -124,7 +124,6 @@ export function AppAlertProvider({ children }) {
   }, []);
 
   const closeAlert = (confirmed) => {
-    if (!alert) return;
     if (confirmed) alert.onConfirm?.();
     alert.resolve(confirmed);
     setQueue((current) => current.slice(1));
@@ -134,6 +133,7 @@ export function AppAlertProvider({ children }) {
     <AlertContext.Provider value={showAlert}>
       {children}
       <Modal
+        testID="app-alert"
         transparent
         visible={!!alert}
         animationType="fade"

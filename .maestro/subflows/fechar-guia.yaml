@@ -1,0 +1,12 @@
+appId: host.exp.exponent
+---
+- scrollUntilVisible:
+    element:
+      id: 'button-dismiss-guide'
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: 'button-dismiss-guide'
+- assertNotVisible: 'Como funciona o FindPets'
+- assertVisible:
+    id: 'feed-filters'

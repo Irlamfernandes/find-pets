@@ -10,7 +10,7 @@ describe('useSingleFlight', () => {
           finish = resolve;
         })
     );
-    const { result } = renderHook(() => useSingleFlight(action));
+    const { result } = await renderHook(() => useSingleFlight(action));
 
     const first = result.current('a');
     const second = result.current('b');
@@ -29,7 +29,7 @@ describe('useSingleFlight', () => {
 
   it('deve liberar após falha e repassar resultados síncronos', async () => {
     const failing = jest.fn().mockRejectedValueOnce(new Error('x'));
-    const { result } = renderHook(() => useSingleFlight(failing));
+    const { result } = await renderHook(() => useSingleFlight(failing));
 
     await act(async () => {
       await expect(result.current()).rejects.toThrow('x');
@@ -39,7 +39,7 @@ describe('useSingleFlight', () => {
       await expect(result.current()).resolves.toBe('de novo');
     });
 
-    const sync = renderHook(() => useSingleFlight(() => 42));
+    const sync = await renderHook(() => useSingleFlight(() => 42));
     expect(sync.result.current()).toBe(42);
     expect(sync.result.current()).toBe(42);
   });

@@ -13,7 +13,12 @@ export async function signUp(email, password) {
     return await remember(await authApi.register(email, password), password);
   } catch (error) {
     if (error instanceof OfflineError) {
-      throw new Error('Sem conexão. Conecte-se à internet para criar a conta.');
+      throw new Error(
+        'Sem conexão. Conecte-se à internet para criar a conta.',
+        {
+          cause: error,
+        }
+      );
     }
     throw friendlyAuthError(error);
   }

@@ -14,9 +14,9 @@ jest.mock('../LocationMap', () => ({
 /* eslint-enable react/prop-types */
 
 describe('MapViewerModal', () => {
-  it('deve exibir o mapa interativo com o endereço e fechar', () => {
+  it('deve exibir o mapa interativo com o endereço e fechar', async () => {
     const onClose = jest.fn();
-    const { getByText, getByTestId } = render(
+    const { getByText, getByTestId } = await render(
       <MapViewerModal
         post={{ latitude: 1, longitude: 2, location: 'Rua A, 10' }}
         onClose={onClose}
@@ -27,12 +27,12 @@ describe('MapViewerModal', () => {
     expect(getByText('Rua A, 10')).toBeTruthy();
     expect(getByText('mapa:1,2:true')).toBeTruthy();
 
-    fireEvent.press(getByTestId('button-close-map-viewer'));
+    await fireEvent.press(getByTestId('button-close-map-viewer'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('deve omitir o endereço quando não houver', () => {
-    const { queryByText, getByText } = render(
+  it('deve omitir o endereço quando não houver', async () => {
+    const { queryByText, getByText } = await render(
       <MapViewerModal
         post={{ latitude: 1, longitude: 2 }}
         onClose={jest.fn()}
@@ -43,8 +43,8 @@ describe('MapViewerModal', () => {
     expect(queryByText('Rua A, 10')).toBeNull();
   });
 
-  it('não deve renderizar o mapa sem post', () => {
-    const { queryByText } = render(
+  it('não deve renderizar o mapa sem post', async () => {
+    const { queryByText } = await render(
       <MapViewerModal post={null} onClose={jest.fn()} />
     );
 

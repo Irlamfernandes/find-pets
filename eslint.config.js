@@ -1,9 +1,14 @@
 import js from '@eslint/js';
+import { fixupPluginRules } from '@eslint/compat';
 import reactPlugin from 'eslint-plugin-react';
 import reactNativePlugin from 'eslint-plugin-react-native';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import prettierConfig from 'eslint-config-prettier';
 import globals from 'globals';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const reactVersion = require('react/package.json').version;
 
 export default [
   {
@@ -13,8 +18,8 @@ export default [
   {
     files: ['**/*.js', '**/*.jsx'],
     plugins: {
-      react: reactPlugin,
-      'react-native': reactNativePlugin,
+      react: fixupPluginRules(reactPlugin),
+      'react-native': fixupPluginRules(reactNativePlugin),
       'react-hooks': reactHooksPlugin,
     },
     languageOptions: {
@@ -44,7 +49,7 @@ export default [
     },
     settings: {
       react: {
-        version: 'detect',
+        version: reactVersion,
       },
     },
   },

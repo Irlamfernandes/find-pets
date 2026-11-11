@@ -42,27 +42,27 @@ describe('useOnboarding Hook (via Componente)', () => {
   });
 
   it('deve lidar com erro de campos vazios ou preenchidos apenas com espaços', async () => {
-    const { getByTestId } = render(<TestComponent />);
+    const { getByTestId } = await render(<TestComponent />);
 
-    fireEvent.press(getByTestId('save'));
+    await fireEvent.press(getByTestId('save'));
     expect(getByTestId('error').props.children).toBe(
       'Preencha todos os campos.'
     );
 
-    fireEvent.changeText(getByTestId('name'), '   ');
-    fireEvent.changeText(getByTestId('whatsapp'), '   ');
-    fireEvent.press(getByTestId('save'));
+    await fireEvent.changeText(getByTestId('name'), '   ');
+    await fireEvent.changeText(getByTestId('whatsapp'), '   ');
+    await fireEvent.press(getByTestId('save'));
     expect(getByTestId('error').props.children).toBe(
       'Preencha todos os campos.'
     );
   });
 
   it('deve exibir erro se o número de WhatsApp for inválido (menos de 12 dígitos)', async () => {
-    const { getByTestId } = render(<TestComponent />);
+    const { getByTestId } = await render(<TestComponent />);
 
-    fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '55119999999');
-    fireEvent.press(getByTestId('save'));
+    await fireEvent.changeText(getByTestId('name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('whatsapp'), '55119999999');
+    await fireEvent.press(getByTestId('save'));
 
     expect(getByTestId('error').props.children).toBe(
       'Insira um número de WhatsApp válido com código do país e DDD.'
@@ -72,12 +72,14 @@ describe('useOnboarding Hook (via Componente)', () => {
 
   it('deve salvar com sucesso quando os dados forem válidos', async () => {
     const mockComplete = jest.fn();
-    const { getByTestId } = render(<TestComponent onComplete={mockComplete} />);
+    const { getByTestId } = await render(
+      <TestComponent onComplete={mockComplete} />
+    );
 
-    fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
+    await fireEvent.changeText(getByTestId('name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
-    fireEvent.press(getByTestId('save'));
+    await fireEvent.press(getByTestId('save'));
 
     await waitFor(() => {
       expect(mockComplete).toHaveBeenCalledWith({
@@ -88,12 +90,12 @@ describe('useOnboarding Hook (via Componente)', () => {
   });
 
   it('deve executar sem quebrar se onComplete não for fornecido', async () => {
-    const { getByTestId } = render(<TestComponent />);
+    const { getByTestId } = await render(<TestComponent />);
 
-    fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
+    await fireEvent.changeText(getByTestId('name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
-    fireEvent.press(getByTestId('save'));
+    await fireEvent.press(getByTestId('save'));
 
     await waitFor(() => {
       expect(getByTestId('error').props.children).toBe('');
@@ -106,12 +108,14 @@ describe('useOnboarding Hook (via Componente)', () => {
     );
 
     const mockComplete = jest.fn();
-    const { getByTestId } = render(<TestComponent onComplete={mockComplete} />);
+    const { getByTestId } = await render(
+      <TestComponent onComplete={mockComplete} />
+    );
 
-    fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
+    await fireEvent.changeText(getByTestId('name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
-    fireEvent.press(getByTestId('save'));
+    await fireEvent.press(getByTestId('save'));
 
     await waitFor(() => {
       expect(getByTestId('error').props.children).toBe(
@@ -123,12 +127,12 @@ describe('useOnboarding Hook (via Componente)', () => {
   it('deve capturar erro genérico se o serviço falhar sem mensagem', async () => {
     profileService.saveProfile.mockRejectedValueOnce({});
 
-    const { getByTestId } = render(<TestComponent />);
+    const { getByTestId } = await render(<TestComponent />);
 
-    fireEvent.changeText(getByTestId('name'), 'Irlam');
-    fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
+    await fireEvent.changeText(getByTestId('name'), 'Irlam');
+    await fireEvent.changeText(getByTestId('whatsapp'), '5511999999999');
 
-    fireEvent.press(getByTestId('save'));
+    await fireEvent.press(getByTestId('save'));
 
     await waitFor(() => {
       expect(getByTestId('error').props.children).toBe(

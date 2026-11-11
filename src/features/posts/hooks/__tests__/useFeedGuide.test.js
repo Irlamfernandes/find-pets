@@ -17,7 +17,7 @@ describe('useFeedGuide', () => {
 
   it('deve mostrar o aviso para quem ainda não viu e esconder ao dispensar', async () => {
     guideService.hasSeenFeedGuide.mockResolvedValueOnce(false);
-    const { result } = renderHook(() => useFeedGuide('ana@test.com'));
+    const { result } = await renderHook(() => useFeedGuide('ana@test.com'));
     await act(async () => {});
 
     expect(result.current.isGuideVisible).toBe(true);
@@ -28,19 +28,22 @@ describe('useFeedGuide', () => {
     expect(result.current.isGuideVisible).toBe(false);
     expect(guideService.markFeedGuideSeen).toHaveBeenCalledWith('ana@test.com');
 
-    act(() => result.current.showGuide());
+    await act(() => result.current.showGuide());
     expect(result.current.isGuideVisible).toBe(true);
   });
 
   it('não deve mostrar para quem já viu nem antes de saber o usuário', async () => {
     guideService.hasSeenFeedGuide.mockResolvedValueOnce(true);
-    const { result, rerender } = renderHook(({ user }) => useFeedGuide(user), {
-      initialProps: { user: null },
-    });
+    const { result, rerender } = await renderHook(
+      ({ user }) => useFeedGuide(user),
+      {
+        initialProps: { user: null },
+      }
+    );
     await act(async () => {});
     expect(guideService.hasSeenFeedGuide).not.toHaveBeenCalled();
 
-    rerender({ user: 'ana@test.com' });
+    await rerender({ user: 'ana@test.com' });
     await act(async () => {});
     expect(result.current.isGuideVisible).toBe(false);
   });
@@ -48,7 +51,7 @@ describe('useFeedGuide', () => {
   it('deve mostrar o aviso se não conseguir ler e esconder mesmo se falhar ao salvar', async () => {
     guideService.hasSeenFeedGuide.mockRejectedValueOnce(new Error('x'));
     guideService.markFeedGuideSeen.mockRejectedValueOnce(new Error('y'));
-    const { result } = renderHook(() => useFeedGuide('ana@test.com'));
+    const { result } = await renderHook(() => useFeedGuide('ana@test.com'));
     await act(async () => {});
     expect(result.current.isGuideVisible).toBe(true);
 
@@ -66,8 +69,8 @@ describe('useFeedGuide', () => {
         finish = resolve;
       })
     );
-    const { unmount } = renderHook(() => useFeedGuide('ana@test.com'));
-    unmount();
+    const { unmount } = await renderHook(() => useFeedGuide('ana@test.com'));
+    await unmount();
 
     await act(async () => {
       finish(false);

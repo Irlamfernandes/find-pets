@@ -1,6 +1,4 @@
 appId: host.exp.exponent
 ---
 - assertVisible: 'Como funciona o FindPets'
-- tapOn:
-    id: 'button-dismiss-guide'
-- assertNotVisible: 'Como funciona o FindPets'
+- runFlow: ../../subflows/fechar-guia.yaml

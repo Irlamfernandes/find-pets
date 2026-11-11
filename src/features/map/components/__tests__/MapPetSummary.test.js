@@ -27,8 +27,8 @@ describe('MapPetSummary', () => {
     jest.clearAllMocks();
   });
 
-  it('deve mostrar o resumo do pet com os dados identificados', () => {
-    const { getByText, queryByText } = render(
+  it('deve mostrar o resumo do pet com os dados identificados', async () => {
+    const { getByText, queryByText } = await render(
       <MapPetSummary post={post} {...handlers} />
     );
 
@@ -40,15 +40,15 @@ describe('MapPetSummary', () => {
     expect(queryByText('Nome')).toBeNull();
   });
 
-  it('deve disparar as ações do resumo', () => {
-    const { getByText, getByLabelText } = render(
+  it('deve disparar as ações do resumo', async () => {
+    const { getByText, getByLabelText } = await render(
       <MapPetSummary post={post} {...handlers} />
     );
 
-    fireEvent.press(getByLabelText('Ver foto em tela cheia'));
-    fireEvent.press(getByText('WhatsApp'));
-    fireEvent.press(getByText('Como chegar'));
-    fireEvent.press(getByLabelText('Fechar resumo'));
+    await fireEvent.press(getByLabelText('Ver foto em tela cheia'));
+    await fireEvent.press(getByText('WhatsApp'));
+    await fireEvent.press(getByText('Como chegar'));
+    await fireEvent.press(getByLabelText('Fechar resumo'));
 
     expect(handlers.onOpenPhoto).toHaveBeenCalledTimes(1);
     expect(handlers.onOpenWhatsApp).toHaveBeenCalledWith('5511999999999');
@@ -56,8 +56,8 @@ describe('MapPetSummary', () => {
     expect(handlers.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('deve funcionar só com os campos obrigatórios', () => {
-    const { getByText, queryByText } = render(
+  it('deve funcionar só com os campos obrigatórios', async () => {
+    const { getByText, queryByText } = await render(
       <MapPetSummary
         post={{ id: '2', images: ['x.jpg'], status: 'Perdido' }}
         {...handlers}

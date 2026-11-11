@@ -35,27 +35,29 @@ describe('LoginScreen Component', () => {
     useLogin.mockReturnValue(baseHookValues);
   });
 
-  it('deve renderizar a tela Home corretamente e navegar para Login ou Cadastro', () => {
-    const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+  it('deve renderizar a tela Home corretamente e navegar para Login ou Cadastro', async () => {
+    const { getByText } = await render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
 
     expect(getByText('FindPets')).toBeTruthy();
     expect(getByText('Escolha uma opção')).toBeTruthy();
 
-    fireEvent.press(getByText('Login'));
+    await fireEvent.press(getByText('Login'));
     expect(mockNavigate).toHaveBeenCalledWith('login');
 
-    fireEvent.press(getByText('Cadastrar'));
+    await fireEvent.press(getByText('Cadastrar'));
     expect(mockNavigate).toHaveBeenCalledWith('cadastro');
   });
 
-  it('deve renderizar a tela de Cadastro e disparar as ações corretamente', () => {
+  it('deve renderizar a tela de Cadastro e disparar as ações corretamente', async () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
       authMode: 'cadastro',
       errorMessage: 'Erro de teste',
     });
 
-    const { getByText, getByPlaceholderText } = render(
+    const { getByText, getByPlaceholderText } = await render(
       <LoginScreen onLoginSuccess={jest.fn()} />
     );
 
@@ -65,37 +67,39 @@ describe('LoginScreen Component', () => {
     const inputUsuario = getByPlaceholderText('E-mail');
     const inputSenha = getByPlaceholderText('Senha');
 
-    fireEvent.changeText(inputUsuario, 'novo@test.com');
-    fireEvent.changeText(inputSenha, '123456');
+    await fireEvent.changeText(inputUsuario, 'novo@test.com');
+    await fireEvent.changeText(inputSenha, '123456');
 
     expect(mockSetUsuario).toHaveBeenCalledWith('novo@test.com');
     expect(mockSetSenha).toHaveBeenCalledWith('123456');
 
-    fireEvent.press(getByText('Criar conta'));
+    await fireEvent.press(getByText('Criar conta'));
     expect(mockHandleRegister).toHaveBeenCalled();
 
-    fireEvent.press(getByText('Voltar'));
+    await fireEvent.press(getByText('Voltar'));
     expect(mockSetAuthMode).toHaveBeenCalledWith('home');
   });
 
-  it('não deve exibir mensagem de erro se errorMessage estiver vazio no Cadastro', () => {
+  it('não deve exibir mensagem de erro se errorMessage estiver vazio no Cadastro', async () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
       authMode: 'cadastro',
       errorMessage: '',
     });
 
-    const { queryByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+    const { queryByText } = await render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
     expect(queryByText('Erro de teste')).toBeNull();
   });
 
-  it('deve renderizar a tela de Login, campos, botões e biometria', () => {
+  it('deve renderizar a tela de Login, campos, botões e biometria', async () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
       authMode: 'login',
     });
 
-    const { getByText, getByPlaceholderText } = render(
+    const { getByText, getByPlaceholderText } = await render(
       <LoginScreen onLoginSuccess={jest.fn()} />
     );
 
@@ -104,62 +108,70 @@ describe('LoginScreen Component', () => {
     const inputUsuario = getByPlaceholderText('E-mail');
     const inputSenha = getByPlaceholderText('Senha');
 
-    fireEvent.changeText(inputUsuario, 'user@test.com');
-    fireEvent.changeText(inputSenha, '123456');
+    await fireEvent.changeText(inputUsuario, 'user@test.com');
+    await fireEvent.changeText(inputSenha, '123456');
 
     expect(mockSetUsuario).toHaveBeenCalledWith('user@test.com');
     expect(mockSetSenha).toHaveBeenCalledWith('123456');
 
-    fireEvent.press(getByText('Entrar com Senha'));
+    await fireEvent.press(getByText('Entrar com Senha'));
     expect(mockHandleManualLogin).toHaveBeenCalled();
 
-    fireEvent.press(getByText('Entrar com Biometria'));
+    await fireEvent.press(getByText('Entrar com Biometria'));
     expect(mockTriggerBiometricAuth).toHaveBeenCalled();
 
-    fireEvent.press(getByText('Voltar'));
+    await fireEvent.press(getByText('Voltar'));
     expect(mockSetAuthMode).toHaveBeenCalledWith('home');
   });
 
-  it('não deve renderizar o botão de biometria se hasHardwareBiometric for falso', () => {
+  it('não deve renderizar o botão de biometria se hasHardwareBiometric for falso', async () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
       authMode: 'login',
       hasHardwareBiometric: false,
     });
 
-    const { queryByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+    const { queryByText } = await render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
     expect(queryByText('Entrar com Biometria')).toBeNull();
   });
 
-  it('não deve exibir mensagem de erro se errorMessage estiver vazio no Login', () => {
+  it('não deve exibir mensagem de erro se errorMessage estiver vazio no Login', async () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
       authMode: 'login',
       errorMessage: '',
     });
 
-    const { queryByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+    const { queryByText } = await render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
     expect(queryByText('Erro crítico de login')).toBeNull();
   });
 
-  it('deve exibir mensagem de erro se errorMessage estiver preenchido no Login', () => {
+  it('deve exibir mensagem de erro se errorMessage estiver preenchido no Login', async () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
       authMode: 'login',
       errorMessage: 'Erro crítico de login',
     });
 
-    const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+    const { getByText } = await render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
     expect(getByText('Erro crítico de login')).toBeTruthy();
   });
 
-  it('deve renderizar a AuthLoginScreen por padrão quando authMode for diferente de home e cadastro', () => {
+  it('deve renderizar a AuthLoginScreen por padrão quando authMode for diferente de home e cadastro', async () => {
     useLogin.mockReturnValue({
       ...baseHookValues,
       authMode: 'unknown_or_login',
     });
 
-    const { getByText } = render(<LoginScreen onLoginSuccess={jest.fn()} />);
+    const { getByText } = await render(
+      <LoginScreen onLoginSuccess={jest.fn()} />
+    );
     expect(getByText('Login')).toBeTruthy();
   });
 });

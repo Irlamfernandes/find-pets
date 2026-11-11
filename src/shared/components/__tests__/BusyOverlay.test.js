@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import { BusyProvider, useBusy } from '../BusyOverlay';
 
 const deferred = () => {
@@ -13,13 +13,13 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
-function renderWithBusy() {
+async function renderWithBusy() {
   const captured = {};
   function Probe() {
     captured.track = useBusy();
     return <Text>tela</Text>;
   }
-  const utils = render(
+  const utils = await render(
     <BusyProvider>
       <Probe />
     </BusyProvider>
@@ -29,13 +29,13 @@ function renderWithBusy() {
 
 describe('BusyOverlay', () => {
   it('deve cobrir a tela enquanto a ação roda e liberar ao terminar', async () => {
-    const { captured, queryByTestId, getByText } = renderWithBusy();
+    const { captured, queryByTestId, getByText } = await renderWithBusy();
     expect(getByText('tela')).toBeTruthy();
     expect(queryByTestId('busy-overlay')).toBeNull();
 
     const action = deferred();
     let result;
-    act(() => {
+    await act(() => {
       result = captured.track(action.promise);
     });
     expect(queryByTestId('busy-overlay')).toBeTruthy();
@@ -48,12 +48,12 @@ describe('BusyOverlay', () => {
   });
 
   it('deve esperar todas as ações e liberar mesmo quando uma falhar', async () => {
-    const { captured, queryByTestId } = renderWithBusy();
+    const { captured, queryByTestId } = await renderWithBusy();
     const first = deferred();
     const second = deferred();
     let failed;
 
-    act(() => {
+    await act(() => {
       failed = captured.track(first.promise);
       captured.track(second.promise);
     });
@@ -68,15 +68,13 @@ describe('BusyOverlay', () => {
     expect(queryByTestId('busy-overlay')).toBeNull();
   });
 
-  it('não deve fechar pelo voltar do Android', () => {
-    const { captured, UNSAFE_getByProps, queryByTestId } = renderWithBusy();
-    act(() => {
+  it('não deve fechar pelo voltar do Android', async () => {
+    const { captured, getByTestId, queryByTestId } = await renderWithBusy();
+    await act(async () => {
       captured.track(new Promise(() => {}));
     });
 
-    act(() =>
-      UNSAFE_getByProps({ statusBarTranslucent: true }).props.onRequestClose()
-    );
+    await fireEvent(getByTestId('busy-modal'), 'requestClose');
     expect(queryByTestId('busy-overlay')).toBeTruthy();
   });
 
@@ -86,7 +84,7 @@ describe('BusyOverlay', () => {
       captured.track = useBusy();
       return null;
     }
-    render(<Probe />);
+    await render(<Probe />);
 
     await expect(captured.track(Promise.resolve(3))).resolves.toBe(3);
   });

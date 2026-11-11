@@ -35,8 +35,8 @@ describe('AppScreens', () => {
     openReport: jest.fn(),
   };
   const session = { usuario: 'ana@x.com' };
-  const show = (screen, editingPost = null) =>
-    render(
+  const show = async (screen, editingPost = null) =>
+    await render(
       <AppScreens
         navigation={{ screen, editingPost }}
         session={session}
@@ -48,21 +48,21 @@ describe('AppScreens', () => {
     jest.clearAllMocks();
   });
 
-  it('deve ligar as telas de entrada às ações do fluxo', () => {
-    show(SCREENS.LOGIN);
+  it('deve ligar as telas de entrada às ações do fluxo', async () => {
+    await show(SCREENS.LOGIN);
     expect(received.Login.onLoginSuccess).toBe(actions.loginSucceeded);
 
-    show(SCREENS.ONBOARDING);
+    await show(SCREENS.ONBOARDING);
     expect(received.Onboarding.onComplete).toBe(actions.onboardingCompleted);
   });
 
-  it('deve abrir o registro novo pelo feed e pelo perfil', () => {
-    show(SCREENS.HOME);
+  it('deve abrir o registro novo pelo feed e pelo perfil', async () => {
+    await show(SCREENS.HOME);
     received.Feed.onOpenReport();
     expect(received.Feed.onOpenProfile).toBe(actions.openProfile);
     expect(received.Feed.onEditPost).toBe(actions.openReport);
 
-    show(SCREENS.PROFILE);
+    await show(SCREENS.PROFILE);
     received.Profile.onOpenReport();
     expect(received.Profile.onBack).toBe(actions.openHome);
     expect(received.Profile.onLogout).toBe(actions.logout);
@@ -71,9 +71,9 @@ describe('AppScreens', () => {
     expect(actions.openReport).toHaveBeenCalledWith(null);
   });
 
-  it('deve passar o registro em edição', () => {
+  it('deve passar o registro em edição', async () => {
     const post = { id: '1' };
-    show(SCREENS.REPORT, post);
+    await show(SCREENS.REPORT, post);
     expect(received.Report).toEqual({
       initialPost: post,
       onBack: actions.openHome,
@@ -81,7 +81,7 @@ describe('AppScreens', () => {
     });
   });
 
-  it('não deve mostrar nada numa tela sem componente', () => {
-    expect(show(SCREENS.LOADING).toJSON()).toBeNull();
+  it('não deve mostrar nada numa tela sem componente', async () => {
+    expect((await show(SCREENS.LOADING)).toJSON()).toBeNull();
   });
 });

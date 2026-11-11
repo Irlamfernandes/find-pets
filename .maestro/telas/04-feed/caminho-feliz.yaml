@@ -1,7 +1,9 @@
 appId: host.exp.exponent
 ---
-- tapOn:
-    id: 'button-dismiss-guide'
-    optional: true
+- runFlow:
+    when:
+      visible: 'Como funciona o FindPets'
+    commands:
+      - runFlow: ../../subflows/fechar-guia.yaml
 - assertVisible:
     id: 'tab-feed'

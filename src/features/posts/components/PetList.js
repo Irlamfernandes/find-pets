@@ -20,6 +20,7 @@ export function PetList({
   posts,
   currentUser,
   header,
+  empty,
   onOpenPhoto,
   onOpenMap,
   onOpenWhatsApp,
@@ -33,6 +34,7 @@ export function PetList({
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
       ListHeaderComponent={header}
+      ListEmptyComponent={empty}
       showsVerticalScrollIndicator={false}
       renderItem={({ item }) => (
         <PetCard
@@ -53,6 +55,7 @@ PetList.propTypes = {
   posts: PropTypes.arrayOf(PropTypes.object).isRequired,
   currentUser: PropTypes.string,
   header: PropTypes.element,
+  empty: PropTypes.element,
   onOpenPhoto: PropTypes.func.isRequired,
   onOpenMap: PropTypes.func.isRequired,
   onOpenWhatsApp: PropTypes.func.isRequired,

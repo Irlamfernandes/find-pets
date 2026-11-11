@@ -45,9 +45,12 @@ jest.mock('../../../../shared/hooks/useKeyboardVisible', () => ({
 jest.spyOn(Alert, 'alert');
 
 async function unlockEditing(password = 'senha123') {
-  fireEvent.press(screen.getByTestId('button-edit-profile'));
-  fireEvent.changeText(screen.getByTestId('input-current-password'), password);
-  fireEvent.press(screen.getByText('Confirmar'));
+  await fireEvent.press(screen.getByTestId('button-edit-profile'));
+  await fireEvent.changeText(
+    screen.getByTestId('input-current-password'),
+    password
+  );
+  await fireEvent.press(screen.getByText('Confirmar'));
   await waitFor(() => {
     expect(screen.getByText('Salvar Alterações')).toBeTruthy();
   });
@@ -58,8 +61,8 @@ async function unlockAndFillProfile() {
     expect(screen.getByPlaceholderText('Seu nome')).toBeTruthy();
   });
   await unlockEditing();
-  fireEvent.changeText(screen.getByPlaceholderText('Seu nome'), 'Irlam');
-  fireEvent.changeText(
+  await fireEvent.changeText(screen.getByPlaceholderText('Seu nome'), 'Irlam');
+  await fireEvent.changeText(
     screen.getByPlaceholderText('Seu WhatsApp'),
     '5511999999999'
   );
@@ -84,7 +87,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve carregar e exibir os dados do usuário ao iniciar com sucesso', async () => {
-    const { getByDisplayValue } = render(<ProfileScreen onBack={mockOnBack} />);
+    const { getByDisplayValue } = await render(
+      <ProfileScreen onBack={mockOnBack} />
+    );
 
     await waitFor(() => {
       expect(getByDisplayValue('Irlam')).toBeTruthy();
@@ -94,23 +99,23 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   it('deve chamar onLogout ao clicar em Sair', async () => {
     const mockOnLogout = jest.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <ProfileScreen onBack={mockOnBack} onLogout={mockOnLogout} />
     );
     await act(async () => {});
 
-    fireEvent.press(getByText('Sair'));
+    await fireEvent.press(getByText('Sair'));
     expect(mockOnLogout).toHaveBeenCalledTimes(1);
   });
 
   it('deve abrir o registro de desaparecimento pela aba', async () => {
     const mockOnOpenReport = jest.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <ProfileScreen onBack={mockOnBack} onOpenReport={mockOnOpenReport} />
     );
     await act(async () => {});
 
-    fireEvent.press(getByText('Registrar desaparecimento'));
+    await fireEvent.press(getByText('Registrar desaparecimento'));
 
     expect(mockOnOpenReport).toHaveBeenCalledTimes(1);
     expect(mockOnBack).not.toHaveBeenCalled();
@@ -119,7 +124,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   it('deve lidar com erro ao carregar os dados do perfil', async () => {
     profileService.getProfile.mockRejectedValueOnce(new Error('Erro perfil'));
 
-    render(<ProfileScreen onBack={mockOnBack} />);
+    await render(<ProfileScreen onBack={mockOnBack} />);
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
@@ -132,7 +137,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   it('deve lidar com perfil vazio/nulo ao carregar', async () => {
     profileService.getProfile.mockResolvedValueOnce(null);
 
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -143,7 +148,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve exibir alerta se nome ou whatsapp estiverem vazios ao salvar', async () => {
-    const { getByPlaceholderText, getByText } = render(
+    const { getByPlaceholderText, getByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -153,10 +158,10 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await unlockEditing();
 
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), '   ');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '');
+    await fireEvent.changeText(getByPlaceholderText('Seu nome'), '   ');
+    await fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '');
     await act(async () => {
-      fireEvent.press(getByText('Salvar Alterações'));
+      await fireEvent.press(getByText('Salvar Alterações'));
     });
 
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -166,7 +171,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve exibir alerta se o telefone tiver menos de 12 dígitos', async () => {
-    const { getByPlaceholderText, getByText } = render(
+    const { getByPlaceholderText, getByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -176,10 +181,10 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await unlockEditing();
 
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999');
+    await fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam');
+    await fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5511999');
     await act(async () => {
-      fireEvent.press(getByText('Salvar Alterações'));
+      await fireEvent.press(getByText('Salvar Alterações'));
     });
 
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -191,7 +196,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   it('deve salvar o perfil com sucesso sem alterar a senha', async () => {
     profileService.saveProfile.mockResolvedValueOnce();
 
-    const { getByPlaceholderText, getByText } = render(
+    const { getByPlaceholderText, getByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -201,12 +206,12 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await unlockEditing();
 
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam Silva');
-    fireEvent.changeText(
+    await fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Irlam Silva');
+    await fireEvent.changeText(
       getByPlaceholderText('Seu WhatsApp'),
       '+55 (11) 98888-7777'
     );
-    fireEvent.press(getByText('Salvar Alterações'));
+    await fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
       expect(profileService.saveProfile).toHaveBeenCalledWith({
@@ -225,20 +230,20 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     profileService.saveProfile.mockResolvedValueOnce();
     changeAccountPassword.mockResolvedValueOnce();
 
-    const { getByPlaceholderText, getByText } = render(
+    const { getByPlaceholderText, getByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
     await unlockAndFillProfile();
-    fireEvent.changeText(
+    await fireEvent.changeText(
       getByPlaceholderText('Digite uma nova senha se desejar alterar'),
       'newpass123'
     );
-    fireEvent.changeText(
+    await fireEvent.changeText(
       getByPlaceholderText('Digite a nova senha novamente'),
       'newpass123'
     );
-    fireEvent.press(getByText('Salvar Alterações'));
+    await fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
       expect(changeAccountPassword).toHaveBeenCalledWith(
@@ -258,10 +263,10 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       new Error('Falha ao salvar')
     );
 
-    const { getByText } = render(<ProfileScreen onBack={mockOnBack} />);
+    const { getByText } = await render(<ProfileScreen onBack={mockOnBack} />);
 
     await unlockAndFillProfile();
-    fireEvent.press(getByText('Salvar Alterações'));
+    await fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
@@ -277,7 +282,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       whatsapp: undefined,
     });
 
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -290,10 +295,10 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   it('deve salvar as alterações com sucesso mesmo quando a prop onBack não é fornecida', async () => {
     profileService.saveProfile.mockResolvedValueOnce();
 
-    const { getByText } = render(<ProfileScreen />);
+    const { getByText } = await render(<ProfileScreen />);
 
     await unlockAndFillProfile();
-    fireEvent.press(getByText('Salvar Alterações'));
+    await fireEvent.press(getByText('Salvar Alterações'));
 
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
@@ -306,10 +311,10 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   it('deve salvar ao confirmar no teclado da nova senha', async () => {
     profileService.saveProfile.mockResolvedValueOnce();
 
-    const { getByPlaceholderText } = render(<ProfileScreen />);
+    const { getByPlaceholderText } = await render(<ProfileScreen />);
 
     await unlockAndFillProfile();
-    fireEvent(
+    await fireEvent(
       getByPlaceholderText('Digite uma nova senha se desejar alterar'),
       'submitEditing'
     );
@@ -324,7 +329,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   it('deve exibir os campos travados por padrão', async () => {
     const { getByPlaceholderText, queryByText, queryByPlaceholderText } =
-      render(<ProfileScreen onBack={mockOnBack} />);
+      await render(<ProfileScreen onBack={mockOnBack} />);
 
     await waitFor(() => {
       expect(getByPlaceholderText('Seu nome').props.value).toBe('Irlam');
@@ -339,7 +344,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve liberar a edição após confirmar a senha atual correta', async () => {
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -361,15 +366,15 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   it('deve manter os campos travados se a senha atual estiver incorreta', async () => {
     accountService.checkPassword.mockResolvedValueOnce(false);
     const { getByPlaceholderText, getByTestId, getByText, queryByText } =
-      render(<ProfileScreen onBack={mockOnBack} />);
+      await render(<ProfileScreen onBack={mockOnBack} />);
 
     await waitFor(() => {
       expect(getByPlaceholderText('Seu nome').props.value).toBe('Irlam');
     });
 
-    fireEvent.press(getByTestId('button-edit-profile'));
-    fireEvent.changeText(getByTestId('input-current-password'), 'errada');
-    fireEvent.press(getByText('Confirmar'));
+    await fireEvent.press(getByTestId('button-edit-profile'));
+    await fireEvent.changeText(getByTestId('input-current-password'), 'errada');
+    await fireEvent.press(getByText('Confirmar'));
 
     await waitFor(() => {
       expect(getByText('Senha incorreta. Tente novamente.')).toBeTruthy();
@@ -379,12 +384,12 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve pedir a senha se o campo de senha atual estiver vazio', async () => {
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
-    fireEvent.press(getByTestId('button-edit-profile'));
-    fireEvent(getByTestId('input-current-password'), 'submitEditing');
+    await fireEvent.press(getByTestId('button-edit-profile'));
+    await fireEvent(getByTestId('input-current-password'), 'submitEditing');
 
     await waitFor(() => {
       expect(getByText('Digite sua senha.')).toBeTruthy();
@@ -394,13 +399,16 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   it('deve exibir erro se não for possível verificar a senha', async () => {
     sessionService.getCurrentUser.mockRejectedValueOnce(new Error('falha'));
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
-    fireEvent.press(getByTestId('button-edit-profile'));
-    fireEvent.changeText(getByTestId('input-current-password'), 'senha123');
-    fireEvent.press(getByText('Confirmar'));
+    await fireEvent.press(getByTestId('button-edit-profile'));
+    await fireEvent.changeText(
+      getByTestId('input-current-password'),
+      'senha123'
+    );
+    await fireEvent.press(getByText('Confirmar'));
 
     await waitFor(() => {
       expect(
@@ -410,14 +418,14 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve fechar o pedido de senha ao cancelar', async () => {
-    const { getByTestId, getByText, queryByText } = render(
+    const { getByTestId, getByText, queryByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
-    fireEvent.press(getByTestId('button-edit-profile'));
+    await fireEvent.press(getByTestId('button-edit-profile'));
     expect(getByText('Editar perfil')).toBeTruthy();
 
-    fireEvent.press(getByText('Cancelar'));
+    await fireEvent.press(getByText('Cancelar'));
 
     await waitFor(() => {
       expect(queryByText('Editar perfil')).toBeNull();
@@ -426,7 +434,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   });
 
   it('deve descartar as alterações e travar os campos ao cancelar a edição', async () => {
-    const { getByPlaceholderText, getByText } = render(
+    const { getByPlaceholderText, getByText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -436,13 +444,16 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
     await unlockEditing();
 
-    fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Outro Nome');
-    fireEvent.changeText(getByPlaceholderText('Seu WhatsApp'), '5521988887777');
+    await fireEvent.changeText(getByPlaceholderText('Seu nome'), 'Outro Nome');
+    await fireEvent.changeText(
+      getByPlaceholderText('Seu WhatsApp'),
+      '5521988887777'
+    );
     expect(getByPlaceholderText('Seu WhatsApp').props.value).toBe(
       '+55 (21) 98888-7777'
     );
 
-    fireEvent.press(getByText('Cancelar'));
+    await fireEvent.press(getByText('Cancelar'));
 
     expect(getByPlaceholderText('Seu nome').props.value).toBe('Irlam');
     expect(getByPlaceholderText('Seu WhatsApp').props.value).toBe(
@@ -454,7 +465,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   it('deve alternar a visibilidade da nova senha', async () => {
     const { getByPlaceholderText, getByTestId, getByLabelText, getByText } =
-      render(<ProfileScreen onBack={mockOnBack} />);
+      await render(<ProfileScreen onBack={mockOnBack} />);
 
     await waitFor(() => {
       expect(getByPlaceholderText('Seu nome').props.value).toBe('Irlam');
@@ -466,21 +477,21 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       getByPlaceholderText('Digite uma nova senha se desejar alterar');
     expect(newPasswordInput().props.secureTextEntry).toBe(true);
 
-    fireEvent.press(getByLabelText('Mostrar senha'));
+    await fireEvent.press(getByLabelText('Mostrar senha'));
     expect(newPasswordInput().props.secureTextEntry).toBe(false);
 
-    fireEvent.press(getByLabelText('Ocultar senha'));
+    await fireEvent.press(getByLabelText('Ocultar senha'));
     expect(newPasswordInput().props.secureTextEntry).toBe(true);
 
-    fireEvent.press(getByTestId('button-toggle-password-visibility'));
-    fireEvent.press(getByText('Cancelar'));
+    await fireEvent.press(getByTestId('button-toggle-password-visibility'));
+    await fireEvent.press(getByText('Cancelar'));
     await unlockEditing();
     expect(newPasswordInput().props.secureTextEntry).toBe(true);
   });
 
   it('deve avançar do nome para o WhatsApp e para a nova senha pelo teclado', async () => {
     const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
-    const { getByPlaceholderText } = render(
+    const { getByPlaceholderText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -489,8 +500,8 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     });
     await unlockEditing();
 
-    fireEvent(getByPlaceholderText('Seu nome'), 'submitEditing');
-    fireEvent(getByPlaceholderText('Seu WhatsApp'), 'submitEditing');
+    await fireEvent(getByPlaceholderText('Seu nome'), 'submitEditing');
+    await fireEvent(getByPlaceholderText('Seu WhatsApp'), 'submitEditing');
 
     expect(focusSpy).toHaveBeenCalledTimes(2);
     focusSpy.mockRestore();
@@ -498,7 +509,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   it('deve esconder a barra inferior enquanto o teclado estiver aberto', async () => {
     useKeyboardVisible.mockReturnValue(true);
-    const { queryByText, getByPlaceholderText } = render(
+    const { queryByText, getByPlaceholderText } = await render(
       <ProfileScreen onBack={mockOnBack} />
     );
 
@@ -512,7 +523,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
   it('deve executar a seta de voltar ao usar o voltar do Android', async () => {
     jest.spyOn(BackHandler, 'addEventListener');
-    render(<ProfileScreen onBack={mockOnBack} />);
+    await render(<ProfileScreen onBack={mockOnBack} />);
     await act(async () => {});
 
     expect(pressHardwareBack()).toBe(true);
@@ -523,7 +534,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
   describe('foto do perfil', () => {
     const renderLoaded = async (profile) => {
       if (profile) profileService.getProfile.mockResolvedValueOnce(profile);
-      const utils = render(<ProfileScreen onBack={mockOnBack} />);
+      const utils = await render(<ProfileScreen onBack={mockOnBack} />);
       await waitFor(() => {
         expect(utils.getByPlaceholderText('Seu nome').props.value).toBe(
           'Irlam'
@@ -546,12 +557,12 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       });
       expect(queryByTestId('button-change-photo')).toBeNull();
 
-      fireEvent.press(getByLabelText('Ver foto do perfil em tela cheia'));
+      await fireEvent.press(getByLabelText('Ver foto do perfil em tela cheia'));
       expect(getByTestId('photo-viewer-image').props.source).toEqual({
         uri: 'stored:perfil.jpg',
       });
 
-      fireEvent.press(getByTestId('button-close-photo-viewer'));
+      await fireEvent.press(getByTestId('button-close-photo-viewer'));
       expect(queryByTestId('photo-viewer-image')).toBeNull();
     });
 
@@ -575,16 +586,16 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       });
 
       await unlockEditing();
-      fireEvent.press(getByTestId('button-change-photo'));
+      await fireEvent.press(getByTestId('button-change-photo'));
       expect(getByText('Remover foto')).toBeTruthy();
       await act(async () => {
-        fireEvent.press(getByText('Tirar foto'));
+        await fireEvent.press(getByText('Tirar foto'));
       });
       expect(photoService.pickProfilePhoto).toHaveBeenCalledWith('camera');
       expect(queryByText('Remover foto')).toBeNull();
 
       await act(async () => {
-        fireEvent.press(getByText('Salvar Alterações'));
+        await fireEvent.press(getByText('Salvar Alterações'));
       });
 
       expect(profilePhotoStorage.persist).toHaveBeenCalledWith(
@@ -609,12 +620,12 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       });
 
       await unlockEditing();
-      fireEvent.press(getByTestId('button-change-photo'));
-      fireEvent.press(getByText('Remover foto'));
+      await fireEvent.press(getByTestId('button-change-photo'));
+      await fireEvent.press(getByText('Remover foto'));
       expect(getByTestId('user-avatar-placeholder')).toBeTruthy();
 
       await act(async () => {
-        fireEvent.press(getByText('Salvar Alterações'));
+        await fireEvent.press(getByText('Salvar Alterações'));
       });
 
       expect(profileService.saveProfile).toHaveBeenCalledWith({
@@ -636,7 +647,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
 
       await unlockEditing();
       await act(async () => {
-        fireEvent.press(getByText('Salvar Alterações'));
+        await fireEvent.press(getByText('Salvar Alterações'));
       });
 
       expect(profileService.saveProfile).toHaveBeenCalledWith(
@@ -657,16 +668,16 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       });
 
       await unlockEditing();
-      fireEvent.press(getByTestId('button-change-photo'));
+      await fireEvent.press(getByTestId('button-change-photo'));
       await act(async () => {
-        fireEvent.press(getByText('Escolher da galeria'));
+        await fireEvent.press(getByText('Escolher da galeria'));
       });
       expect(photoService.pickProfilePhoto).toHaveBeenCalledWith('gallery');
       expect(getByTestId('user-avatar-image').props.source).toEqual({
         uri: 'cache:nova.jpg',
       });
 
-      fireEvent.press(getByText('Cancelar'));
+      await fireEvent.press(getByText('Cancelar'));
       expect(getByTestId('user-avatar-image').props.source).toEqual({
         uri: 'stored:antiga.jpg',
       });
@@ -682,9 +693,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         } else {
           photoService.pickProfilePhoto.mockResolvedValueOnce(result);
         }
-        fireEvent.press(getByTestId('button-change-photo'));
+        await fireEvent.press(getByTestId('button-change-photo'));
         await act(async () => {
-          fireEvent.press(getByText(label));
+          await fireEvent.press(getByText(label));
         });
       };
 
@@ -716,7 +727,7 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     const CONFIRM = 'Digite a nova senha novamente';
 
     const renderUnlocked = async () => {
-      const utils = render(<ProfileScreen onBack={mockOnBack} />);
+      const utils = await render(<ProfileScreen onBack={mockOnBack} />);
       await waitFor(() => {
         expect(utils.getByPlaceholderText('Seu nome').props.value).toBe(
           'Irlam'
@@ -731,11 +742,13 @@ describe('ProfileScreen Component - 100% Coverage', () => {
         await renderUnlocked();
 
       expect(queryByPlaceholderText(CONFIRM)).toBeNull();
-      fireEvent.changeText(getByPlaceholderText(NEW), 'a');
+      await fireEvent.changeText(getByPlaceholderText(NEW), 'a');
       expect(getByPlaceholderText(CONFIRM)).toBeTruthy();
       expect(getByPlaceholderText(CONFIRM).props.secureTextEntry).toBe(true);
 
-      fireEvent.press(screen.getByTestId('button-toggle-confirm-visibility'));
+      await fireEvent.press(
+        screen.getByTestId('button-toggle-confirm-visibility')
+      );
       expect(getByPlaceholderText(CONFIRM).props.secureTextEntry).toBe(false);
       expect(getByPlaceholderText(NEW).props.secureTextEntry).toBe(false);
     });
@@ -743,12 +756,12 @@ describe('ProfileScreen Component - 100% Coverage', () => {
     it('deve avisar e bloquear o salvamento quando as senhas forem diferentes', async () => {
       const { getByPlaceholderText, getByText } = await renderUnlocked();
 
-      fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
-      fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha999');
+      await fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
+      await fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha999');
       expect(getByText('As senhas não conferem.')).toBeTruthy();
 
       await act(async () => {
-        fireEvent.press(getByText('Salvar Alterações'));
+        await fireEvent.press(getByText('Salvar Alterações'));
       });
 
       expect(Alert.alert).toHaveBeenCalledWith(
@@ -763,11 +776,11 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       const { getByPlaceholderText, getByText, queryByText } =
         await renderUnlocked();
 
-      fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
+      await fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
       expect(queryByText('As senhas não conferem.')).toBeNull();
 
       await act(async () => {
-        fireEvent.press(getByText('Salvar Alterações'));
+        await fireEvent.press(getByText('Salvar Alterações'));
       });
 
       expect(Alert.alert).toHaveBeenCalledWith(
@@ -781,12 +794,12 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       const { getByPlaceholderText, queryByPlaceholderText } =
         await renderUnlocked();
 
-      fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
-      fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha123');
-      fireEvent.changeText(getByPlaceholderText(NEW), '');
+      await fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
+      await fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha123');
+      await fireEvent.changeText(getByPlaceholderText(NEW), '');
       expect(queryByPlaceholderText(CONFIRM)).toBeNull();
 
-      fireEvent.changeText(getByPlaceholderText(NEW), 'x');
+      await fireEvent.changeText(getByPlaceholderText(NEW), 'x');
       expect(getByPlaceholderText(CONFIRM).props.value).toBe('');
     });
 
@@ -795,14 +808,14 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
       const { getByPlaceholderText } = await renderUnlocked();
 
-      fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
-      fireEvent(getByPlaceholderText(NEW), 'submitEditing');
+      await fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
+      await fireEvent(getByPlaceholderText(NEW), 'submitEditing');
       expect(focusSpy).toHaveBeenCalledTimes(1);
       focusSpy.mockRestore();
 
-      fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha123');
+      await fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha123');
       await act(async () => {
-        fireEvent(getByPlaceholderText(CONFIRM), 'submitEditing');
+        await fireEvent(getByPlaceholderText(CONFIRM), 'submitEditing');
       });
 
       expect(changeAccountPassword).toHaveBeenCalledWith(
@@ -815,9 +828,9 @@ describe('ProfileScreen Component - 100% Coverage', () => {
       const { getByPlaceholderText, getByText, queryByPlaceholderText } =
         await renderUnlocked();
 
-      fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
-      fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha123');
-      fireEvent.press(getByText('Cancelar'));
+      await fireEvent.changeText(getByPlaceholderText(NEW), 'senha123');
+      await fireEvent.changeText(getByPlaceholderText(CONFIRM), 'senha123');
+      await fireEvent.press(getByText('Cancelar'));
       await unlockEditing();
 
       expect(getByPlaceholderText(NEW).props.value).toBe('');

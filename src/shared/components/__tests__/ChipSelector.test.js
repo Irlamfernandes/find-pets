@@ -14,32 +14,32 @@ const findSelected = (node) => {
 };
 
 describe('ChipSelector', () => {
-  it('deve marcar a opção escolhida e fechar o teclado ao tocar', () => {
+  it('deve marcar a opção escolhida e fechar o teclado ao tocar', async () => {
     const onChange = jest.fn();
     const dismissSpy = jest.spyOn(Keyboard, 'dismiss');
-    const { getByText } = render(
+    const { getByText } = await render(
       <ChipSelector options={options} value="Médio" onChange={onChange} />
     );
 
     expect(findSelected(getByText('Médio'))).toBe(true);
     expect(findSelected(getByText('Grande'))).toBe(false);
 
-    fireEvent.press(getByText('Grande'));
+    await fireEvent.press(getByText('Grande'));
     expect(onChange).toHaveBeenCalledWith('Grande');
     expect(dismissSpy).toHaveBeenCalledTimes(1);
     dismissSpy.mockRestore();
   });
 
-  it('deve desmarcar ao tocar de novo, exceto em campo obrigatório', () => {
+  it('deve desmarcar ao tocar de novo, exceto em campo obrigatório', async () => {
     const onChange = jest.fn();
-    const { getByText, rerender } = render(
+    const { getByText, rerender } = await render(
       <ChipSelector options={options} value="Médio" onChange={onChange} />
     );
 
-    fireEvent.press(getByText('Médio'));
+    await fireEvent.press(getByText('Médio'));
     expect(onChange).toHaveBeenLastCalledWith('');
 
-    rerender(
+    await rerender(
       <ChipSelector
         options={options}
         value="Médio"
@@ -47,7 +47,7 @@ describe('ChipSelector', () => {
         required
       />
     );
-    fireEvent.press(getByText('Médio'));
+    await fireEvent.press(getByText('Médio'));
     expect(onChange).toHaveBeenLastCalledWith('Médio');
   });
 });

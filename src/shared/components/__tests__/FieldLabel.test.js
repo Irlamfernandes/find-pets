@@ -4,8 +4,8 @@ import { FieldLabel } from '../FieldLabel';
 import { palette } from '../../theme/colors';
 
 describe('FieldLabel', () => {
-  it('deve marcar o campo obrigatório com um asterisco vermelho', () => {
-    const { getByText, getByTestId } = render(
+  it('deve marcar o campo obrigatório com um asterisco vermelho', async () => {
+    const { getByText, getByTestId } = await render(
       <FieldLabel required>Nome</FieldLabel>
     );
 
@@ -13,8 +13,8 @@ describe('FieldLabel', () => {
     expect(getByTestId('required-mark')).toHaveStyle({ color: palette.error });
   });
 
-  it('não deve marcar o campo opcional', () => {
-    const { getByText, queryByTestId } = render(
+  it('não deve marcar o campo opcional', async () => {
+    const { getByText, queryByTestId } = await render(
       <FieldLabel>Raça (opcional)</FieldLabel>
     );
 

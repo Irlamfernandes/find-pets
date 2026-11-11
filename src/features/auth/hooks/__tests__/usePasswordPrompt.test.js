@@ -11,8 +11,10 @@ describe('usePasswordPrompt', () => {
     jest.clearAllMocks();
   });
 
-  const renderPrompt = (options) =>
-    renderHook(() => usePasswordPrompt({ onConfirmed: jest.fn(), ...options }));
+  const renderPrompt = async (options) =>
+    await renderHook(() =>
+      usePasswordPrompt({ onConfirmed: jest.fn(), ...options })
+    );
 
   const confirm = async (result, password) => {
     let confirmed;
@@ -22,12 +24,12 @@ describe('usePasswordPrompt', () => {
     return confirmed;
   };
 
-  it('deve começar fechado e abrir com o pedido informado', () => {
-    const { result } = renderPrompt();
+  it('deve começar fechado e abrir com o pedido informado', async () => {
+    const { result } = await renderPrompt();
     expect(result.current.promptProps.visible).toBe(false);
     expect(result.current.payload).toBeNull();
 
-    act(() => result.current.open('activate'));
+    await act(() => result.current.open('activate'));
 
     expect(result.current.promptProps.visible).toBe(true);
     expect(result.current.payload).toBe('activate');
@@ -37,8 +39,8 @@ describe('usePasswordPrompt', () => {
     sessionService.getCurrentUser.mockResolvedValue('ana@x.com');
     accountService.checkPassword.mockResolvedValue(true);
     const onConfirmed = jest.fn();
-    const { result } = renderPrompt({ onConfirmed });
-    act(() => result.current.open('activate'));
+    const { result } = await renderPrompt({ onConfirmed });
+    await act(() => result.current.open('activate'));
 
     await expect(confirm(result, 'certa')).resolves.toBe(true);
 
@@ -53,8 +55,8 @@ describe('usePasswordPrompt', () => {
 
   it('deve usar a verificação informada com o pedido', async () => {
     const verify = jest.fn().mockResolvedValue(true);
-    const { result } = renderPrompt({ verify });
-    act(() => result.current.open('bia@x.com'));
+    const { result } = await renderPrompt({ verify });
+    await act(() => result.current.open('bia@x.com'));
 
     await confirm(result, 'senha');
 
@@ -82,8 +84,8 @@ describe('usePasswordPrompt', () => {
       const verify = jest.fn();
       setup(verify);
       const onConfirmed = jest.fn();
-      const { result } = renderPrompt({ verify, onConfirmed });
-      act(() => result.current.open());
+      const { result } = await renderPrompt({ verify, onConfirmed });
+      await act(() => result.current.open());
 
       await expect(confirm(result, password)).resolves.toBe(false);
 
@@ -95,16 +97,16 @@ describe('usePasswordPrompt', () => {
   );
 
   it('deve limpar o erro ao cancelar e ao abrir de novo', async () => {
-    const { result } = renderPrompt();
-    act(() => result.current.open());
+    const { result } = await renderPrompt();
+    await act(() => result.current.open());
     await confirm(result, '');
 
-    act(() => result.current.promptProps.onCancel());
+    await act(() => result.current.promptProps.onCancel());
     expect(result.current.promptProps.visible).toBe(false);
     expect(result.current.promptProps.errorMessage).toBe('');
 
     await confirm(result, '');
-    act(() => result.current.open());
+    await act(() => result.current.open());
     expect(result.current.promptProps.errorMessage).toBe('');
   });
 });

@@ -3,8 +3,8 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import PasswordPromptModal from '../PasswordPromptModal';
 
 describe('PasswordPromptModal', () => {
-  it('deve exibir título e mensagem padrão', () => {
-    const { getByText, queryByText } = render(
+  it('deve exibir título e mensagem padrão', async () => {
+    const { getByText, queryByText } = await render(
       <PasswordPromptModal visible onCancel={jest.fn()} onConfirm={jest.fn()} />
     );
 
@@ -13,15 +13,15 @@ describe('PasswordPromptModal', () => {
     expect(queryByText('Senha incorreta')).toBeNull();
   });
 
-  it('deve mostrar a senha digitada ao tocar no olho', () => {
-    const { getByTestId, getByLabelText } = render(
+  it('deve mostrar a senha digitada ao tocar no olho', async () => {
+    const { getByTestId, getByLabelText } = await render(
       <PasswordPromptModal visible onCancel={jest.fn()} onConfirm={jest.fn()} />
     );
 
     expect(getByTestId('input-current-password').props.secureTextEntry).toBe(
       true
     );
-    fireEvent.press(getByLabelText('Mostrar senha'));
+    await fireEvent.press(getByLabelText('Mostrar senha'));
     expect(getByTestId('input-current-password').props.secureTextEntry).toBe(
       false
     );
@@ -29,12 +29,15 @@ describe('PasswordPromptModal', () => {
 
   it('deve enviar a senha digitada e limpar o campo quando confirmada', async () => {
     const onConfirm = jest.fn().mockResolvedValue(true);
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText } = await render(
       <PasswordPromptModal visible onCancel={jest.fn()} onConfirm={onConfirm} />
     );
 
-    fireEvent.changeText(getByTestId('input-current-password'), 'senha123');
-    fireEvent.press(getByText('Confirmar'));
+    await fireEvent.changeText(
+      getByTestId('input-current-password'),
+      'senha123'
+    );
+    await fireEvent.press(getByText('Confirmar'));
 
     await waitFor(() => {
       expect(onConfirm).toHaveBeenCalledWith('senha123');
@@ -44,7 +47,7 @@ describe('PasswordPromptModal', () => {
 
   it('deve manter a senha digitada quando a confirmação falhar', async () => {
     const onConfirm = jest.fn().mockResolvedValue(false);
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText } = await render(
       <PasswordPromptModal
         visible
         errorMessage="Senha incorreta"
@@ -53,8 +56,8 @@ describe('PasswordPromptModal', () => {
       />
     );
 
-    fireEvent.changeText(getByTestId('input-current-password'), 'errada');
-    fireEvent.press(getByText('Confirmar'));
+    await fireEvent.changeText(getByTestId('input-current-password'), 'errada');
+    await fireEvent.press(getByText('Confirmar'));
 
     await waitFor(() => {
       expect(onConfirm).toHaveBeenCalledWith('errada');
@@ -63,14 +66,17 @@ describe('PasswordPromptModal', () => {
     expect(getByText('Senha incorreta')).toBeTruthy();
   });
 
-  it('deve limpar a senha e chamar onCancel ao cancelar', () => {
+  it('deve limpar a senha e chamar onCancel ao cancelar', async () => {
     const onCancel = jest.fn();
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText } = await render(
       <PasswordPromptModal visible onCancel={onCancel} onConfirm={jest.fn()} />
     );
 
-    fireEvent.changeText(getByTestId('input-current-password'), 'senha123');
-    fireEvent.press(getByText('Cancelar'));
+    await fireEvent.changeText(
+      getByTestId('input-current-password'),
+      'senha123'
+    );
+    await fireEvent.press(getByText('Cancelar'));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(getByTestId('input-current-password').props.value).toBe('');

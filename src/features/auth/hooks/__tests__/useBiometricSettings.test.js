@@ -24,7 +24,7 @@ describe('useBiometricSettings', () => {
   });
 
   const renderSettings = async () => {
-    const hook = renderHook(() => useBiometricSettings());
+    const hook = await renderHook(() => useBiometricSettings());
     await act(async () => {});
     return hook;
   };

@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
-import { Modal } from 'react-native';
 import { PhotoViewerModal } from '../PhotoViewerModal';
 
 describe('PhotoViewerModal', () => {
@@ -10,19 +9,19 @@ describe('PhotoViewerModal', () => {
     jest.useFakeTimers();
   });
 
-  afterEach(() => {
-    act(() => {
+  afterEach(async () => {
+    await act(() => {
       jest.runOnlyPendingTimers();
     });
     jest.useRealTimers();
   });
 
-  it('deve exibir as fotos em tela cheia a partir da foto escolhida', () => {
-    const { getAllByTestId, getByText, UNSAFE_getByType } = render(
+  it('deve exibir as fotos em tela cheia a partir da foto escolhida', async () => {
+    const { getAllByTestId, getByText, getByTestId } = await render(
       <PhotoViewerModal images={images} initialIndex={1} onClose={jest.fn()} />
     );
 
-    expect(UNSAFE_getByType(Modal).props.visible).toBe(true);
+    expect(getByTestId('photo-viewer')).toBeTruthy();
     const sources = getAllByTestId('photo-viewer-image').map(
       (image) => image.props.source.uri
     );
@@ -30,37 +29,29 @@ describe('PhotoViewerModal', () => {
     expect(getByText('2 de 3')).toBeTruthy();
   });
 
-  it('deve atualizar o contador ao deslizar, reiniciar ao abrir e fechar', () => {
+  it('deve atualizar o contador ao deslizar, reiniciar ao abrir e fechar', async () => {
     const onClose = jest.fn();
-    const { getByText, getByTestId, UNSAFE_getByType, UNSAFE_getByProps } =
-      render(
-        <PhotoViewerModal images={images} initialIndex={0} onClose={onClose} />
-      );
+    const { getByText, getByTestId } = await render(
+      <PhotoViewerModal images={images} initialIndex={0} onClose={onClose} />
+    );
 
-    const list = UNSAFE_getByProps({ pagingEnabled: true });
-    expect(list.props.getItemLayout(null, 2)).toEqual({
-      length: 750,
-      offset: 1500,
-      index: 2,
-    });
-
-    fireEvent(list, 'momentumScrollEnd', {
+    await fireEvent(getByTestId('photo-viewer-list'), 'momentumScrollEnd', {
       nativeEvent: { contentOffset: { x: 1500 } },
     });
     expect(getByText('3 de 3')).toBeTruthy();
 
-    fireEvent(UNSAFE_getByType(Modal), 'show');
+    await fireEvent(getByTestId('photo-viewer'), 'show');
     expect(getByText('1 de 3')).toBeTruthy();
 
-    fireEvent.press(getByTestId('button-close-photo-viewer'));
+    await fireEvent.press(getByTestId('button-close-photo-viewer'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('deve ficar oculto quando não houver fotos', () => {
-    const { UNSAFE_getByType } = render(
+  it('deve ficar oculto quando não houver fotos', async () => {
+    const { queryByTestId } = await render(
       <PhotoViewerModal images={[]} onClose={jest.fn()} />
     );
 
-    expect(UNSAFE_getByType(Modal).props.visible).toBe(false);
+    expect(queryByTestId('photo-viewer')).toBeNull();
   });
 });

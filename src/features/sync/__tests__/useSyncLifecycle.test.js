@@ -27,14 +27,14 @@ describe('useSyncLifecycle', () => {
     syncService.subscribe.mockReturnValue(unsubscribe);
   });
 
-  it('deve atender os pedidos de sincronização e sincronizar ao reconectar', () => {
-    const { unmount } = renderHook(() => useSyncLifecycle(jest.fn()));
+  it('deve atender os pedidos de sincronização e sincronizar ao reconectar', async () => {
+    const { unmount } = await renderHook(() => useSyncLifecycle(jest.fn()));
 
     requestSync();
     expect(syncService.syncNow).toHaveBeenCalledTimes(1);
     expect(onReconnect).toHaveBeenCalledWith(syncService.syncNow);
 
-    unmount();
+    await unmount();
     requestSync();
     expect(syncService.syncNow).toHaveBeenCalledTimes(1);
     expect(setSyncHandler).toHaveBeenLastCalledWith(null);
@@ -42,9 +42,9 @@ describe('useSyncLifecycle', () => {
     expect(unsubscribe).toHaveBeenCalled();
   });
 
-  it('deve avisar só quando o servidor recusar o token', () => {
+  it('deve avisar só quando o servidor recusar o token', async () => {
     const onSessionExpired = jest.fn();
-    renderHook(() => useSyncLifecycle(onSessionExpired));
+    await renderHook(() => useSyncLifecycle(onSessionExpired));
     const listener = syncService.subscribe.mock.calls[0][0];
 
     listener(SYNC_RESULT.SYNCED);

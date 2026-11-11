@@ -40,15 +40,18 @@ describe('BiometricSettingsCard', () => {
   });
 
   const confirmPassword = async (utils, password = 'senha123') => {
-    fireEvent.press(utils.getByTestId('button-activate-biometrics'));
-    fireEvent.changeText(utils.getByTestId('input-current-password'), password);
+    await fireEvent.press(utils.getByTestId('button-activate-biometrics'));
+    await fireEvent.changeText(
+      utils.getByTestId('input-current-password'),
+      password
+    );
     await act(async () => {
-      fireEvent.press(utils.getByText('Confirmar'));
+      await fireEvent.press(utils.getByText('Confirmar'));
     });
   };
 
-  it('deve mostrar o texto de cada situação', () => {
-    const utils = render(<BiometricSettingsCard />);
+  it('deve mostrar o texto de cada situação', async () => {
+    const utils = await render(<BiometricSettingsCard />);
     expect(
       utils.getByText(
         'Entre mais rápido usando a digital ou o rosto cadastrado neste celular.'
@@ -60,7 +63,7 @@ describe('BiometricSettingsCard', () => {
       status: BIOMETRIC_STATUS.TAKEN,
       owner: 'irlam@gmail.com',
     });
-    utils.rerender(<BiometricSettingsCard />);
+    await utils.rerender(<BiometricSettingsCard />);
     expect(
       utils.getByText(
         'A biometria deste celular está na conta ir***@gmail.com. Ao ativar aqui, ela passa para esta conta e deixa de entrar na outra.'
@@ -73,7 +76,7 @@ describe('BiometricSettingsCard', () => {
       ...settings,
       status: BIOMETRIC_STATUS.UNAVAILABLE,
     });
-    utils.rerender(<BiometricSettingsCard />);
+    await utils.rerender(<BiometricSettingsCard />);
     expect(
       utils.getByText(
         'Este celular não tem digital ou rosto cadastrado nas configurações.'
@@ -84,24 +87,27 @@ describe('BiometricSettingsCard', () => {
       ...settings,
       status: BIOMETRIC_STATUS.LOADING,
     });
-    utils.rerender(<BiometricSettingsCard />);
+    await utils.rerender(<BiometricSettingsCard />);
     expect(utils.getByText('Verificando...')).toBeTruthy();
   });
 
   it('deve pedir a senha com o aviso e ativar a biometria', async () => {
     accountService.checkPassword.mockResolvedValueOnce(true);
     settings.activate.mockResolvedValueOnce('activated');
-    const utils = render(<BiometricSettingsCard />);
+    const utils = await render(<BiometricSettingsCard />);
 
-    fireEvent.press(utils.getByTestId('button-activate-biometrics'));
+    await fireEvent.press(utils.getByTestId('button-activate-biometrics'));
     expect(
       utils.getByText(
         'Atenção: qualquer digital ou rosto cadastrado neste celular poderá entrar nesta conta. Digite sua senha para continuar.'
       )
     ).toBeTruthy();
-    fireEvent.changeText(utils.getByTestId('input-current-password'), 'abc');
+    await fireEvent.changeText(
+      utils.getByTestId('input-current-password'),
+      'abc'
+    );
     await act(async () => {
-      fireEvent.press(utils.getByText('Confirmar'));
+      await fireEvent.press(utils.getByText('Confirmar'));
     });
 
     expect(accountService.checkPassword).toHaveBeenCalledWith(
@@ -116,27 +122,30 @@ describe('BiometricSettingsCard', () => {
   });
 
   it('deve validar a senha antes de ativar', async () => {
-    const utils = render(<BiometricSettingsCard />);
+    const utils = await render(<BiometricSettingsCard />);
 
     await confirmPassword(utils, '   ');
     expect(utils.getByText('Digite sua senha.')).toBeTruthy();
 
     accountService.checkPassword.mockResolvedValueOnce(false);
-    fireEvent.changeText(utils.getByTestId('input-current-password'), 'x');
+    await fireEvent.changeText(
+      utils.getByTestId('input-current-password'),
+      'x'
+    );
     await act(async () => {
-      fireEvent.press(utils.getByText('Confirmar'));
+      await fireEvent.press(utils.getByText('Confirmar'));
     });
     expect(utils.getByText('Senha incorreta. Tente novamente.')).toBeTruthy();
     expect(settings.activate).not.toHaveBeenCalled();
 
-    fireEvent.press(utils.getByText('Cancelar'));
+    await fireEvent.press(utils.getByText('Cancelar'));
     expect(utils.queryByText('Senha incorreta. Tente novamente.')).toBeNull();
   });
 
   it('deve avisar quando a biometria não for confirmada ou for cancelada', async () => {
     accountService.checkPassword.mockResolvedValue(true);
     settings.activate.mockResolvedValueOnce('failed');
-    const utils = render(<BiometricSettingsCard />);
+    const utils = await render(<BiometricSettingsCard />);
 
     await confirmPassword(utils);
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -155,7 +164,7 @@ describe('BiometricSettingsCard', () => {
     settings.activate.mockRejectedValueOnce(
       new Error('A biometria deste aparelho já está em uso.')
     );
-    const utils = render(<BiometricSettingsCard />);
+    const utils = await render(<BiometricSettingsCard />);
 
     await confirmPassword(utils);
 
@@ -171,29 +180,29 @@ describe('BiometricSettingsCard', () => {
       status: BIOMETRIC_STATUS.ACTIVE,
     });
     accountService.checkPassword.mockResolvedValue(true);
-    const utils = render(<BiometricSettingsCard />);
+    const utils = await render(<BiometricSettingsCard />);
     expect(utils.getByText('Ativada nesta conta.')).toBeTruthy();
 
     const deactivateWithPassword = async (password) => {
-      fireEvent.press(utils.getByTestId('button-deactivate-biometrics'));
+      await fireEvent.press(utils.getByTestId('button-deactivate-biometrics'));
       expect(
         utils.getByText(
           'Digite sua senha para desativar a biometria desta conta.'
         )
       ).toBeTruthy();
-      fireEvent.changeText(
+      await fireEvent.changeText(
         utils.getByTestId('input-current-password'),
         password
       );
       await act(async () => {
-        fireEvent.press(utils.getByText('Confirmar'));
+        await fireEvent.press(utils.getByText('Confirmar'));
       });
     };
 
     accountService.checkPassword.mockResolvedValueOnce(false);
     await deactivateWithPassword('errada');
     expect(settings.deactivate).not.toHaveBeenCalled();
-    fireEvent.press(utils.getByText('Cancelar'));
+    await fireEvent.press(utils.getByText('Cancelar'));
 
     settings.deactivate.mockResolvedValueOnce();
     await deactivateWithPassword('senha123');

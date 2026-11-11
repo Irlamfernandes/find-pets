@@ -1,8 +1,6 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
-import { FlatList } from 'react-native';
 import FeedScreen from '../FeedScreen';
-import { FeedGuideCard } from '../../components/FeedGuideCard';
 import { useFeed } from '../../hooks/useFeed';
 import { useFeedGuide } from '../../hooks/useFeedGuide';
 import { shareService } from '../../services/shareService';
@@ -140,6 +138,14 @@ jest.mock('../../components/FoundPetModal', () => ({
 }));
 /* eslint-enable react/prop-types */
 
+const testIdsInOrder = (node, found = []) => {
+  if (node.props?.testID) found.push(node.props.testID);
+  node.children.forEach((child) => {
+    if (typeof child !== 'string') testIdsInOrder(child, found);
+  });
+  return found;
+};
+
 describe('FeedScreen', () => {
   const mockGuide = {
     isGuideVisible: false,
@@ -165,15 +171,15 @@ describe('FeedScreen', () => {
     useFeedGuide.mockReturnValue(mockGuide);
   });
 
-  afterEach(() => {
-    act(() => {
+  afterEach(async () => {
+    await act(() => {
       jest.runOnlyPendingTimers();
     });
     jest.useRealTimers();
   });
 
-  it('deve renderizar o cabeçalho e as abas, sem texto de lista vazia', () => {
-    const { getByText } = render(
+  it('deve renderizar o cabeçalho e as abas, sem texto de lista vazia', async () => {
+    const { getByText } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
@@ -181,66 +187,66 @@ describe('FeedScreen', () => {
     expect(getByText('Olá, Irlam')).toBeTruthy();
   });
 
-  it('não deve exibir saudação se o userName estiver vazio', () => {
+  it('não deve exibir saudação se o userName estiver vazio', async () => {
     useFeed.mockReturnValue({ ...mockUseFeedReturn, userName: '' });
 
-    const { queryByText } = render(
+    const { queryByText } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
     expect(queryByText(/Olá,/)).toBeNull();
   });
 
-  it('deve abrir o perfil e a tela de registro pelas abas', () => {
+  it('deve abrir o perfil e a tela de registro pelas abas', async () => {
     const mockOnOpenProfile = jest.fn();
-    const { getByText } = render(
+    const { getByText } = await render(
       <FeedScreen
         onOpenProfile={mockOnOpenProfile}
         onOpenReport={mockOnOpenReport}
       />
     );
 
-    fireEvent.press(getByText('Perfil'));
-    fireEvent.press(getByText('Registrar desaparecimento'));
+    await fireEvent.press(getByText('Perfil'));
+    await fireEvent.press(getByText('Registrar desaparecimento'));
 
     expect(mockOnOpenProfile).toHaveBeenCalledTimes(1);
     expect(mockOnOpenReport).toHaveBeenCalledTimes(1);
   });
 
-  it('deve abrir e fechar as fotos em tela cheia a partir do card', () => {
+  it('deve abrir e fechar as fotos em tela cheia a partir do card', async () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       posts: [{ id: '1', status: 'Perdido', images: ['a.jpg', 'b.jpg'] }],
     });
 
-    const { getByTestId, getByText, queryByTestId } = render(
+    const { getByTestId, getByText, queryByTestId } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
-    fireEvent.press(getByTestId('photo-1'));
+    await fireEvent.press(getByTestId('photo-1'));
     expect(getByText('fotos:a.jpg,b.jpg|inicio:1')).toBeTruthy();
 
-    fireEvent.press(getByTestId('photo-viewer'));
+    await fireEvent.press(getByTestId('photo-viewer'));
     expect(queryByTestId('photo-viewer')).toBeNull();
   });
 
-  it('deve abrir e fechar o mapa em tela cheia a partir do card', () => {
+  it('deve abrir e fechar o mapa em tela cheia a partir do card', async () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       posts: [{ id: '1', status: 'Perdido', images: ['a.jpg'] }],
     });
 
-    const { getByTestId, getByText, queryByTestId } = render(
+    const { getByTestId, getByText, queryByTestId } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
-    fireEvent.press(getByTestId('map-1'));
+    await fireEvent.press(getByTestId('map-1'));
     expect(getByText('mapa:1')).toBeTruthy();
 
-    fireEvent.press(getByTestId('map-viewer'));
+    await fireEvent.press(getByTestId('map-viewer'));
     expect(queryByTestId('map-viewer')).toBeNull();
   });
 
-  it('deve abrir o WhatsApp e a rota a partir do card', () => {
+  it('deve abrir o WhatsApp e a rota a partir do card', async () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       posts: [
@@ -254,37 +260,37 @@ describe('FeedScreen', () => {
       ],
     });
 
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
-    fireEvent.press(getByTestId('whatsapp-1'));
+    await fireEvent.press(getByTestId('whatsapp-1'));
     expect(externalLinkService.openWhatsApp).toHaveBeenCalledWith(
       '5511999999999'
     );
 
-    fireEvent.press(getByTestId('route-1'));
+    await fireEvent.press(getByTestId('route-1'));
     expect(externalLinkService.openRoute).toHaveBeenCalledWith(-23.5, -46.6);
   });
 
-  it('deve habilitar exclusão e finalização quando o post pertence ao usuário', () => {
+  it('deve habilitar exclusão e finalização quando o post pertence ao usuário', async () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       currentUser: 'user1@test.com',
       posts: [{ id: '1', status: 'Perdido', author: 'user1@test.com' }],
     });
 
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
-    fireEvent.press(getByTestId('pet-card-1'));
-    fireEvent.press(getByTestId('mark-found-1'));
+    await fireEvent.press(getByTestId('pet-card-1'));
+    await fireEvent.press(getByTestId('mark-found-1'));
     expect(mockUseFeedReturn.deletePost).toHaveBeenCalledWith('1');
     expect(mockUseFeedReturn.markPostAsFound).toHaveBeenCalledWith('1');
   });
 
-  it('deve ocultar ações quando o post pertence a outro usuário ou já foi encontrado', () => {
+  it('deve ocultar ações quando o post pertence a outro usuário ou já foi encontrado', async () => {
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
       currentUser: 'user1@test.com',
@@ -298,37 +304,37 @@ describe('FeedScreen', () => {
       ],
     });
 
-    const { queryByTestId, getByTestId } = render(
+    const { queryByTestId, getByTestId } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
     expect(queryByTestId('mark-found-1')).toBeNull();
     expect(queryByTestId('mark-found-2')).toBeNull();
-    fireEvent.press(getByTestId('pet-card-1'));
+    await fireEvent.press(getByTestId('pet-card-1'));
     expect(mockUseFeedReturn.deletePost).not.toHaveBeenCalled();
   });
 
-  it('deve exibir o formulário de reencontro', () => {
+  it('deve exibir o formulário de reencontro', async () => {
     useFeed.mockReturnValue({ ...mockUseFeedReturn, isFoundFormOpen: true });
 
-    const { getByText, getByTestId } = render(
+    const { getByText, getByTestId } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
     expect(getByText('reencontro')).toBeTruthy();
-    fireEvent.press(getByTestId('found-confirm'));
-    fireEvent.press(getByTestId('found-cancel'));
+    await fireEvent.press(getByTestId('found-confirm'));
+    await fireEvent.press(getByTestId('found-cancel'));
     expect(mockUseFeedReturn.confirmFound).toHaveBeenCalledWith({
       receiverName: 'Ana',
     });
     expect(mockUseFeedReturn.cancelFound).toHaveBeenCalledTimes(1);
   });
 
-  it('deve exibir a foto do usuário no topo e abrir o perfil ao tocar', () => {
+  it('deve exibir a foto do usuário no topo e abrir o perfil ao tocar', async () => {
     const mockOnOpenProfile = jest.fn();
     useFeed.mockReturnValue({ ...mockUseFeedReturn, userPhoto: 'eu.jpg' });
 
-    const { getByLabelText, getByTestId } = render(
+    const { getByLabelText, getByTestId } = await render(
       <FeedScreen
         onOpenProfile={mockOnOpenProfile}
         onOpenReport={mockOnOpenReport}
@@ -338,11 +344,11 @@ describe('FeedScreen', () => {
     expect(getByTestId('user-avatar-image').props.source).toEqual({
       uri: 'eu.jpg',
     });
-    fireEvent.press(getByLabelText('Abrir meu perfil'));
+    await fireEvent.press(getByLabelText('Abrir meu perfil'));
     expect(mockOnOpenProfile).toHaveBeenCalledTimes(1);
   });
 
-  it('deve mostrar o aviso de orientação antes das postagens e dispensar', () => {
+  it('deve mostrar o aviso de orientação antes das postagens e dispensar', async () => {
     useFeedGuide.mockReturnValue({ ...mockGuide, isGuideVisible: true });
     useFeed.mockReturnValue({
       ...mockUseFeedReturn,
@@ -350,27 +356,58 @@ describe('FeedScreen', () => {
       posts: [{ id: '1', status: 'Perdido', images: ['a.jpg'] }],
     });
 
-    const { getByTestId, getByText, queryByLabelText, UNSAFE_getByType } =
-      render(<FeedScreen onOpenReport={mockOnOpenReport} />);
+    const { getByTestId, getByText, queryByLabelText, container } =
+      await render(<FeedScreen onOpenReport={mockOnOpenReport} />);
 
     expect(useFeedGuide).toHaveBeenCalledWith('ana@test.com');
-    const header = UNSAFE_getByType(FlatList).props.ListHeaderComponent;
-    expect(header.type).toBe(FeedGuideCard);
-    expect(getByTestId('pet-card-1')).toBeTruthy();
+    const order = testIdsInOrder(container);
+    expect(order.indexOf('feed-guide')).toBeGreaterThan(-1);
+    expect(order.indexOf('feed-guide')).toBeLessThan(
+      order.indexOf('pet-card-1')
+    );
     expect(queryByLabelText('Como funciona o app')).toBeNull();
 
-    fireEvent.press(getByText('Entendi'));
+    await fireEvent.press(getByText('Entendi'));
     expect(mockGuide.dismissGuide).toHaveBeenCalledTimes(1);
     expect(getByTestId('feed-guide')).toBeTruthy();
   });
 
-  it('deve reabrir o aviso pelo botão de ajuda', () => {
-    const { getByLabelText, queryByTestId } = render(
+  it('deve filtrar os registros por espécie e texto e limpar os filtros', async () => {
+    useFeed.mockReturnValue({
+      ...mockUseFeedReturn,
+      posts: [
+        { id: '1', status: 'Perdido', species: 'Cachorro', petName: 'Rex' },
+        { id: '2', status: 'Perdido', species: 'Gato', petName: 'Mimi' },
+      ],
+    });
+    const { getByTestId, getByText, queryByTestId } = await render(
+      <FeedScreen onOpenReport={mockOnOpenReport} />
+    );
+    expect(getByTestId('pet-card-1')).toBeTruthy();
+    expect(getByTestId('pet-card-2')).toBeTruthy();
+    expect(queryByTestId('feed-filter-empty')).toBeNull();
+
+    await fireEvent.press(getByText('Gato'));
+    expect(queryByTestId('pet-card-1')).toBeNull();
+    expect(getByTestId('pet-card-2')).toBeTruthy();
+
+    await fireEvent.changeText(getByTestId('input-feed-search'), 'rex');
+    expect(queryByTestId('pet-card-2')).toBeNull();
+    expect(getByTestId('feed-filter-empty')).toBeTruthy();
+
+    await fireEvent.press(getByTestId('button-clear-filters'));
+    expect(getByTestId('pet-card-1')).toBeTruthy();
+    expect(getByTestId('pet-card-2')).toBeTruthy();
+    expect(getByTestId('input-feed-search').props.value).toBe('');
+  });
+
+  it('deve reabrir o aviso pelo botão de ajuda', async () => {
+    const { getByLabelText, queryByTestId } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
     expect(queryByTestId('feed-guide')).toBeNull();
-    fireEvent.press(getByLabelText('Como funciona o app'));
+    await fireEvent.press(getByLabelText('Como funciona o app'));
     expect(mockGuide.showGuide).toHaveBeenCalledTimes(1);
   });
 
@@ -378,24 +415,24 @@ describe('FeedScreen', () => {
     const post = { id: '1', status: 'Perdido', images: ['a.jpg'] };
     useFeed.mockReturnValue({ ...mockUseFeedReturn, posts: [post] });
 
-    const { getByTestId, getByText, queryByText } = render(
+    const { getByTestId, getByText, queryByText } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} />
     );
 
-    fireEvent.press(getByTestId('share-1'));
+    await fireEvent.press(getByTestId('share-1'));
     expect(getByText('Compartilhar cartaz')).toBeTruthy();
 
-    fireEvent(getByTestId('share-poster-image'), 'loadEnd');
+    await fireEvent(getByTestId('share-poster-image'), 'loadEnd');
     await act(async () => {
-      fireEvent.press(getByText('Compartilhar'));
+      await fireEvent.press(getByText('Compartilhar'));
     });
     expect(shareService.sharePoster).toHaveBeenCalledTimes(1);
 
-    fireEvent.press(getByText('Cancelar'));
+    await fireEvent.press(getByText('Cancelar'));
     expect(queryByText('Compartilhar cartaz')).toBeNull();
   });
 
-  it('deve permitir editar só os registros ativos do próprio usuário', () => {
+  it('deve permitir editar só os registros ativos do próprio usuário', async () => {
     const mockOnEditPost = jest.fn();
     const own = { id: '1', status: 'Perdido', author: 'eu@test.com' };
     useFeed.mockReturnValue({
@@ -412,16 +449,16 @@ describe('FeedScreen', () => {
       ],
     });
 
-    const { getByTestId, queryByTestId, rerender } = render(
+    const { getByTestId, queryByTestId, rerender } = await render(
       <FeedScreen onOpenReport={mockOnOpenReport} onEditPost={mockOnEditPost} />
     );
 
-    fireEvent.press(getByTestId('edit-1'));
+    await fireEvent.press(getByTestId('edit-1'));
     expect(mockOnEditPost).toHaveBeenCalledWith(own);
     expect(queryByTestId('edit-2')).toBeNull();
     expect(queryByTestId('edit-3')).toBeNull();
 
-    rerender(<FeedScreen onOpenReport={mockOnOpenReport} />);
+    await rerender(<FeedScreen onOpenReport={mockOnOpenReport} />);
     expect(queryByTestId('edit-1')).toBeNull();
   });
 
@@ -453,58 +490,57 @@ describe('FeedScreen', () => {
       });
     });
 
-    it('deve alternar entre lista e mapa só com pets perdidos localizados', () => {
-      const { getByText, queryByTestId, getByTestId } = render(
+    it('deve alternar entre lista e mapa só com pets perdidos localizados', async () => {
+      const { getByText, queryByTestId, getByTestId } = await render(
         <FeedScreen onOpenReport={mockOnOpenReport} />
       );
 
       expect(getByTestId('pet-card-1')).toBeTruthy();
-      fireEvent.press(getByText('Mapa'));
+      await fireEvent.press(getByText('Mapa'));
 
       expect(getByText('pontos:1')).toBeTruthy();
       expect(queryByTestId('pet-card-1')).toBeNull();
 
-      fireEvent.press(getByText('Lista'));
+      await fireEvent.press(getByText('Lista'));
       expect(getByTestId('pet-card-1')).toBeTruthy();
     });
 
-    it('deve mostrar o resumo ao tocar num ponto e fechá-lo', () => {
-      const { getByText, getByTestId, queryByTestId, getByLabelText } = render(
-        <FeedScreen onOpenReport={mockOnOpenReport} />
-      );
-      fireEvent.press(getByText('Mapa'));
+    it('deve mostrar o resumo ao tocar num ponto e fechá-lo', async () => {
+      const { getByText, getByTestId, queryByTestId, getByLabelText } =
+        await render(<FeedScreen onOpenReport={mockOnOpenReport} />);
+      await fireEvent.press(getByText('Mapa'));
 
-      fireEvent.press(getByTestId('ponto-1'));
+      await fireEvent.press(getByTestId('ponto-1'));
       expect(getByTestId('map-pet-summary')).toBeTruthy();
       expect(getByText('Rex')).toBeTruthy();
 
-      fireEvent.press(getByText('WhatsApp'));
-      fireEvent.press(getByText('Como chegar'));
+      await fireEvent.press(getByText('WhatsApp'));
+      await fireEvent.press(getByText('Como chegar'));
       expect(externalLinkService.openWhatsApp).toHaveBeenCalledWith(
         '5511999999999'
       );
       expect(externalLinkService.openRoute).toHaveBeenCalledWith(-23.5, -46.6);
 
-      fireEvent.press(getByLabelText('Ver foto em tela cheia'));
+      await fireEvent.press(getByLabelText('Ver foto em tela cheia'));
       expect(getByText('fotos:a.jpg|inicio:0')).toBeTruthy();
 
-      fireEvent.press(getByLabelText('Fechar resumo'));
+      await fireEvent.press(getByLabelText('Fechar resumo'));
       expect(queryByTestId('map-pet-summary')).toBeNull();
 
-      fireEvent.press(getByTestId('ponto-1'));
-      fireEvent.press(getByTestId('mapa-fundo'));
+      await fireEvent.press(getByTestId('ponto-1'));
+      await fireEvent.press(getByTestId('mapa-fundo'));
       expect(queryByTestId('map-pet-summary')).toBeNull();
     });
 
-    it('deve fechar o resumo ao voltar para a lista', () => {
-      const { getByText, getByTestId, queryByTestId } = render(
+    it('deve fechar o resumo ao voltar para a lista', async () => {
+      const { getByText, getByTestId, queryByTestId } = await render(
         <FeedScreen onOpenReport={mockOnOpenReport} />
       );
-      fireEvent.press(getByText('Mapa'));
-      fireEvent.press(getByTestId('ponto-1'));
+      await fireEvent.press(getByText('Mapa'));
+      await fireEvent.press(getByTestId('ponto-1'));
 
-      fireEvent.press(getByText('Lista'));
-      fireEvent.press(getByText('Mapa'));
+      await fireEvent.press(getByText('Lista'));
+      await fireEvent.press(getByText('Mapa'));
 
       expect(queryByTestId('map-pet-summary')).toBeNull();
     });

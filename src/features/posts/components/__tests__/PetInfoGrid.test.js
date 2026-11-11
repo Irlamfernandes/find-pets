@@ -3,8 +3,8 @@ import { render } from '@testing-library/react-native';
 import { PetInfoGrid } from '../PetInfoGrid';
 
 describe('PetInfoGrid', () => {
-  it('deve mostrar cada dado com seu rótulo', () => {
-    const { getByText } = render(
+  it('deve mostrar cada dado com seu rótulo', async () => {
+    const { getByText } = await render(
       <PetInfoGrid
         fields={[
           { label: 'Nome', value: 'Rex' },
@@ -19,8 +19,8 @@ describe('PetInfoGrid', () => {
     expect(getByText('Vira-lata')).toBeTruthy();
   });
 
-  it('não deve renderizar nada sem dados', () => {
-    const { queryByTestId } = render(<PetInfoGrid fields={[]} />);
+  it('não deve renderizar nada sem dados', async () => {
+    const { queryByTestId } = await render(<PetInfoGrid fields={[]} />);
 
     expect(queryByTestId('pet-info-grid')).toBeNull();
   });

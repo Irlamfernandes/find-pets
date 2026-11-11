@@ -3,7 +3,7 @@ import { Keyboard } from 'react-native';
 import { useKeyboardVisible } from '../useKeyboardVisible';
 
 describe('useKeyboardVisible', () => {
-  it('deve acompanhar a abertura e o fechamento do teclado', () => {
+  it('deve acompanhar a abertura e o fechamento do teclado', async () => {
     const listeners = {};
     const remove = jest.fn();
     jest.spyOn(Keyboard, 'addListener').mockImplementation((event, cb) => {
@@ -11,16 +11,16 @@ describe('useKeyboardVisible', () => {
       return { remove };
     });
 
-    const { result, unmount } = renderHook(() => useKeyboardVisible());
+    const { result, unmount } = await renderHook(() => useKeyboardVisible());
     expect(result.current).toBe(false);
 
-    act(() => listeners.keyboardDidShow());
+    await act(() => listeners.keyboardDidShow());
     expect(result.current).toBe(true);
 
-    act(() => listeners.keyboardDidHide());
+    await act(() => listeners.keyboardDidHide());
     expect(result.current).toBe(false);
 
-    unmount();
+    await unmount();
     expect(remove).toHaveBeenCalledTimes(2);
     Keyboard.addListener.mockRestore();
   });

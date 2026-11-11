@@ -17,11 +17,11 @@ jest.spyOn(Alert, 'alert');
 
 const OWNER = { usuario: 'dona@test.com', hasBiometrics: true };
 
-const renderLogin = (onSuccess = jest.fn()) =>
-  renderHook(() => useLogin(onSuccess)).result;
+const renderLogin = async (onSuccess = jest.fn()) =>
+  (await renderHook(() => useLogin(onSuccess))).result;
 
 const submit = async (result, action, { usuario = '', senha = '' } = {}) => {
-  act(() => {
+  await act(() => {
     result.current.setUsuario(usuario);
     result.current.setSenha(senha);
   });
@@ -52,7 +52,7 @@ describe('useLogin Hook', () => {
 
     it('deve inicializar com biometria disponível, mas não autenticar automaticamente', async () => {
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await waitFor(() => {
         expect(result.current.hasHardwareBiometric).toBe(true);
@@ -65,7 +65,7 @@ describe('useLogin Hook', () => {
       biometricService.authenticate.mockResolvedValue({ success: true });
       accountService.getBiometricOwner.mockResolvedValue(OWNER);
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await waitFor(() => {
         expect(result.current.biometricOwner).toBe('dona@test.com');
@@ -85,7 +85,7 @@ describe('useLogin Hook', () => {
       accountService.getBiometricOwner.mockResolvedValue(OWNER);
       signInWithBiometrics.mockResolvedValueOnce(null);
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await triggerBiometric(result);
 
@@ -99,7 +99,7 @@ describe('useLogin Hook', () => {
       biometricService.authenticate.mockResolvedValue({ success: true });
       accountService.getBiometricOwner.mockResolvedValue(OWNER);
       signInWithBiometrics.mockRejectedValueOnce(new Error('Sem conexão.'));
-      const result = renderLogin();
+      const result = await renderLogin();
       await triggerBiometric(result);
       expect(result.current.errorMessage).toBe('Sem conexão.');
 
@@ -115,7 +115,7 @@ describe('useLogin Hook', () => {
       accountService.getBiometricOwner.mockResolvedValue(OWNER);
       signInWithBiometrics.mockResolvedValue('dona@test.com');
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
       await waitFor(() => {
         expect(result.current.biometricOwner).toBe('dona@test.com');
       });
@@ -133,7 +133,7 @@ describe('useLogin Hook', () => {
     });
 
     it('deve exibir erro se não houver conta com biometria no aparelho', async () => {
-      const result = renderLogin();
+      const result = await renderLogin();
 
       await triggerBiometric(result);
 
@@ -145,7 +145,7 @@ describe('useLogin Hook', () => {
 
     it('deve considerar sem dona de biometria se falhar ao verificar ao abrir', async () => {
       accountService.getBiometricOwner.mockRejectedValueOnce(new Error('x'));
-      const result = renderLogin();
+      const result = await renderLogin();
 
       await waitFor(() => {
         expect(result.current.hasHardwareBiometric).toBe(true);
@@ -165,7 +165,7 @@ describe('useLogin Hook', () => {
       accountService.getBiometricOwner.mockResolvedValue(OWNER);
       biometricService.authenticate.mockResolvedValueOnce(response);
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await waitFor(() => {
         expect(result.current.biometricOwner).toBe('dona@test.com');
@@ -178,14 +178,14 @@ describe('useLogin Hook', () => {
   });
 
   it('não deve pedir biometria ao abrir o login sem conta dona nem no cadastro', async () => {
-    const result = renderLogin();
+    const result = await renderLogin();
     await waitFor(() => {
       expect(biometricService.checkAvailability).toHaveBeenCalled();
     });
 
-    act(() => result.current.navigate('login'));
+    await act(() => result.current.navigate('login'));
     expect(result.current.authMode).toBe('login');
-    act(() => result.current.navigate('cadastro'));
+    await act(() => result.current.navigate('cadastro'));
     expect(result.current.authMode).toBe('cadastro');
 
     expect(biometricService.authenticate).not.toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe('useLogin Hook', () => {
     ['cadastro', 'handleRegister'],
   ])('validação do %s', (_name, action) => {
     it('deve exigir usuário e senha', async () => {
-      const result = renderLogin();
+      const result = await renderLogin();
 
       await submit(result, action);
 
@@ -204,7 +204,7 @@ describe('useLogin Hook', () => {
     });
 
     it('deve exigir um e-mail válido', async () => {
-      const result = renderLogin();
+      const result = await renderLogin();
 
       await submit(result, action, { usuario: 'notanemail', senha: '123456' });
 
@@ -218,7 +218,7 @@ describe('useLogin Hook', () => {
     const CREDENTIALS = { usuario: 'user@test.com', senha: '123456' };
 
     it('deve exibir erro se credenciais manuais estiverem incorretas', async () => {
-      const result = renderLogin();
+      const result = await renderLogin();
 
       await submit(result, 'handleManualLogin', {
         usuario: 'user@test.com',
@@ -234,7 +234,7 @@ describe('useLogin Hook', () => {
     it('deve chamar onSuccess ao fazer login manual válido', async () => {
       signIn.mockResolvedValue('user@test.com');
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await submit(result, 'handleManualLogin', CREDENTIALS);
 
@@ -247,7 +247,7 @@ describe('useLogin Hook', () => {
     it('deve entrar na conta como foi cadastrada, mesmo com outras maiúsculas', async () => {
       signIn.mockResolvedValue('Ana@Test.com');
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await submit(result, 'handleManualLogin', {
         usuario: ' ANA@test.com ',
@@ -266,7 +266,7 @@ describe('useLogin Hook', () => {
       [{}, 'Erro ao realizar o login.'],
     ])('deve exibir o erro da falha %#', async (error, message) => {
       signIn.mockRejectedValue(error);
-      const result = renderLogin();
+      const result = await renderLogin();
 
       await submit(result, 'handleManualLogin', CREDENTIALS);
 
@@ -281,7 +281,7 @@ describe('useLogin Hook', () => {
       biometricService.checkAvailability.mockResolvedValue(true);
       signUp.mockResolvedValue('novo@test.com');
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await waitFor(() => {
         expect(result.current.hasHardwareBiometric).toBe(true);
@@ -305,7 +305,7 @@ describe('useLogin Hook', () => {
     it('deve abrir a sessão com o e-mail devolvido pelo servidor', async () => {
       signUp.mockResolvedValue('novo@test.com');
       const onSuccess = jest.fn();
-      const result = renderLogin(onSuccess);
+      const result = await renderLogin(onSuccess);
 
       await submit(result, 'handleRegister', {
         ...NEW_ACCOUNT,
@@ -327,7 +327,7 @@ describe('useLogin Hook', () => {
       [{}, 'Erro ao realizar o cadastro.'],
     ])('deve exibir o erro da falha %#', async (error, message) => {
       signUp.mockRejectedValue(error);
-      const result = renderLogin();
+      const result = await renderLogin();
 
       await submit(result, 'handleRegister', NEW_ACCOUNT);
 

@@ -3,7 +3,7 @@ import { BackHandler } from 'react-native';
 import { useBackHandler } from '../useBackHandler';
 
 describe('useBackHandler', () => {
-  it('deve executar a ação atual ao voltar e impedir o fechamento do app', () => {
+  it('deve executar a ação atual ao voltar e impedir o fechamento do app', async () => {
     let backListener;
     const remove = jest.fn();
     jest
@@ -16,18 +16,18 @@ describe('useBackHandler', () => {
     const firstAction = jest.fn();
     const latestAction = jest.fn();
 
-    const { rerender, unmount } = renderHook(
+    const { rerender, unmount } = await renderHook(
       ({ action }) => useBackHandler(action),
       { initialProps: { action: firstAction } }
     );
-    rerender({ action: latestAction });
+    await rerender({ action: latestAction });
 
     expect(backListener()).toBe(true);
     expect(latestAction).toHaveBeenCalledTimes(1);
     expect(firstAction).not.toHaveBeenCalled();
     expect(BackHandler.addEventListener).toHaveBeenCalledTimes(1);
 
-    unmount();
+    await unmount();
     expect(remove).toHaveBeenCalledTimes(1);
     BackHandler.addEventListener.mockRestore();
   });

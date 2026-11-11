@@ -126,6 +126,7 @@ export function FoundPetModal({ visible, lostAt, onCancel, onConfirm }) {
 
   return (
     <Modal
+      testID="found-pet-modal"
       visible={visible}
       transparent
       animationType="slide"

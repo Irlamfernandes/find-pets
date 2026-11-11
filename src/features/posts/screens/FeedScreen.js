@@ -5,10 +5,12 @@ import PropTypes from 'prop-types';
 import { useFeed } from '../hooks/useFeed';
 import { useFeedGuide } from '../hooks/useFeedGuide';
 import { useSharePost } from '../hooks/useSharePost';
+import { useFeedFilter } from '../hooks/useFeedFilter';
 import { PetList } from '../components/PetList';
 import { FoundPetModal } from '../components/FoundPetModal';
 import { FeedGuideCard } from '../components/FeedGuideCard';
 import { FeedHeader } from '../components/FeedHeader';
+import { FeedFilters, FilterEmptyState } from '../components/FeedFilters';
 import { OfflineBanner } from '../../../shared/components/OfflineBanner';
 import { ViewModeToggle } from '../components/ViewModeToggle';
 import { SharePreviewModal } from '../components/SharePreviewModal';
@@ -23,13 +25,58 @@ const openWhatsApp = (phone) => externalLinkService.openWhatsApp(phone);
 const openRoute = (post) =>
   externalLinkService.openRoute(post.latitude, post.longitude);
 
+function FeedOverlays({
+  feed,
+  sharing,
+  photoViewer,
+  onClosePhotos,
+  mapPost,
+  onCloseMap,
+}) {
+  return (
+    <>
+      <PhotoViewerModal
+        images={photoViewer.images}
+        initialIndex={photoViewer.index}
+        onClose={onClosePhotos}
+      />
+
+      <MapViewerModal post={mapPost} onClose={onCloseMap} />
+
+      <SharePreviewModal
+        post={sharing.sharingPost}
+        onShare={sharing.sharePoster}
+        onClose={sharing.closeShare}
+      />
+
+      <FoundPetModal
+        visible={feed.isFoundFormOpen}
+        lostAt={feed.foundPost?.occurredAt}
+        onCancel={feed.cancelFound}
+        onConfirm={feed.confirmFound}
+      />
+    </>
+  );
+}
+
+FeedOverlays.propTypes = {
+  feed: PropTypes.object.isRequired,
+  sharing: PropTypes.object.isRequired,
+  photoViewer: PropTypes.object.isRequired,
+  onClosePhotos: PropTypes.func.isRequired,
+  mapPost: PropTypes.object,
+  onCloseMap: PropTypes.func.isRequired,
+};
+
 export default function FeedScreen({
   onOpenProfile,
   onOpenReport,
   onEditPost,
 }) {
   const feed = useFeed();
-  const { posts, currentUser } = feed;
+  const { currentUser } = feed;
+  const filter = useFeedFilter(feed.posts);
+  const { posts } = filter;
   const [photoViewer, setPhotoViewer] = useState({ images: [], index: 0 });
   const [mapPost, setMapPost] = useState(null);
   const guide = useFeedGuide(currentUser);
@@ -50,6 +97,12 @@ export default function FeedScreen({
 
       <OfflineBanner />
       <ViewModeToggle value={viewMode} onChange={setViewMode} />
+      <FeedFilters
+        species={filter.species}
+        text={filter.text}
+        onChangeSpecies={filter.setSpecies}
+        onChangeText={filter.setText}
+      />
 
       {viewMode === 'map' ? (
         <LostPetsMapView
@@ -65,6 +118,11 @@ export default function FeedScreen({
           header={
             guide.isGuideVisible ? (
               <FeedGuideCard onDismiss={guide.dismissGuide} />
+            ) : null
+          }
+          empty={
+            filter.isFiltering ? (
+              <FilterEmptyState onClear={filter.clear} />
             ) : null
           }
           onOpenPhoto={openPhotos}
@@ -85,25 +143,13 @@ export default function FeedScreen({
         onNavigate={{ report: onOpenReport, profile: onOpenProfile }}
       />
 
-      <PhotoViewerModal
-        images={photoViewer.images}
-        initialIndex={photoViewer.index}
-        onClose={() => setPhotoViewer({ images: [], index: 0 })}
-      />
-
-      <MapViewerModal post={mapPost} onClose={() => setMapPost(null)} />
-
-      <SharePreviewModal
-        post={sharingPost}
-        onShare={sharePoster}
-        onClose={closeShare}
-      />
-
-      <FoundPetModal
-        visible={feed.isFoundFormOpen}
-        lostAt={feed.foundPost?.occurredAt}
-        onCancel={feed.cancelFound}
-        onConfirm={feed.confirmFound}
+      <FeedOverlays
+        feed={feed}
+        sharing={{ sharingPost, sharePoster, closeShare }}
+        photoViewer={photoViewer}
+        onClosePhotos={() => setPhotoViewer({ images: [], index: 0 })}
+        mapPost={mapPost}
+        onCloseMap={() => setMapPost(null)}
       />
     </SafeAreaView>
   );

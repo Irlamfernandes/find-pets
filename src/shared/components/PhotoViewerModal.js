@@ -25,6 +25,7 @@ export function PhotoViewerModal({ images, initialIndex = 0, onClose }) {
 
   return (
     <Modal
+      testID="photo-viewer"
       visible={visible}
       animationType="fade"
       onRequestClose={onClose}
@@ -46,6 +47,7 @@ export function PhotoViewerModal({ images, initialIndex = 0, onClose }) {
         </View>
 
         <FlatList
+          testID="photo-viewer-list"
           data={images}
           keyExtractor={(uri, index) => `${uri}-${index}`}
           horizontal

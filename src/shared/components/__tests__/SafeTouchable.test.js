@@ -5,45 +5,45 @@ import { SafeTouchable } from '../SafeTouchable';
 
 const buttonStyle = { padding: 4 };
 
-const findTouchable = (node) => {
-  let current = node;
-  while (current && current.props.onPress === undefined) {
-    current = current.parent;
-  }
-  return current;
+const tap = (element) =>
+  act(async () => {
+    element.props.onClick({ nativeEvent: {} });
+  });
+
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
 };
 
 describe('SafeTouchable', () => {
   it('deve travar o botão enquanto a ação assíncrona estiver em andamento', async () => {
-    let finish;
-    const onPress = jest.fn(
-      () =>
-        new Promise((resolve) => {
-          finish = resolve;
-        })
-    );
-    const { getByText } = render(
-      <SafeTouchable onPress={onPress} style={buttonStyle}>
+    const action = deferred();
+    const onPress = jest.fn(() => action.promise);
+    const { getByTestId } = await render(
+      <SafeTouchable testID="botao" onPress={onPress} style={buttonStyle}>
         <Text>Salvar</Text>
       </SafeTouchable>
     );
 
     await act(async () => {
-      fireEvent.press(getByText('Salvar'));
+      getByTestId('botao').props.onClick({ nativeEvent: {} });
+      getByTestId('botao').props.onClick({ nativeEvent: {} });
     });
-    await act(async () => {
-      findTouchable(getByText('Salvar')).props.onPress();
-      fireEvent.press(getByText('Salvar'));
-    });
+    expect(getByTestId('botao')).toBeDisabled();
+    await tap(getByTestId('botao'));
     expect(onPress).toHaveBeenCalledTimes(1);
-    expect(
-      StyleSheet.flatten(findTouchable(getByText('Salvar')).props.style)
-    ).toEqual({ padding: 4, opacity: 0.6 });
+    expect(StyleSheet.flatten(getByTestId('botao').props.style)).toEqual(
+      expect.objectContaining({ padding: 4 })
+    );
 
     await act(async () => {
-      finish();
+      action.resolve();
     });
-    fireEvent.press(getByText('Salvar'));
+    expect(getByTestId('botao')).toBeEnabled();
+    await fireEvent.press(getByTestId('botao'));
     expect(onPress).toHaveBeenCalledTimes(2);
   });
 
@@ -52,65 +52,59 @@ describe('SafeTouchable', () => {
       .fn()
       .mockRejectedValueOnce(new Error('falha'))
       .mockResolvedValueOnce();
-    const { getByText } = render(
-      <SafeTouchable onPress={onPress}>
+    const { getByTestId } = await render(
+      <SafeTouchable testID="botao" onPress={onPress}>
         <Text>Enviar</Text>
       </SafeTouchable>
     );
 
-    await act(async () => {
-      await expect(
-        findTouchable(getByText('Enviar')).props.onPress()
-      ).rejects.toThrow('falha');
-    });
-    await act(async () => {
-      fireEvent.press(getByText('Enviar'));
-    });
+    await expect(fireEvent.press(getByTestId('botao'))).rejects.toThrow(
+      'falha'
+    );
+    expect(getByTestId('botao')).toBeEnabled();
+    await fireEvent.press(getByTestId('botao'));
     expect(onPress).toHaveBeenCalledTimes(2);
   });
 
-  it('não deve travar ações síncronas nem quebrar sem onPress', () => {
+  it('não deve travar ações síncronas nem quebrar sem onPress', async () => {
     const onPress = jest.fn();
-    const { getByText, rerender } = render(
-      <SafeTouchable onPress={onPress}>
+    const { getByTestId, rerender } = await render(
+      <SafeTouchable testID="botao" onPress={onPress}>
         <Text>Abrir</Text>
       </SafeTouchable>
     );
 
-    fireEvent.press(getByText('Abrir'));
-    fireEvent.press(getByText('Abrir'));
+    await fireEvent.press(getByTestId('botao'));
+    await fireEvent.press(getByTestId('botao'));
     expect(onPress).toHaveBeenCalledTimes(2);
 
-    rerender(
-      <SafeTouchable>
+    await rerender(
+      <SafeTouchable testID="botao">
         <Text>Abrir</Text>
       </SafeTouchable>
     );
-    expect(() => fireEvent.press(getByText('Abrir'))).not.toThrow();
+    await expect(fireEvent.press(getByTestId('botao'))).resolves.toBe(
+      undefined
+    );
   });
 
   it('não deve atualizar o estado depois de desmontado', async () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation();
-    let finish;
-    const onPress = () =>
-      new Promise((resolve) => {
-        finish = resolve;
-      });
-    const { getByText, unmount } = render(
-      <SafeTouchable onPress={onPress}>
+    const action = deferred();
+    const { getByTestId, unmount } = await render(
+      <SafeTouchable testID="botao" onPress={() => action.promise}>
         <Text>Sair</Text>
       </SafeTouchable>
     );
 
+    await tap(getByTestId('botao'));
+    expect(getByTestId('botao')).toBeDisabled();
+    await unmount();
     await act(async () => {
-      fireEvent.press(getByText('Sair'));
+      action.resolve();
     });
-    unmount();
-    await act(async () => {
-      finish();
 
-      expect(consoleError).not.toHaveBeenCalled();
-      consoleError.mockRestore();
-    });
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

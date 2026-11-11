@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Button, Modal } from 'react-native';
+import { Alert, Button } from 'react-native';
 import PropTypes from 'prop-types';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { AppAlertProvider, nativeAlert, useAppAlert } from '../AppAlert';
@@ -12,15 +12,15 @@ function AlertTrigger({ type, cancelText, confirmText }) {
     <Button
       testID="open-alert"
       title="Abrir"
-      onPress={() =>
+      onPress={() => {
         showAlert({
           type,
           title: 'Título',
           message: 'Descrição',
           cancelText,
           confirmText,
-        })
-      }
+        });
+      }}
     />
   );
 }
@@ -31,14 +31,14 @@ function ConfirmTrigger({ onConfirmed }) {
     <Button
       testID="open-alert"
       title="Abrir"
-      onPress={() =>
+      onPress={() => {
         showAlert({
           title: 'Confirmar',
           message: 'Continuar?',
           confirmText: 'Sim',
           onConfirm: onConfirmed,
-        })
-      }
+        });
+      }}
     />
   );
 }
@@ -48,49 +48,51 @@ describe('AppAlert', () => {
     jest.clearAllMocks();
   });
 
-  it('deve renderizar tipos visuais e confirmar', () => {
+  it('deve renderizar tipos visuais e confirmar', async () => {
     const types = ['info', 'success', 'warning', 'danger'];
 
-    types.forEach((type) => {
-      const { getByTestId, getByText, unmount } = render(
+    for (const type of types) {
+      const { getByTestId, getByText, unmount } = await render(
         <AppAlertProvider>
           <AlertTrigger type={type} />
         </AppAlertProvider>
       );
 
-      fireEvent.press(getByTestId('open-alert'));
+      await fireEvent.press(getByTestId('open-alert'));
       expect(getByText('Título')).toBeTruthy();
       expect(getByText('Descrição')).toBeTruthy();
-      fireEvent.press(getByText('Entendi'));
-      unmount();
-    });
+      await fireEvent.press(getByText('Entendi'));
+      await unmount();
+    }
   });
 
-  it('deve cancelar e fechar pelo evento do sistema', () => {
-    const { getByTestId, getByText, UNSAFE_getByType } = render(
+  it('deve cancelar e fechar pelo evento do sistema', async () => {
+    const { getByTestId, getByText, queryByTestId } = await render(
       <AppAlertProvider>
         <AlertTrigger type="warning" cancelText="Cancelar" />
       </AppAlertProvider>
     );
 
-    fireEvent(UNSAFE_getByType(Modal), 'requestClose');
-    fireEvent.press(getByTestId('open-alert'));
-    fireEvent.press(getByText('Cancelar'));
-    fireEvent.press(getByTestId('open-alert'));
-    fireEvent(UNSAFE_getByType(Modal), 'requestClose');
+    expect(queryByTestId('app-alert')).toBeNull();
+    await fireEvent.press(getByTestId('open-alert'));
+    await fireEvent.press(getByText('Cancelar'));
+    expect(queryByTestId('app-alert')).toBeNull();
+    await fireEvent.press(getByTestId('open-alert'));
+    await fireEvent(getByTestId('app-alert'), 'requestClose');
+    expect(queryByTestId('app-alert')).toBeNull();
     expect(getByText('Abrir')).toBeTruthy();
   });
 
-  it('deve executar a ação de confirmação', () => {
+  it('deve executar a ação de confirmação', async () => {
     const onConfirmed = jest.fn();
-    const { getByTestId, getByText } = render(
+    const { getByTestId, getByText } = await render(
       <AppAlertProvider>
         <ConfirmTrigger onConfirmed={onConfirmed} />
       </AppAlertProvider>
     );
 
-    fireEvent.press(getByTestId('open-alert'));
-    fireEvent.press(getByText('Sim'));
+    await fireEvent.press(getByTestId('open-alert'));
+    await fireEvent.press(getByText('Sim'));
     expect(onConfirmed).toHaveBeenCalledTimes(1);
   });
 
@@ -153,7 +155,7 @@ describe('AppAlertProvider com vários avisos', () => {
   it('deve mostrar avisos seguidos um de cada vez, sem perder nenhum', async () => {
     let showAlert;
     const onConfirm = jest.fn();
-    const { getByText, queryByText } = render(
+    const { getByText, queryByText } = await render(
       <AppAlertProvider>
         <CaptureAlert
           onReady={(fn) => {
@@ -165,7 +167,7 @@ describe('AppAlertProvider com vários avisos', () => {
 
     let first;
     let second;
-    act(() => {
+    await act(() => {
       first = showAlert({
         title: 'Confirmar Exclusão',
         message: 'a',
@@ -178,16 +180,12 @@ describe('AppAlertProvider com vários avisos', () => {
     expect(getByText('Confirmar Exclusão')).toBeTruthy();
     expect(queryByText('Segundo aviso')).toBeNull();
 
-    await act(async () => {
-      fireEvent.press(getByText('Excluir'));
-    });
+    await fireEvent.press(getByText('Excluir'));
     await expect(first).resolves.toBe(true);
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(getByText('Segundo aviso')).toBeTruthy();
 
-    await act(async () => {
-      fireEvent.press(getByText('Entendi'));
-    });
+    await fireEvent.press(getByText('Entendi'));
     await expect(second).resolves.toBe(true);
     expect(queryByText('Segundo aviso')).toBeNull();
   });

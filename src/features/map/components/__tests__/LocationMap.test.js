@@ -3,8 +3,8 @@ import { render } from '@testing-library/react-native';
 import { LocationMap } from '../LocationMap';
 
 describe('LocationMap', () => {
-  it('deve mostrar o ponto num mapa estático e leve no card', () => {
-    const { getByTestId } = render(
+  it('deve mostrar o ponto num mapa estático e leve no card', async () => {
+    const { getByTestId } = await render(
       <LocationMap latitude={-23.5} longitude={-46.6} />
     );
 
@@ -26,8 +26,8 @@ describe('LocationMap', () => {
     });
   });
 
-  it('deve permitir mover e aproximar o mapa em tela cheia', () => {
-    const { getByTestId } = render(
+  it('deve permitir mover e aproximar o mapa em tela cheia', async () => {
+    const { getByTestId } = await render(
       <LocationMap latitude={-23.5} longitude={-46.6} interactive />
     );
 
@@ -38,8 +38,8 @@ describe('LocationMap', () => {
     });
   });
 
-  it('deve exibir aviso quando não houver coordenadas', () => {
-    const { getByText, queryByTestId } = render(
+  it('deve exibir aviso quando não houver coordenadas', async () => {
+    const { getByText, queryByTestId } = await render(
       <LocationMap latitude={null} longitude={undefined} />
     );
 

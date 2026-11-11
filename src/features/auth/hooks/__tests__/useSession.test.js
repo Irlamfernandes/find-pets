@@ -11,15 +11,19 @@ describe('useSession Hook', () => {
 
   it('deve carregar a sessão existente na inicialização', async () => {
     const mockSession = { type: 'biometric', email: 'test@test.com' };
-    sessionService.getSession.mockResolvedValueOnce(mockSession);
+    let finish;
+    sessionService.getSession.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      })
+    );
 
-    const { result } = renderHook(() => useSession());
+    const { result } = await renderHook(() => useSession());
 
     expect(result.current.isLoading).toBe(true);
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
+    await act(async () => finish(mockSession));
+    expect(result.current.isLoading).toBe(false);
 
     expect(result.current.session).toEqual(mockSession);
   });
@@ -27,7 +31,7 @@ describe('useSession Hook', () => {
   it('deve lidar com ausência de sessão na inicialização', async () => {
     sessionService.getSession.mockResolvedValueOnce(null);
 
-    const { result } = renderHook(() => useSession());
+    const { result } = await renderHook(() => useSession());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -40,7 +44,7 @@ describe('useSession Hook', () => {
     sessionService.getSession.mockResolvedValueOnce(null);
     sessionService.saveSession.mockResolvedValueOnce();
 
-    const { result } = renderHook(() => useSession());
+    const { result } = await renderHook(() => useSession());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -61,7 +65,7 @@ describe('useSession Hook', () => {
     sessionService.getSession.mockResolvedValueOnce(mockSession);
     sessionService.clearSession.mockResolvedValueOnce();
 
-    const { result } = renderHook(() => useSession());
+    const { result } = await renderHook(() => useSession());
 
     await waitFor(() => {
       expect(result.current.session).toEqual(mockSession);
@@ -78,7 +82,7 @@ describe('useSession Hook', () => {
   it('deve lidar com erro ao carregar a sessão na inicialização', async () => {
     sessionService.getSession.mockRejectedValueOnce(new Error('Storage error'));
 
-    const { result } = renderHook(() => useSession());
+    const { result } = await renderHook(() => useSession());
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

@@ -1,10 +1,6 @@
-import { dogBreedNames, normalize, searchBreeds } from '../breeds';
+import { dogBreedNames, searchBreeds } from '../breeds';
 
 describe('breeds (regras das raças)', () => {
-  it('deve comparar sem acentos, maiúsculas nem espaços nas pontas', () => {
-    expect(normalize('  Pastor Alemão ')).toBe('pastor alemao');
-  });
-
   it('deve transformar a lista da Dog CEO em nomes de raça', () => {
     expect(
       dogBreedNames({ beagle: [], bulldog: ['boston', 'french'] })

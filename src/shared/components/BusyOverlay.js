@@ -21,6 +21,7 @@ export function BusyProvider({ children }) {
     <BusyContext.Provider value={track}>
       {children}
       <Modal
+        testID="busy-modal"
         transparent
         statusBarTranslucent
         visible={pending > 0}

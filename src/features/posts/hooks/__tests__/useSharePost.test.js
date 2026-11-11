@@ -17,10 +17,10 @@ describe('useSharePost', () => {
   });
 
   it('deve abrir e fechar o cartaz do registro e compartilhar a imagem', async () => {
-    const { result } = renderHook(() => useSharePost());
+    const { result } = await renderHook(() => useSharePost());
     expect(result.current.sharingPost).toBeNull();
 
-    act(() => result.current.openShare(post));
+    await act(() => result.current.openShare(post));
     expect(result.current.sharingPost).toBe(post);
 
     await act(async () => {
@@ -28,13 +28,13 @@ describe('useSharePost', () => {
     });
     expect(shareService.sharePoster).toHaveBeenCalledWith('ref-do-cartaz');
 
-    act(() => result.current.closeShare());
+    await act(() => result.current.closeShare());
     expect(result.current.sharingPost).toBeNull();
   });
 
   it('deve avisar quando não for possível compartilhar', async () => {
     shareService.sharePoster.mockRejectedValueOnce(new Error('x'));
-    const { result } = renderHook(() => useSharePost());
+    const { result } = await renderHook(() => useSharePost());
 
     await act(async () => {
       await result.current.sharePoster('ref');

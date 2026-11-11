@@ -1,13 +1,8 @@
+import { normalizeText as normalize } from '../../../shared/utils/text';
+
 export const BREED_SPECIES = ['Cachorro', 'Gato'];
 export const MIN_SEARCH_LENGTH = 2;
 const MAX_SUGGESTIONS = 5;
-
-export const normalize = (text) =>
-  text
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
 
 const capitalize = (text) =>
   text.replace(/\b\w/g, (letter) => letter.toUpperCase());

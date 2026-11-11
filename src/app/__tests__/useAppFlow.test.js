@@ -42,27 +42,27 @@ describe('useAppFlow', () => {
     syncService.syncNow.mockResolvedValue('synced');
   });
 
-  const renderFlow = () => renderHook(() => useAppFlow());
+  const renderFlow = async () => await renderHook(() => useAppFlow());
   const screenOf = (hook) => hook.result.current.navigation.screen;
 
-  it('deve esperar a sessão carregar para decidir a tela inicial', () => {
+  it('deve esperar a sessão carregar para decidir a tela inicial', async () => {
     sessionState.isLoading = true;
-    const hook = renderFlow();
+    const hook = await renderFlow();
     expect(screenOf(hook)).toBe(SCREENS.LOADING);
 
     sessionState = { ...sessionState, isLoading: false };
-    hook.rerender();
+    await hook.rerender();
     expect(screenOf(hook)).toBe(SCREENS.LOGIN);
   });
 
-  it('deve abrir na tela de entrada mesmo com sessão salva', () => {
+  it('deve abrir na tela de entrada mesmo com sessão salva', async () => {
     sessionState.session = { usuario: 'ana@x.com' };
-    const hook = renderFlow();
+    const hook = await renderFlow();
     expect(screenOf(hook)).toBe(SCREENS.LOGIN);
   });
 
   it('deve salvar a sessão ao entrar e avisar conforme a forma de entrada', async () => {
-    const hook = renderFlow();
+    const hook = await renderFlow();
 
     await act(() =>
       hook.result.current.actions.loginSucceeded({
@@ -86,7 +86,7 @@ describe('useAppFlow', () => {
   });
 
   it('não deve oferecer a biometria ao entrar com ela, ao cadastrar ou sem perfil', async () => {
-    const hook = renderFlow();
+    const hook = await renderFlow();
     await act(() =>
       hook.result.current.actions.loginSucceeded({ type: 'biometric' })
     );
@@ -105,7 +105,7 @@ describe('useAppFlow', () => {
     ['biometric', 'Login realizado via Biometria com sucesso.'],
     ['register', 'Agora complete seu perfil para começar.'],
   ])('deve avisar a entrada do tipo %s', async (type, message) => {
-    const hook = renderFlow();
+    const hook = await renderFlow();
     await act(() =>
       hook.result.current.actions.loginSucceeded({ type, usuario: 'a' })
     );
@@ -116,14 +116,14 @@ describe('useAppFlow', () => {
 
   it('deve levar ao cadastro do perfil quando ele não existir ou falhar', async () => {
     profileService.getProfile.mockResolvedValueOnce(null);
-    const hook = renderFlow();
+    const hook = await renderFlow();
     await act(() =>
       hook.result.current.actions.loginSucceeded({ type: 'register' })
     );
     expect(screenOf(hook)).toBe(SCREENS.ONBOARDING);
 
     profileService.getProfile.mockRejectedValueOnce(new Error('x'));
-    const other = renderFlow();
+    const other = await renderFlow();
     await act(() =>
       other.result.current.actions.loginSucceeded({ type: 'register' })
     );
@@ -134,7 +134,7 @@ describe('useAppFlow', () => {
     const completeOnboarding = async () => {
       profileService.getProfile.mockResolvedValueOnce(null);
       sessionState.session = { usuario: 'ana@x.com' };
-      const hook = renderFlow();
+      const hook = await renderFlow();
       await act(() =>
         hook.result.current.actions.loginSucceeded({
           type: 'register',
@@ -174,7 +174,7 @@ describe('useAppFlow', () => {
     it('deve funcionar sem sessão carregada', async () => {
       offerBiometrics.mockResolvedValueOnce(false);
       profileService.getProfile.mockResolvedValueOnce(null);
-      const hook = renderFlow();
+      const hook = await renderFlow();
       await act(() =>
         hook.result.current.actions.loginSucceeded({ type: 'register' })
       );
@@ -189,23 +189,23 @@ describe('useAppFlow', () => {
   });
 
   it('deve navegar entre feed, perfil e registro', async () => {
-    const hook = renderFlow();
+    const hook = await renderFlow();
     await act(() => hook.result.current.actions.loginSucceeded({}));
     const { actions } = hook.result.current;
 
-    act(() => actions.openProfile());
+    await act(() => actions.openProfile());
     expect(screenOf(hook)).toBe(SCREENS.PROFILE);
-    act(() => actions.openReport({ id: '1' }));
+    await act(() => actions.openReport({ id: '1' }));
     expect(hook.result.current.navigation).toEqual({
       screen: SCREENS.REPORT,
       editingPost: { id: '1' },
     });
-    act(() => actions.openHome());
+    await act(() => actions.openHome());
     expect(screenOf(hook)).toBe(SCREENS.HOME);
   });
 
   it('deve sair da conta e avisar quando não conseguir', async () => {
-    const hook = renderFlow();
+    const hook = await renderFlow();
     await act(() => hook.result.current.actions.loginSucceeded({}));
 
     sessionState.logout.mockRejectedValueOnce(new Error('falhou'));
@@ -227,7 +227,7 @@ describe('useAppFlow', () => {
         order.push('perfil');
         return { name: 'Ana' };
       });
-      const hook = renderFlow();
+      const hook = await renderFlow();
 
       await act(() =>
         hook.result.current.actions.loginSucceeded({ usuario: 'ana@x.com' })
@@ -238,7 +238,7 @@ describe('useAppFlow', () => {
     });
 
     it('deve pedir novo login quando o servidor recusar o token', async () => {
-      const hook = renderFlow();
+      const hook = await renderFlow();
       await act(() => hook.result.current.actions.loginSucceeded({}));
       const onSessionExpired = useSyncLifecycle.mock.calls.at(-1)[0];
 

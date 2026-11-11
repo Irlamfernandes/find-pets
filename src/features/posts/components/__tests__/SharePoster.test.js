@@ -15,9 +15,9 @@ describe('SharePoster', () => {
     status: 'Perdido',
   };
 
-  it('deve montar o cartaz com foto e todas as informações', () => {
+  it('deve montar o cartaz com foto e todas as informações', async () => {
     const onImageLoadEnd = jest.fn();
-    const { getByText, getByTestId } = render(
+    const { getByText, getByTestId } = await render(
       <SharePoster post={post} onImageLoadEnd={onImageLoadEnd} />
     );
 
@@ -38,12 +38,12 @@ describe('SharePoster', () => {
     expect(getByText('+55 (11) 99999-9999')).toBeTruthy();
     expect(getByText('Compartilhado pelo FindPets')).toBeTruthy();
 
-    fireEvent(getByTestId('share-poster-image'), 'loadEnd');
+    await fireEvent(getByTestId('share-poster-image'), 'loadEnd');
     expect(onImageLoadEnd).toHaveBeenCalledTimes(1);
   });
 
-  it('deve montar o cartaz de encontrado sem data de desaparecimento nem contato', () => {
-    const { getByText, queryByText } = render(
+  it('deve montar o cartaz de encontrado sem data de desaparecimento nem contato', async () => {
+    const { getByText, queryByText } = await render(
       <SharePoster post={{ ...post, status: 'Encontrado' }} />
     );
 
@@ -52,8 +52,8 @@ describe('SharePoster', () => {
     expect(queryByText('+55 (11) 99999-9999')).toBeNull();
   });
 
-  it('deve omitir as informações que o registro não tiver', () => {
-    const { getByText, queryByText } = render(
+  it('deve omitir as informações que o registro não tiver', async () => {
+    const { getByText, queryByText } = await render(
       <SharePoster post={{ status: 'Perdido', images: ['file:///a.jpg'] }} />
     );
 

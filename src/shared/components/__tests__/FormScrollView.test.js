@@ -8,7 +8,8 @@ describe('FormScrollView', () => {
   let removeMocks;
   let scrollToSpy;
 
-  const emit = (event, payload) => act(() => listeners[event](payload));
+  const emit = async (event, payload) =>
+    await act(() => listeners[event](payload));
 
   const mockFocusedInput = (y, height = 40) => {
     jest.spyOn(TextInput.State, 'currentlyFocusedInput').mockReturnValue({
@@ -37,84 +38,95 @@ describe('FormScrollView', () => {
     jest.restoreAllMocks();
   });
 
-  const renderForm = (props = {}) =>
-    render(
+  const renderForm = async (props = {}) =>
+    await render(
       <FormScrollView {...props}>
         <FormTextInput testID="field" placeholder="Campo" />
       </FormScrollView>
     );
 
-  it('deve reservar espaço e rolar até o campo coberto pelo teclado', () => {
-    const { getByTestId, getByPlaceholderText } = renderForm();
+  it('deve reservar espaço e rolar até o campo coberto pelo teclado', async () => {
+    const { getByTestId, getByPlaceholderText } = await renderForm();
     mockFocusedInput(700);
 
-    fireEvent.scroll(getByTestId('field').parent.parent, {
+    await fireEvent.scroll(getByTestId('field').parent.parent, {
       nativeEvent: { contentOffset: { y: 50 } },
     });
-    emit('keyboardDidShow', { endCoordinates: { screenY: 600, height: 300 } });
+    await emit('keyboardDidShow', {
+      endCoordinates: { screenY: 600, height: 300 },
+    });
 
     expect(getByTestId('keyboard-spacer').props.style).toEqual({
       height: 300,
     });
-    act(() => jest.runAllTimers());
+    await act(() => jest.runAllTimers());
 
     expect(scrollToSpy).toHaveBeenCalledWith({ y: 214, animated: true });
     expect(getByPlaceholderText('Campo')).toBeTruthy();
   });
 
-  it('não deve rolar quando o campo já estiver visível ou não houver foco', () => {
-    renderForm({ bottomOffset: 0 });
+  it('não deve rolar quando o campo já estiver visível ou não houver foco', async () => {
+    await renderForm({ bottomOffset: 0 });
 
     mockFocusedInput(100);
-    emit('keyboardDidShow', { endCoordinates: { screenY: 600, height: 300 } });
-    act(() => jest.runAllTimers());
+    await emit('keyboardDidShow', {
+      endCoordinates: { screenY: 600, height: 300 },
+    });
+    await act(() => jest.runAllTimers());
 
     TextInput.State.currentlyFocusedInput.mockReturnValue(null);
-    emit('keyboardDidShow', { endCoordinates: { screenY: 600, height: 300 } });
-    act(() => jest.runAllTimers());
+    await emit('keyboardDidShow', {
+      endCoordinates: { screenY: 600, height: 300 },
+    });
+    await act(() => jest.runAllTimers());
 
     expect(scrollToSpy).not.toHaveBeenCalled();
   });
 
-  it('deve rolar ao focar outro campo com o teclado aberto e ignorar sem teclado', () => {
+  it('deve rolar ao focar outro campo com o teclado aberto e ignorar sem teclado', async () => {
     const onFocus = jest.fn();
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <FormScrollView>
         <FormTextInput testID="field" onFocus={onFocus} />
       </FormScrollView>
     );
     mockFocusedInput(800);
 
-    fireEvent(getByTestId('field'), 'focus', { nativeEvent: {} });
-    act(() => jest.runAllTimers());
+    await fireEvent(getByTestId('field'), 'focus', { nativeEvent: {} });
+    await act(() => jest.runAllTimers());
     expect(scrollToSpy).not.toHaveBeenCalled();
     expect(onFocus).toHaveBeenCalledTimes(1);
 
-    emit('keyboardDidShow', { endCoordinates: { screenY: 600, height: 300 } });
-    act(() => jest.runAllTimers());
+    await emit('keyboardDidShow', {
+      endCoordinates: { screenY: 600, height: 300 },
+    });
+    await act(() => jest.runAllTimers());
     scrollToSpy.mockClear();
 
-    fireEvent(getByTestId('field'), 'focus', { nativeEvent: {} });
-    act(() => jest.runAllTimers());
+    await fireEvent(getByTestId('field'), 'focus', { nativeEvent: {} });
+    await act(() => jest.runAllTimers());
     expect(scrollToSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('deve remover o espaço ao fechar o teclado e os ouvintes ao desmontar', () => {
-    const { getByTestId, unmount } = renderForm();
+  it('deve remover o espaço ao fechar o teclado e os ouvintes ao desmontar', async () => {
+    const { getByTestId, unmount } = await renderForm();
 
-    emit('keyboardDidShow', { endCoordinates: { screenY: 600, height: 300 } });
-    emit('keyboardDidHide');
+    await emit('keyboardDidShow', {
+      endCoordinates: { screenY: 600, height: 300 },
+    });
+    await emit('keyboardDidHide');
     expect(getByTestId('keyboard-spacer').props.style).toEqual({ height: 0 });
 
-    unmount();
+    await unmount();
     removeMocks.forEach((remove) => expect(remove).toHaveBeenCalled());
   });
 
-  it('FormTextInput deve funcionar fora de um FormScrollView', () => {
-    const { getByTestId } = render(<FormTextInput testID="solo" />);
+  it('FormTextInput deve funcionar fora de um FormScrollView', async () => {
+    const { getByTestId } = await render(<FormTextInput testID="solo" />);
 
-    expect(() =>
-      fireEvent(getByTestId('solo'), 'focus', { nativeEvent: {} })
+    expect(
+      async () =>
+        await fireEvent(getByTestId('solo'), 'focus', { nativeEvent: {} })
     ).not.toThrow();
   });
 });

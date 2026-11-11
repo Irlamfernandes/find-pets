@@ -22,6 +22,7 @@ export function PhotoCarousel({ images, onOpenPhoto }) {
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
     >
       <FlatList
+        testID="pet-carousel-list"
         data={images}
         keyExtractor={(uri, index) => `${uri}-${index}`}
         horizontal

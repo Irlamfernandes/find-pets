@@ -50,8 +50,8 @@ describe('ReportLostPetScreen', () => {
     useReportLostPet.mockReturnValue(hookValue);
   });
 
-  it('deve renderizar o formulário e repassar onSaved ao hook', () => {
-    const { getByText, getByTestId } = render(
+  it('deve renderizar o formulário e repassar onSaved ao hook', async () => {
+    const { getByText, getByTestId } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
@@ -75,33 +75,33 @@ describe('ReportLostPetScreen', () => {
       ...hookValue,
       petData: { ...hookValue.petData, species: 'Cachorro', breed: 'bull' },
     });
-    const { getByText } = render(
+    const { getByText } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
     await waitFor(() => expect(getByText('French Bulldog')).toBeTruthy());
     expect(breedService.getBreeds).toHaveBeenCalledWith('Cachorro');
-    fireEvent.press(getByText('French Bulldog'));
+    await fireEvent.press(getByText('French Bulldog'));
     expect(hookValue.setPetField).toHaveBeenCalledWith(
       'breed',
       'French Bulldog'
     );
   });
 
-  it('deve disparar as ações do formulário', () => {
-    const { getByTestId } = render(
+  it('deve disparar as ações do formulário', async () => {
+    const { getByTestId } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
-    fireEvent.press(getByTestId('button-back'));
-    fireEvent.press(getByTestId('button-take-photo'));
-    fireEvent.press(getByTestId('button-pick-gallery'));
-    fireEvent.changeText(getByTestId('input-description'), 'Cão marrom');
-    fireEvent.changeText(getByTestId('input-pet-name'), 'Rex');
-    fireEvent.changeText(getByTestId('input-pet-color'), 'Caramelo');
-    fireEvent.changeText(getByTestId('input-pet-breed'), 'Vira-lata');
-    fireEvent.changeText(getByTestId('input-address'), 'Rua A');
-    fireEvent.press(getByTestId('button-submit-report'));
+    await fireEvent.press(getByTestId('button-back'));
+    await fireEvent.press(getByTestId('button-take-photo'));
+    await fireEvent.press(getByTestId('button-pick-gallery'));
+    await fireEvent.changeText(getByTestId('input-description'), 'Cão marrom');
+    await fireEvent.changeText(getByTestId('input-pet-name'), 'Rex');
+    await fireEvent.changeText(getByTestId('input-pet-color'), 'Caramelo');
+    await fireEvent.changeText(getByTestId('input-pet-breed'), 'Vira-lata');
+    await fireEvent.changeText(getByTestId('input-address'), 'Rua A');
+    await fireEvent.press(getByTestId('button-submit-report'));
 
     expect(onBack).toHaveBeenCalledTimes(1);
     expect(hookValue.takePhoto).toHaveBeenCalledTimes(1);
@@ -117,29 +117,28 @@ describe('ReportLostPetScreen', () => {
     expect(hookValue.submit).toHaveBeenCalledTimes(1);
   });
 
-  it('deve exibir e remover fotos e esconder os botões ao atingir o limite', () => {
+  it('deve exibir e remover fotos e esconder os botões ao atingir o limite', async () => {
     useReportLostPet.mockReturnValue({
       ...hookValue,
       photos: [{ uri: 'a.jpg' }, { uri: 'b.jpg' }],
       remainingPhotos: 0,
     });
 
-    const { getAllByTestId, getByLabelText, queryByTestId, getByText } = render(
-      <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
-    );
+    const { getAllByTestId, getByLabelText, queryByTestId, getByText } =
+      await render(<ReportLostPetScreen onBack={onBack} onSaved={onSaved} />);
 
     expect(getAllByTestId('report-photo')).toHaveLength(2);
     expect(getByText('Fotos do pet (2/5) *')).toBeTruthy();
     expect(queryByTestId('button-take-photo')).toBeNull();
 
-    fireEvent.press(getByLabelText('Remover foto 2'));
+    await fireEvent.press(getByLabelText('Remover foto 2'));
     expect(hookValue.removePhoto).toHaveBeenCalledWith('b.jpg');
   });
 
-  it('deve mostrar carregamento e bloquear o botão enquanto salva', () => {
+  it('deve mostrar carregamento e bloquear o botão enquanto salva', async () => {
     useReportLostPet.mockReturnValue({ ...hookValue, isSaving: true });
 
-    const { getByTestId, queryByText } = render(
+    const { getByTestId, queryByText } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
@@ -151,78 +150,78 @@ describe('ReportLostPetScreen', () => {
     ).toEqual(expect.objectContaining({ disabled: true }));
   });
 
-  it('deve fechar o teclado ao confirmar o endereço sem salvar', () => {
+  it('deve fechar o teclado ao confirmar o endereço sem salvar', async () => {
     const dismissSpy = jest.spyOn(Keyboard, 'dismiss');
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
-    fireEvent(getByTestId('input-address'), 'submitEditing');
+    await fireEvent(getByTestId('input-address'), 'submitEditing');
 
     expect(dismissSpy).toHaveBeenCalledTimes(1);
     expect(hookValue.submit).not.toHaveBeenCalled();
     dismissSpy.mockRestore();
   });
 
-  it('deve fechar o teclado ao tocar nos botões', () => {
+  it('deve fechar o teclado ao tocar nos botões', async () => {
     useReportLostPet.mockReturnValue({
       ...hookValue,
       photos: [{ uri: 'a.jpg' }],
     });
     const dismissSpy = jest.spyOn(Keyboard, 'dismiss');
-    const { getByTestId, getByLabelText } = render(
+    const { getByTestId, getByLabelText } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
-    fireEvent.press(getByTestId('button-take-photo'));
-    fireEvent.press(getByLabelText('Remover foto 1'));
-    fireEvent.press(getByTestId('button-submit-report'));
+    await fireEvent.press(getByTestId('button-take-photo'));
+    await fireEvent.press(getByLabelText('Remover foto 1'));
+    await fireEvent.press(getByTestId('button-submit-report'));
 
     expect(dismissSpy).toHaveBeenCalledTimes(3);
     dismissSpy.mockRestore();
   });
 
-  it('deve executar a seta de voltar ao usar o voltar do Android', () => {
+  it('deve executar a seta de voltar ao usar o voltar do Android', async () => {
     jest.spyOn(BackHandler, 'addEventListener');
-    render(<ReportLostPetScreen onBack={onBack} onSaved={onSaved} />);
+    await render(<ReportLostPetScreen onBack={onBack} onSaved={onSaved} />);
 
     expect(pressHardwareBack()).toBe(true);
     expect(onBack).toHaveBeenCalledTimes(1);
     BackHandler.addEventListener.mockRestore();
   });
 
-  it('deve escolher espécie, porte e sexo pelas opções', () => {
-    const { getByText } = render(
+  it('deve escolher espécie, porte e sexo pelas opções', async () => {
+    const { getByText } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
-    fireEvent.press(getByText('Gato'));
-    fireEvent.press(getByText('Grande'));
-    fireEvent.press(getByText('Fêmea'));
+    await fireEvent.press(getByText('Gato'));
+    await fireEvent.press(getByText('Grande'));
+    await fireEvent.press(getByText('Fêmea'));
 
     expect(hookValue.setPetField).toHaveBeenCalledWith('species', 'Gato');
     expect(hookValue.setPetField).toHaveBeenCalledWith('size', 'Grande');
     expect(hookValue.setPetField).toHaveBeenCalledWith('sex', 'Fêmea');
   });
 
-  it('deve avançar de cor para raça e detalhes pelo teclado', () => {
+  it('deve avançar de cor para raça e detalhes pelo teclado', async () => {
     const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
-    const { getByTestId } = render(
+    const { getByTestId } = await render(
       <ReportLostPetScreen onBack={onBack} onSaved={onSaved} />
     );
 
-    fireEvent(getByTestId('input-pet-color'), 'submitEditing');
-    fireEvent(getByTestId('input-pet-breed'), 'submitEditing');
+    await fireEvent(getByTestId('input-pet-color'), 'submitEditing');
+    await fireEvent(getByTestId('input-pet-breed'), 'submitEditing');
 
     expect(focusSpy).toHaveBeenCalledTimes(2);
     focusSpy.mockRestore();
   });
 
-  it('deve mostrar títulos e dicas de edição e repassar o registro ao hook', () => {
+  it('deve mostrar títulos e dicas de edição e repassar o registro ao hook', async () => {
     const post = { id: '1', species: 'Cachorro' };
     useReportLostPet.mockReturnValue({ ...hookValue, isEditing: true });
 
-    const { getByText, queryByText } = render(
+    const { getByText, queryByText } = await render(
       <ReportLostPetScreen
         onBack={onBack}
         onSaved={onSaved}

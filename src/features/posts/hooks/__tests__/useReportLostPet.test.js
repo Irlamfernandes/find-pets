@@ -57,11 +57,11 @@ async function setupWithPhotos(photos, onSaved = jest.fn()) {
     photos,
     denied: false,
   });
-  const hook = renderHook(() => useReportLostPet(onSaved));
+  const hook = await renderHook(() => useReportLostPet(onSaved));
   await act(async () => {
     await hook.result.current.pickFromGallery();
   });
-  act(() => hook.result.current.setPetField('species', 'Gato'));
+  await act(() => hook.result.current.setPetField('species', 'Gato'));
   return hook;
 }
 
@@ -101,8 +101,8 @@ describe('useReportLostPet', () => {
     expect(postService.savePost).toHaveBeenCalledTimes(1);
   });
 
-  it('deve começar vazio para um registro novo', () => {
-    const { result } = renderHook(() => useReportLostPet());
+  it('deve começar vazio para um registro novo', async () => {
+    const { result } = await renderHook(() => useReportLostPet());
 
     expect(result.current.isEditing).toBe(false);
     expect(result.current.photos).toEqual([]);
@@ -111,7 +111,7 @@ describe('useReportLostPet', () => {
   });
 
   it('deve adicionar fotos da galeria e da câmera respeitando o limite', async () => {
-    const { result } = renderHook(() => useReportLostPet());
+    const { result } = await renderHook(() => useReportLostPet());
 
     photoService.pickFromGallery.mockResolvedValueOnce({
       photos: [photo('1'), photo('2'), photo('3'), photo('4')],
@@ -146,7 +146,7 @@ describe('useReportLostPet', () => {
       `Você pode adicionar até ${MAX_PHOTOS} fotos.`
     );
 
-    act(() => result.current.removePhoto('3'));
+    await act(() => result.current.removePhoto('3'));
     expect(result.current.photos.map((p) => p.uri)).toEqual([
       '1',
       '2',
@@ -156,7 +156,7 @@ describe('useReportLostPet', () => {
   });
 
   it('deve avisar quando a permissão for negada ou ocorrer erro', async () => {
-    const { result } = renderHook(() => useReportLostPet());
+    const { result } = await renderHook(() => useReportLostPet());
 
     photoService.takePhoto.mockResolvedValueOnce({ photos: [], denied: true });
     await act(async () => {
@@ -200,7 +200,7 @@ describe('useReportLostPet', () => {
       longitude: -8,
       address: 'Lat',
     });
-    const { result } = renderHook(() => useReportLostPet());
+    const { result } = await renderHook(() => useReportLostPet());
 
     await act(async () => {
       await result.current.takePhoto();
@@ -210,7 +210,7 @@ describe('useReportLostPet', () => {
       longitude: -8,
     });
 
-    act(() => result.current.setPetField('species', 'Cachorro'));
+    await act(() => result.current.setPetField('species', 'Cachorro'));
     await act(async () => {
       await result.current.submit();
     });
@@ -231,7 +231,7 @@ describe('useReportLostPet', () => {
       longitude: null,
       address: 'Localização não permitida',
     });
-    const { result } = renderHook(() => useReportLostPet());
+    const { result } = await renderHook(() => useReportLostPet());
 
     await act(async () => {
       await result.current.takePhoto();
@@ -242,7 +242,7 @@ describe('useReportLostPet', () => {
 
   it('não deve buscar a localização se a câmera for cancelada', async () => {
     photoService.takePhoto.mockResolvedValueOnce({ photos: [], denied: false });
-    const { result } = renderHook(() => useReportLostPet());
+    const { result } = await renderHook(() => useReportLostPet());
 
     await act(async () => {
       await result.current.takePhoto();
@@ -253,7 +253,7 @@ describe('useReportLostPet', () => {
   });
 
   it('deve exigir foto e espécie antes de salvar', async () => {
-    const { result } = renderHook(() => useReportLostPet());
+    const { result } = await renderHook(() => useReportLostPet());
 
     await act(async () => {
       await result.current.submit();
@@ -295,7 +295,7 @@ describe('useReportLostPet', () => {
       ],
       onSaved
     );
-    act(() => {
+    await act(() => {
       result.current.setPetField('petName', '  Mimi ');
       result.current.setPetField('size', 'Pequeno');
       result.current.setPetField('sex', 'Fêmea');
@@ -349,7 +349,7 @@ describe('useReportLostPet', () => {
     profileService.getProfile.mockResolvedValueOnce(null);
     sessionService.getCurrentUser.mockResolvedValueOnce(null);
     const { result } = await setupWithPhotos([photo('a.jpg')]);
-    act(() => result.current.setAddress('  Rua Digitada, 5  '));
+    await act(() => result.current.setAddress('  Rua Digitada, 5  '));
 
     await act(async () => {
       await result.current.submit();
@@ -427,7 +427,7 @@ describe('useReportLostPet', () => {
     expect(result.current.isSaving).toBe(true);
 
     let secondSubmit;
-    act(() => {
+    await act(() => {
       secondSubmit = result.current.submit();
     });
     expect(postService.savePost).toHaveBeenCalledTimes(1);
@@ -461,11 +461,11 @@ describe('useReportLostPet', () => {
       status: 'Perdido',
     };
 
-    const renderEdit = (post = existingPost, onSaved = jest.fn()) =>
-      renderHook(() => useReportLostPet(onSaved, post));
+    const renderEdit = async (post = existingPost, onSaved = jest.fn()) =>
+      await renderHook(() => useReportLostPet(onSaved, post));
 
-    it('deve abrir preenchido com os dados do registro', () => {
-      const { result } = renderEdit();
+    it('deve abrir preenchido com os dados do registro', async () => {
+      const { result } = await renderEdit();
 
       expect(result.current.isEditing).toBe(true);
       expect(result.current.photos).toEqual([
@@ -484,9 +484,9 @@ describe('useReportLostPet', () => {
 
     it('deve atualizar os dados mantendo o local e trocar as fotos', async () => {
       const onSaved = jest.fn();
-      const { result } = renderEdit(existingPost, onSaved);
+      const { result } = await renderEdit(existingPost, onSaved);
 
-      act(() => {
+      await act(() => {
         result.current.setPetField('petName', 'Rex Jr');
         result.current.removePhoto('stored:a.jpg');
       });
@@ -526,8 +526,8 @@ describe('useReportLostPet', () => {
         latitude: 5,
         longitude: 6,
       });
-      const { result } = renderEdit();
-      act(() => result.current.setAddress('Rua Nova, 20'));
+      const { result } = await renderEdit();
+      await act(() => result.current.setAddress('Rua Nova, 20'));
 
       await act(async () => {
         await result.current.submit();
@@ -544,8 +544,8 @@ describe('useReportLostPet', () => {
     });
 
     it('deve manter as coordenadas se o endereço novo não for encontrado', async () => {
-      const { result } = renderEdit();
-      act(() => result.current.setAddress('Lugar desconhecido'));
+      const { result } = await renderEdit();
+      await act(() => result.current.setAddress('Lugar desconhecido'));
 
       await act(async () => {
         await result.current.submit();
@@ -569,9 +569,9 @@ describe('useReportLostPet', () => {
         species: 'Cachorro',
         location: 'Centro',
       };
-      const { result } = renderEdit(legacyPost);
+      const { result } = await renderEdit(legacyPost);
       expect(result.current.photos).toEqual([{ uri: 'file:///antiga.jpg' }]);
-      act(() => result.current.setAddress('   '));
+      await act(() => result.current.setAddress('   '));
 
       await act(async () => {
         await result.current.submit();
@@ -593,7 +593,7 @@ describe('useReportLostPet', () => {
     it('deve avisar quando falhar ao salvar a edição', async () => {
       postService.updatePost.mockRejectedValueOnce(new Error('falha'));
       const onSaved = jest.fn();
-      const { result } = renderEdit(existingPost, onSaved);
+      const { result } = await renderEdit(existingPost, onSaved);
 
       await act(async () => {
         await result.current.submit();

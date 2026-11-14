@@ -150,17 +150,23 @@ API REST em `api/` (Flask + MySQL + Docker + Swagger), usada pelo app antes do F
 
 O repositório já traz a configuração pronta: o app usa o Firebase do projeto, então **não é preciso criar conta nem projeto no Firebase**.
 
-**Você vai precisar de (no Mac):**
+**1. Prepare o computador** (Windows, Linux ou Mac):
 
-- **Terminal:** em Aplicativos > Utilitários > Terminal. Todos os comandos abaixo são digitados nele.
-- **Git:** rode `git --version` no Terminal; se ele não estiver instalado, o Mac oferece instalar as ferramentas de linha de comando (ou rode `xcode-select --install`).
-- **Node.js 22:** baixe o instalador para macOS da versão 22 em [nodejs.org/en/download](https://nodejs.org/en/download) e confira com `node -v` (o projeto indica a versão no arquivo `.nvmrc`; com o nvm, basta `nvm use`).
-- **Um celular com o app Expo Go** (versão do SDK 58), na **mesma rede Wi-Fi** do Mac:
-  - **Android:** instale o [Expo Go](https://expo.dev/go) pela Play Store; não precisa de conta;
-  - **iPhone:** instale o Expo Go pela App Store e crie uma conta gratuita em [expo.dev](https://expo.dev/signup). O Expo Go do iPhone só roda projetos com login: entre com a conta no app Expo Go e também no Terminal, com `npx expo login` (rode na pasta do projeto, depois do passo 1). No iPhone, o Face ID não funciona dentro do Expo Go; entre com a senha.
-- **Sem celular:** com o **Xcode** instalado (App Store), dá para usar o simulador de iPhone do Mac: no passo 3, depois do `npx expo start`, aperte **`i`** no Terminal.
+|                                               | Windows                                                                             | Linux                                                                                  | Mac                                                                                 |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Terminal** (onde os comandos são digitados) | PowerShell (menu Iniciar)                                                           | Terminal                                                                               | Terminal (Aplicativos > Utilitários)                                                |
+| **Git**                                       | Instale pelo [git-scm.com](https://git-scm.com/download/win)                        | `sudo apt install git` (Ubuntu/Debian)                                                 | `xcode-select --install`                                                            |
+| **Node.js 22**                                | Instalador da versão 22 em [nodejs.org/en/download](https://nodejs.org/en/download) | [nvm](https://github.com/nvm-sh/nvm): `nvm install 22` (ou o instalador do nodejs.org) | Instalador da versão 22 em [nodejs.org/en/download](https://nodejs.org/en/download) |
 
-**1. Baixe o projeto e instale as dependências:**
+Depois de instalar, feche e abra o terminal e confira com `git --version` e `node -v` (deve mostrar `v22`). Com o nvm, `nvm use` dentro da pasta do projeto lê a versão do arquivo `.nvmrc`.
+
+**2. Prepare o celular**, na **mesma rede Wi-Fi** do computador, com o app **Expo Go** na versão do SDK 58:
+
+- **Android:** instale o [Expo Go](https://expo.dev/go) pela Play Store; não precisa de conta.
+- **iPhone:** instale o Expo Go pela App Store e crie uma conta gratuita em [expo.dev](https://expo.dev/signup). O Expo Go do iPhone só roda projetos com login: entre com a conta no app Expo Go e também no terminal, com `npx expo login` (rode na pasta do projeto, depois do passo 3). No iPhone, o Face ID não funciona dentro do Expo Go; entre com a senha.
+- **Sem celular (opcional):** no Mac, com o **Xcode** instalado, aperte **`i`** no terminal depois do `npx expo start` para abrir o simulador de iPhone. No Windows e no Linux, com o **Android Studio** e um emulador ligado, aperte **`a`**.
+
+**3. Baixe o projeto e instale as dependências:**
 
 ```bash
 git clone https://github.com/Irlamfernandes/find-pets.git
@@ -168,37 +174,41 @@ cd find-pets
 npm install --legacy-peer-deps
 ```
 
-**2. Crie o arquivo de configuração do app** (copia o `.env.example`, que já vem preenchido, para `.env`, o arquivo que o app lê):
+**4. Crie o arquivo de configuração do app** (copia o `.env.example`, que já vem preenchido, para `.env`, o arquivo que o app lê):
 
 ```bash
 cp .env.example .env
 ```
 
-**3. Rode o app:**
+No Windows (PowerShell), use `Copy-Item .env.example .env`.
+
+**5. Rode o app:**
 
 ```bash
 npx expo start
 ```
 
-Vai aparecer um **QR code** no Terminal. No **Android**, abra o Expo Go e use o botão "Scan QR code". No **iPhone**, leia o QR code com a **câmera** e toque no aviso para abrir no Expo Go. O app abre na tela inicial do FindPets.
+Vai aparecer um **QR code** no terminal. No **Android**, abra o Expo Go e use o botão "Scan QR code". No **iPhone**, leia o QR code com a **câmera** e toque no aviso para abrir no Expo Go. O app abre na tela inicial do FindPets.
 
-**4. Use o app:** toque em **Cadastrar** e crie uma conta com qualquer e-mail e uma senha de 6 caracteres ou mais. Depois, complete o perfil e use o feed, o mapa e o registro de pets. As contas e os registros ficam no Firebase do projeto.
+**6. Use o app:** toque em **Cadastrar** e crie uma conta com qualquer e-mail e uma senha de 6 caracteres ou mais. Depois, complete o perfil e use o feed, o mapa e o registro de pets. As contas e os registros ficam no Firebase do projeto.
 
 **Se algo não funcionar:**
 
-| Problema                                                                       | Solução                                                                      |
-| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| O celular não abre o app pelo QR code (redes diferentes ou Wi-Fi que bloqueia) | Rode `npx expo start --tunnel` e leia o novo QR code                         |
-| No Android, o Expo pede login ou reclama da conta do projeto                   | Rode `npx expo start --offline`                                              |
-| No iPhone, o Expo Go pede login ou não abre o projeto                          | Entre com a mesma conta Expo no app Expo Go e no Terminal (`npx expo login`) |
-| O Expo Go diz que a versão do SDK não é compatível                             | Atualize o Expo Go na Play Store (o projeto usa o SDK 58)                    |
-| O app mostra uma versão antiga depois de atualizar o projeto                   | Rode `npx expo start --clear` uma vez                                        |
+| Problema                                                                                            | Solução                                                                      |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| O celular não abre o app pelo QR code (redes diferentes, Wi-Fi que bloqueia ou firewall do Windows) | Rode `npx expo start --tunnel` e leia o novo QR code                         |
+| No Android, o Expo pede login ou reclama da conta do projeto                                        | Rode `npx expo start --offline`                                              |
+| No iPhone, o Expo Go pede login ou não abre o projeto                                               | Entre com a mesma conta Expo no app Expo Go e no terminal (`npx expo login`) |
+| O Expo Go diz que a versão do SDK não é compatível                                                  | Atualize o Expo Go na Play Store (o projeto usa o SDK 58)                    |
+| O app mostra uma versão antiga depois de atualizar o projeto                                        | Rode `npx expo start --clear` uma vez                                        |
 
 **API antiga (opcional):** o app não precisa dela. Para rodar a API em Flask com Docker, copie também o arquivo de configuração dela e siga o [api/README.md](api/README.md):
 
 ```bash
 cp api/.env.example api/.env
 ```
+
+No Windows (PowerShell), use `Copy-Item api/.env.example api/.env`.
 
 **Usar o seu próprio Firebase (opcional):** no [console do Firebase](https://console.firebase.google.com/), crie um projeto com um app **Web** (`</>`), ative em **Authentication** o login por **E-mail/senha**, crie o **Realtime Database**, cole em **Regras** o conteúdo de [database.rules.json](database.rules.json) e troque os valores `EXPO_PUBLIC_FIREBASE_*` do `.env` pelos do seu app Web.
 

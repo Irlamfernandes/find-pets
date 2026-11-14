@@ -146,24 +146,57 @@ API REST em `api/` (Flask + MySQL + Docker + Swagger), usada pelo app antes do F
 
 ---
 
-## ⚙️ Como executar
+## ⚙️ Como executar (passo a passo para quem clonar o projeto)
 
-1. **Clone o repositório e instale as dependências:**
-   ```bash
-   git clone https://github.com/Irlamfernandes/find-pets.git
-   cd find-pets
-   npm install --legacy-peer-deps
-   ```
-2. **Crie o projeto no [console do Firebase](https://console.firebase.google.com/):**
-   - adicione um app **Web** (`</>`) e copie a configuração;
-   - em **Authentication**, ative o login por **E-mail/senha**;
-   - crie o **Realtime Database** e, na aba **Regras**, cole o conteúdo de [database.rules.json](database.rules.json).
-3. **Configure o app:** copie `.env.example` para `.env` e preencha com a configuração do app Web.
-4. **Rode o app no celular** (pelo Expo Go, lendo o QR code):
-   ```bash
-   npx expo start
-   ```
-   Depois de mudanças grandes (arquivos apagados ou bibliotecas novas), use `npx expo start --clear` uma vez.
+O repositório já traz a configuração pronta: o app usa o Firebase do projeto, então **não é preciso criar conta nem projeto no Firebase**.
+
+**Você vai precisar de:**
+
+- **[Node.js 22](https://nodejs.org)** e **[Git](https://git-scm.com)** no computador (com o nvm, `nvm use` lê a versão do arquivo `.nvmrc`);
+- um celular **Android** com o app **[Expo Go](https://expo.dev/go)** (versão do SDK 58), na **mesma rede Wi-Fi** do computador.
+
+**1. Baixe o projeto e instale as dependências:**
+
+```bash
+git clone https://github.com/Irlamfernandes/find-pets.git
+cd find-pets
+npm install --legacy-peer-deps
+```
+
+**2. Crie o arquivo de configuração do app** (copia o `.env.example`, que já vem preenchido, para `.env`, o arquivo que o app lê):
+
+```bash
+cp .env.example .env
+```
+
+No Windows (PowerShell), use `copy .env.example .env`.
+
+**3. Rode o app:**
+
+```bash
+npx expo start
+```
+
+Vai aparecer um **QR code** no terminal. No celular, abra o **Expo Go** e leia o QR code com ele (botão "Scan QR code"). O app abre na tela inicial do FindPets.
+
+**4. Use o app:** toque em **Cadastrar** e crie uma conta com qualquer e-mail e uma senha de 6 caracteres ou mais. Depois, complete o perfil e use o feed, o mapa e o registro de pets. As contas e os registros ficam no Firebase do projeto.
+
+**Se algo não funcionar:**
+
+| Problema                                                                       | Solução                                                   |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| O celular não abre o app pelo QR code (redes diferentes ou Wi-Fi que bloqueia) | Rode `npx expo start --tunnel` e leia o novo QR code      |
+| O Expo pede login ou reclama da conta do projeto                               | Rode `npx expo start --offline`                           |
+| O Expo Go diz que a versão do SDK não é compatível                             | Atualize o Expo Go na Play Store (o projeto usa o SDK 58) |
+| O app mostra uma versão antiga depois de atualizar o projeto                   | Rode `npx expo start --clear` uma vez                     |
+
+**API antiga (opcional):** o app não precisa dela. Para rodar a API em Flask com Docker, copie também o arquivo de configuração dela e siga o [api/README.md](api/README.md):
+
+```bash
+cp api/.env.example api/.env
+```
+
+**Usar o seu próprio Firebase (opcional):** no [console do Firebase](https://console.firebase.google.com/), crie um projeto com um app **Web** (`</>`), ative em **Authentication** o login por **E-mail/senha**, crie o **Realtime Database**, cole em **Regras** o conteúdo de [database.rules.json](database.rules.json) e troque os valores `EXPO_PUBLIC_FIREBASE_*` do `.env` pelos do seu app Web.
 
 ### Publicar no Expo (abrir sem o computador)
 
